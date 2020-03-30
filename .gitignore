@@ -1,0 +1,10 @@
+# # Build directories
+/target/
+
+# Compiled class file
+*.class
+
+# IDE metadata	
+.settings
+.classpath
+.project
