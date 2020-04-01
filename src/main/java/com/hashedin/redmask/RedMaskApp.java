@@ -6,7 +6,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.hashedin.redmask.configurations.DataBaseCredentials;
 import com.hashedin.redmask.configurations.Configuration;
 import com.hashedin.redmask.service.MaskingService;
 
@@ -23,7 +22,6 @@ public class RedMaskApp {
       configFilePath = val;
     }
     
-    DataBaseCredentials credentials = new DataBaseCredentials();
     ObjectMapper mapper = new ObjectMapper();
     Configuration config = null;
 
@@ -33,7 +31,7 @@ public class RedMaskApp {
       log.error("Exception while reading config.json file: " + ex);
     }
     
-    MaskingService service = new MaskingService(config, credentials);
+    MaskingService service = new MaskingService(config);
     service.createSchemaAndView();
     
     log.info("Closing redmask application.");

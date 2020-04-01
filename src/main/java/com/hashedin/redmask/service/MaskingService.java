@@ -11,7 +11,6 @@ import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import com.hashedin.redmask.configurations.DataBaseCredentials;
 import com.hashedin.redmask.configurations.MaskType;
 import com.hashedin.redmask.configurations.MaskingRule;
 import com.hashedin.redmask.configurations.Configuration;
@@ -22,12 +21,10 @@ public class MaskingService {
   private static final String MASKING_FUNCTION_SCHEMA = "redmask";
   
   private Configuration config;
-  private DataBaseCredentials credentials;
   private String url = "jdbc:postgresql://";
   
-  public MaskingService(Configuration config, DataBaseCredentials credentials) {
+  public MaskingService(Configuration config) {
     this.config = config;
-    this.credentials = credentials;
     this.url = url + config.getHost() + ":" + config.getPort() + "/" + config.getDatabase();
   }
   
@@ -52,7 +49,7 @@ public class MaskingService {
      */
     for (MaskingRule maskingRule : rules) {
       try(Connection conn = DriverManager.getConnection(url, 
-          credentials.getSuperUserName(), credentials.getSuperUserPassword())) {
+          config.getSuperUser(), config.getSuperUserPassword())) {
         
         try (PreparedStatement pst = 
             conn.prepareStatement("CREATE SCHEMA IF NOT EXISTS " + MASKING_FUNCTION_SCHEMA)) {
@@ -120,7 +117,7 @@ public class MaskingService {
 
     // Create view
     StringBuilder sb = new StringBuilder();
-    sb.append(credentials.getUsername()).append(".").append(maskingRule.getTable());
+    sb.append(config.getUsername()).append(".").append(maskingRule.getTable());
     
     String createViewQuery = "CREATE VIEW " + sb.toString() + " AS SELECT " +
         querySubstring +  " FROM " + maskingRule.getTable();
@@ -134,9 +131,9 @@ public class MaskingService {
   
   // Create a Schema for a given user.
   private void createSchema() {
-    String createSchemaQuery = "CREATE SCHEMA IF NOT EXISTS " + credentials.getUsername();
+    String createSchemaQuery = "CREATE SCHEMA IF NOT EXISTS " + config.getUsername();
     try(Connection conn = DriverManager.getConnection(url, 
-        credentials.getSuperUserName(), credentials.getSuperUserPassword());
+        config.getSuperUser(), config.getSuperUserPassword());
         PreparedStatement pst = conn.prepareStatement(createSchemaQuery)) {
       pst.execute();
     } catch (SQLException e) {
@@ -148,9 +145,9 @@ public class MaskingService {
   
   private void dropSchema() {
     String dropSchemaQuery = "drop schema IF EXISTS " + 
-        credentials.getUsername() + ", " + MASKING_FUNCTION_SCHEMA + " CASCADE";
+        config.getUsername() + ", " + MASKING_FUNCTION_SCHEMA + " CASCADE";
     try(Connection conn = DriverManager.getConnection(url, 
-        credentials.getSuperUserName(), credentials.getSuperUserPassword());
+        config.getSuperUser(), config.getSuperUserPassword());
         PreparedStatement pst = conn.prepareStatement(dropSchemaQuery)) {
       pst.execute();
     } catch (SQLException e) {
@@ -164,7 +161,7 @@ public class MaskingService {
     String createUserquery = "CREATE USER developer WITH PASSWORD 'password' VALID UNTIL 'infinity' ";
     String grantAccessquery = "GRANT SELECT ON ALL TABLES IN SCHEMA developer TO developer";
     try(Connection conn = DriverManager.getConnection(url, 
-        credentials.getSuperUserName(), credentials.getSuperUserPassword())) {
+        config.getSuperUser(), config.getSuperUserPassword())) {
       try (PreparedStatement pst = conn.prepareStatement(createUserquery)){
         pst.executeUpdate();
       }
