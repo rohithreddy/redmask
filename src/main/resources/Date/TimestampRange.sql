@@ -1,0 +1,12 @@
+CREATE OR REPLACE FUNCTION redmask.range_timestamp(
+  val TIMESTAMP WITHOUT TIME ZONE,
+  step TEXT DEFAULT 'decade'
+)
+RETURNS TSRANGE
+AS $$
+SELECT tsrange(
+    date_trunc(step, val)::TIMESTAMP WITHOUT TIME ZONE,
+    date_trunc(step, val)::TIMESTAMP WITHOUT TIME ZONE + ('1 '|| step)::INTERVAL
+  );
+$$
+LANGUAGE SQL IMMUTABLE SECURITY INVOKER;
