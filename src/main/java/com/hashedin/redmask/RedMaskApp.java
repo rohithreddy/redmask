@@ -27,10 +27,14 @@ public class RedMaskApp implements Callable<Integer>  {
       description = "Complete file path of json containing masking configurations.")
   private String configFilePath;
 
+  @Option(names = {"-r", "--dryrun"},
+      description = "When true, this will just generates sql file with required queries. "
+          + "It will not make any chnages to DB.")
+  private boolean dryRun = true;
+
   public static void main( String[] args ) throws IOException {
     log.info("Starting redmask application.");
     System.exit(new CommandLine(new RedMaskApp()).execute(args));
-    log.info("Closing redmask application.");
   }
 
   @Override
@@ -44,9 +48,10 @@ public class RedMaskApp implements Callable<Integer>  {
       log.error("Exception while reading config.json file: " + ex);
     }
     
-    MaskingService service = new MaskingService(config);
-    service.createSchemaAndView();
-    
+    MaskingService service = new MaskingService(config, dryRun);
+    service.generateSqlQueryForMasking();
+    service.executeSqlQueryForMasking();
+    log.info("Closing redmask application.");
     return 0;
   }
 

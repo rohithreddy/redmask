@@ -1,13 +1,19 @@
 package com.hashedin.redmask.service;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.Reader;
 import java.sql.Connection;
 import java.sql.DriverManager;
-import java.sql.PreparedStatement;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.List;
 
+import org.apache.ibatis.jdbc.ScriptRunner;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -17,76 +23,106 @@ import com.hashedin.redmask.configurations.Configuration;
 
 public class MaskingService {
 
-  static Logger log = LogManager.getLogger(MaskingService.class);
+  private static final Logger log = LogManager.getLogger(MaskingService.class);
   private static final String MASKING_FUNCTION_SCHEMA = "redmask";
-  
+  private static final String MASKING_SQL_FILE_PATH = "src/main/resources/masking.sql";
+
   private Configuration config;
   private String url = "jdbc:postgresql://";
-  
-  public MaskingService(Configuration config) {
+  private boolean dryRunEnabled;
+
+  public MaskingService(Configuration config, boolean dryRunEnabled) {
     this.config = config;
     this.url = url + config.getHost() + ":" + config.getPort() + "/" + config.getDatabase();
+    this.dryRunEnabled = dryRunEnabled;
   }
-  
+
   /**
    * Steps: 
    * 
+   * Create a masking.sql file. This will contain all required masking queries. 
    * Create Schema.
    * Create masking function for given masking rule.
    * Create View using those masking function.
    * Provide access to user to read data from masked view.
    * 
    * TODO: proper error handling.
+   * @throws IOException 
+   * @throws SQLException 
    */
-  public void createSchemaAndView() {
-    dropSchema();
-    createSchema();
-    List<MaskingRule> rules = config.getRules();
-    
+  public void generateSqlQueryForMasking() throws IOException, SQLException {
+    // create a .sql file
+    File sqlFile = new File(MASKING_SQL_FILE_PATH);
+    if (!sqlFile.createNewFile()) {
+      // delete the existing file and create again.
+      sqlFile.delete();
+      sqlFile.createNewFile();
+    }
+    FileWriter writer = new FileWriter(MASKING_SQL_FILE_PATH);
+
+    // TODO: find a better way without dropping schema.
+    writer.append(BuildQueryUtil.dropSchemaQuery(MASKING_FUNCTION_SCHEMA));
+    writer.append(BuildQueryUtil.dropSchemaQuery(config.getUser()));
+
+    // Create Schema
+    writer.append(BuildQueryUtil.createSchemaQuery(MASKING_FUNCTION_SCHEMA));
+    writer.append(BuildQueryUtil.createSchemaQuery(config.getUser()));
+
     /**
      * For each masking rule, create postgres mask function.
      * Create view for given table.
      */
-    for (MaskingRule maskingRule : rules) {
+    for (MaskingRule maskingRule : config.getRules()) {
+
+      if (maskingRule.getRule() == MaskType.RANDOM_PHONE) {
+        maskPhoneData(maskingRule, writer);
+      }
+
+      if (maskingRule.getRule() == MaskType.DESTRUCTION) {
+        // create function for destruction masking rule.
+      }
+
+      if (maskingRule.getRule() == MaskType.EMAIL_MASKING) {
+        // create function for email masking rule.
+      }
+    }
+    writer.flush();
+    writer.close();
+
+  }
+
+  public void executeSqlQueryForMasking() throws SQLException, FileNotFoundException {
+    if (!dryRunEnabled) {
       try(Connection conn = DriverManager.getConnection(url, 
           config.getSuperUser(), config.getSuperUserPassword())) {
-        
-        try (PreparedStatement pst = 
-            conn.prepareStatement("CREATE SCHEMA IF NOT EXISTS " + MASKING_FUNCTION_SCHEMA)) {
-          pst.execute();
-        }
-        
-        if (maskingRule.getRule() == MaskType.RANDOM_PHONE) {
-          maskPhoneData(maskingRule, conn);
-        }
-        
-        if (maskingRule.getRule() == MaskType.DESTRUCTION) {
-          // create function for destruction masking rule.
-        }
-        
-        if (maskingRule.getRule() == MaskType.EMAIL_MASKING) {
-          // create function for email masking rule.
-        }
+        //Initialize the script runner
+        ScriptRunner sr = new ScriptRunner(conn);
 
-      } catch (SQLException e) {
-        log.error("Exception while masking: " + maskingRule + e);
-      } finally {
+        //Creating a reader object
+        Reader reader = new BufferedReader(new FileReader(MASKING_SQL_FILE_PATH));
 
+        //Running the script
+        sr.setSendFullScript(true);
+        sr.runScript(reader);
       }
- 
     }
   }
 
-  private void maskPhoneData(MaskingRule maskingRule, Connection conn) throws SQLException {
+  private void maskPhoneData(MaskingRule maskingRule, FileWriter writer) 
+      throws SQLException, IOException {
 
     // get all columns of given table.
     String query = "SELECT * FROM " + maskingRule.getTable();
     boolean maskingColumnExists = false;
     String querySubstring = "";
+    ResultSetMetaData rs = null;
 
-    Statement st = conn.createStatement();
-    ResultSetMetaData rs = st.executeQuery(query).getMetaData();
-    
+    try(Connection conn = DriverManager.getConnection(url, 
+        config.getSuperUser(), config.getSuperUserPassword());
+        Statement st = conn.createStatement()) {
+      rs = st.executeQuery(query).getMetaData();
+    }
+
     // Dynamically build sub query part for create view.
     for (int i = 1; i <= rs.getColumnCount(); i++) {
       if (rs.getColumnName(i).equals(maskingRule.getColumn()) ) {
@@ -98,7 +134,6 @@ public class MaskingService {
         querySubstring = querySubstring + ", " + rs.getColumnName(i);
       }
     }
-    st.close();
 
     if (!maskingColumnExists) {
       log.error("Column with name: " + maskingRule.getColumn() + " does not exist.");
@@ -106,74 +141,23 @@ public class MaskingService {
     }
 
     // Create random phone number generation function.
-    try (PreparedStatement pst = 
-        conn.prepareStatement(MaskingFunctionQuery.randomIntegerBetween())) {
-      pst.execute();
-    }
-    try (PreparedStatement pst = 
-        conn.prepareStatement(MaskingFunctionQuery.randomPhone())) {
-      pst.execute();
-    }
+    writer.append("\n\n-- Postgres function to generate ranadom between given two integer.\n");
+    writer.append(MaskingFunctionQuery.randomIntegerBetween());
+
+    writer.append("\n\n-- Postgres function to generate ranadom phone number data.\n");
+    writer.append(MaskingFunctionQuery.randomPhone());
 
     // Create view
     StringBuilder sb = new StringBuilder();
     sb.append(config.getUsername()).append(".").append(maskingRule.getTable());
-    
+
     String createViewQuery = "CREATE VIEW " + sb.toString() + " AS SELECT " +
-        querySubstring +  " FROM " + maskingRule.getTable();
+        querySubstring +  " FROM " + maskingRule.getTable() + ";";
 
-    try (PreparedStatement pst = conn.prepareStatement(createViewQuery)) {
-      pst.execute();
-    }
-    
+    writer.append("\n\n-- Create masked view.\n");
+    writer.append(createViewQuery);
+
     //TODO: Grant access of this masked view to user.
-  }
-  
-  // Create a Schema for a given user.
-  private void createSchema() {
-    String createSchemaQuery = "CREATE SCHEMA IF NOT EXISTS " + config.getUsername();
-    try(Connection conn = DriverManager.getConnection(url, 
-        config.getSuperUser(), config.getSuperUserPassword());
-        PreparedStatement pst = conn.prepareStatement(createSchemaQuery)) {
-      pst.execute();
-    } catch (SQLException e) {
-      log.error(e);
-    } finally {
-
-    }
-  }
-  
-  private void dropSchema() {
-    String dropSchemaQuery = "drop schema IF EXISTS " + 
-        config.getUsername() + ", " + MASKING_FUNCTION_SCHEMA + " CASCADE";
-    try(Connection conn = DriverManager.getConnection(url, 
-        config.getSuperUser(), config.getSuperUserPassword());
-        PreparedStatement pst = conn.prepareStatement(dropSchemaQuery)) {
-      pst.execute();
-    } catch (SQLException e) {
-      log.error(e);
-    } finally {
-
-    }
-  }
-
-  private void createUserAndGrantAccess() {
-    String createUserquery = "CREATE USER developer WITH PASSWORD 'password' VALID UNTIL 'infinity' ";
-    String grantAccessquery = "GRANT SELECT ON ALL TABLES IN SCHEMA developer TO developer";
-    try(Connection conn = DriverManager.getConnection(url, 
-        config.getSuperUser(), config.getSuperUserPassword())) {
-      try (PreparedStatement pst = conn.prepareStatement(createUserquery)){
-        pst.executeUpdate();
-      }
-
-      try (PreparedStatement pst = conn.prepareStatement(grantAccessquery)){
-        pst.executeUpdate();
-      }
-
-    } catch (SQLException ex) {
-      log.error(ex);
-    } finally {
-    }
   }
 
 }
