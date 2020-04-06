@@ -30,7 +30,6 @@ BEGIN
     else
         RETURN make_timestamp(2000,1,1,0,categoryval::integer,0);
      End Case;
-
 END;
 $$
 LANGUAGE plpgsql VOLATILE SECURITY INVOKER;

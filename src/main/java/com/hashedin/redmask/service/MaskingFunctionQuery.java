@@ -1,10 +1,11 @@
 package com.hashedin.redmask.service;
 
 public class MaskingFunctionQuery {
-  
-  public static final String randomIntegerBetween() {
-    return "CREATE OR REPLACE FUNCTION " +
-        "redmask.random_int_between(int_start integer,\n" + 
+
+  public static final String randomIntegerBetween(String createFunString) {
+    StringBuilder sb = new StringBuilder();
+    sb.append(createFunString);
+    String subQuery = "(int_start integer,\n" + 
         "  int_stop integer\n" + 
         ")\n" + 
         "RETURNS integer AS $$\n" + 
@@ -12,10 +13,14 @@ public class MaskingFunctionQuery {
         "    RETURN (SELECT CAST ( random()*(int_stop-int_start)+int_start AS integer ));\n" + 
         "END\n" + 
         "$$ LANGUAGE plpgsql;";
+    sb.append(subQuery);
+    return sb.toString();
   }
-  
-  public static final String randomPhone() {
-    return "CREATE OR REPLACE FUNCTION redmask.random_phone(\n" + 
+
+  public static final String randomPhone(String createFunString) {
+    StringBuilder sb = new StringBuilder();
+    sb.append(createFunString);
+    String subQuery = "(\n" + 
         "  phone_prefix TEXT DEFAULT '0'\n" + 
         ")\n" + 
         "RETURNS TEXT AS $$\n" + 
@@ -25,6 +30,8 @@ public class MaskingFunctionQuery {
         "          AS \"phone\");\n" + 
         "END\n" + 
         "$$ LANGUAGE plpgsql;";
+    sb.append(subQuery);
+    return sb.toString();
   }
 
 }

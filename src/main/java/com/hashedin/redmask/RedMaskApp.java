@@ -8,9 +8,11 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.hashedin.redmask.configurations.Configuration;
+import com.hashedin.redmask.configurations.MaskConfiguration;
 import com.hashedin.redmask.service.MaskingService;
 
+import freemarker.template.Configuration;
+import freemarker.template.TemplateExceptionHandler;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -27,26 +29,31 @@ public class RedMaskApp implements Callable<Integer>  {
       description = "Complete file path of json containing masking configurations.")
   private String configFilePath;
 
+  @Option(names = {"-r", "--dryrun"},
+      description = "When true, this will just generates sql file with required queries. "
+          + "It will not make any chnages to DB.")
+  private boolean dryRun = true;
+
   public static void main( String[] args ) throws IOException {
     log.info("Starting redmask application.");
     System.exit(new CommandLine(new RedMaskApp()).execute(args));
-    log.info("Closing redmask application.");
   }
 
   @Override
   public Integer call() throws Exception {
 
-    Configuration config = null;
+    MaskConfiguration config = null;
 
     try {
-      config = new ObjectMapper().readValue(new File(configFilePath), Configuration.class);
+      config = new ObjectMapper().readValue(new File(configFilePath), MaskConfiguration.class);
     } catch (Exception ex) {
       log.error("Exception while reading config.json file: " + ex);
     }
     
-    MaskingService service = new MaskingService(config);
-    service.createSchemaAndView();
-    
+    MaskingService service = new MaskingService(config, dryRun);
+    service.generateSqlQueryForMasking();
+    service.executeSqlQueryForMasking();
+    log.info("Closing redmask application.");
     return 0;
   }
 
