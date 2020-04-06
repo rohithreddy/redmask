@@ -1,27 +1,34 @@
 package com.hashedin.redmask.configurations;
 
+import java.io.IOException;
 import java.util.List;
 
-public class Configuration {
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
+public class MaskConfiguration {
 
   private String host;
   private String port;
   private String database;
 
   // Get these credentials from environment variable.
-  private String superUser;
-  private String superUserPassword;
-  private String username;
-  private String userPassword;
+  private final String superUser;
+  private final String superUserPassword;
+  private final String username;
+  private final String userPassword;
 
   private String user;
   private List<MaskingRule> rules;
 
-  public Configuration() {
+  @JsonIgnore
+  private TemplateConfiguration templateConfig;
+
+  public MaskConfiguration() throws IOException {
     this.superUser = System.getenv("DB_SUPER_USER");
     this.superUserPassword = System.getenv("DB_SUPER_USER_PASSWORD");
     this.username = System.getenv("DB_USER");
     this.userPassword = System.getenv("DB_USER_PASSWORD");
+    this.templateConfig = new TemplateConfiguration();
   }
 
   public String getHost() {
@@ -78,6 +85,10 @@ public class Configuration {
 
   public void setRules(List<MaskingRule> rules) {
     this.rules = rules;
+  }
+
+  public TemplateConfiguration getTemplateConfig() {
+    return templateConfig;
   }
 
   @Override

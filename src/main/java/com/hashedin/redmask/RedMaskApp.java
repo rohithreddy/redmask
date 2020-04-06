@@ -8,9 +8,11 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.hashedin.redmask.configurations.Configuration;
+import com.hashedin.redmask.configurations.MaskConfiguration;
 import com.hashedin.redmask.service.MaskingService;
 
+import freemarker.template.Configuration;
+import freemarker.template.TemplateExceptionHandler;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -40,10 +42,10 @@ public class RedMaskApp implements Callable<Integer>  {
   @Override
   public Integer call() throws Exception {
 
-    Configuration config = null;
+    MaskConfiguration config = null;
 
     try {
-      config = new ObjectMapper().readValue(new File(configFilePath), Configuration.class);
+      config = new ObjectMapper().readValue(new File(configFilePath), MaskConfiguration.class);
     } catch (Exception ex) {
       log.error("Exception while reading config.json file: " + ex);
     }

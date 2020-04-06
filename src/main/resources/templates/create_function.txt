@@ -1,1 +1,1 @@
-CREATE OR REPLACE FUNCTION {schema}.{functionName}
+CREATE OR REPLACE FUNCTION ${schema}.${functionName}

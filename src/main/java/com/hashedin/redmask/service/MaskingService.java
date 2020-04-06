@@ -7,11 +7,14 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Reader;
+import java.io.StringWriter;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.apache.ibatis.jdbc.ScriptRunner;
 import org.apache.logging.log4j.LogManager;
@@ -19,7 +22,14 @@ import org.apache.logging.log4j.Logger;
 
 import com.hashedin.redmask.configurations.MaskType;
 import com.hashedin.redmask.configurations.MaskingRule;
-import com.hashedin.redmask.configurations.Configuration;
+
+import freemarker.core.ParseException;
+import freemarker.template.MalformedTemplateNameException;
+import freemarker.template.Template;
+import freemarker.template.TemplateException;
+import freemarker.template.TemplateNotFoundException;
+
+import com.hashedin.redmask.configurations.MaskConfiguration;
 
 public class MaskingService {
 
@@ -27,11 +37,11 @@ public class MaskingService {
   private static final String MASKING_FUNCTION_SCHEMA = "redmask";
   private static final String MASKING_SQL_FILE_PATH = "src/main/resources/masking.sql";
 
-  private Configuration config;
+  private MaskConfiguration config;
   private String url = "jdbc:postgresql://";
   private boolean dryRunEnabled;
 
-  public MaskingService(Configuration config, boolean dryRunEnabled) {
+  public MaskingService(MaskConfiguration config, boolean dryRunEnabled) {
     this.config = config;
     this.url = url + config.getHost() + ":" + config.getPort() + "/" + config.getDatabase();
     this.dryRunEnabled = dryRunEnabled;
@@ -49,8 +59,9 @@ public class MaskingService {
    * TODO: proper error handling.
    * @throws IOException 
    * @throws SQLException 
+   * @throws TemplateException 
    */
-  public void generateSqlQueryForMasking() throws IOException, SQLException {
+  public void generateSqlQueryForMasking() throws IOException, SQLException, TemplateException {
     // create a .sql file
     File sqlFile = new File(MASKING_SQL_FILE_PATH);
     if (!sqlFile.createNewFile()) {
@@ -109,7 +120,7 @@ public class MaskingService {
   }
 
   private void maskPhoneData(MaskingRule maskingRule, FileWriter writer) 
-      throws SQLException, IOException {
+      throws SQLException, IOException, TemplateException {
 
     // get all columns of given table.
     String query = "SELECT * FROM " + maskingRule.getTable();
@@ -140,12 +151,15 @@ public class MaskingService {
       return;
     }
 
+    String createFunString = processTemplate("random_int_between");
+
     // Create random phone number generation function.
     writer.append("\n\n-- Postgres function to generate ranadom between given two integer.\n");
-    writer.append(MaskingFunctionQuery.randomIntegerBetween());
+    writer.append(MaskingFunctionQuery.randomIntegerBetween(createFunString.toString()));
 
+    String createPhoneFun = processTemplate("random_phone");
     writer.append("\n\n-- Postgres function to generate ranadom phone number data.\n");
-    writer.append(MaskingFunctionQuery.randomPhone());
+    writer.append(MaskingFunctionQuery.randomPhone(createPhoneFun));
 
     // Create view
     StringBuilder sb = new StringBuilder();
@@ -158,6 +172,20 @@ public class MaskingService {
     writer.append(createViewQuery);
 
     //TODO: Grant access of this masked view to user.
+  }
+
+  private String processTemplate(String functionName)
+      throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException, TemplateException {
+    Map<String, String> input = new HashMap<String, String>();
+    input.put("schema", MASKING_FUNCTION_SCHEMA);
+    input.put("functionName", functionName);
+    Template temp = config.getTemplateConfig().getConfig().getTemplate("create_function.txt");
+    StringWriter stringWriter = new StringWriter();
+    temp.process(input, stringWriter);
+    String createFunString = stringWriter.toString();
+    stringWriter.close();
+    input.clear();
+    return createFunString;
   }
 
 }
