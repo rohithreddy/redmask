@@ -10,15 +10,14 @@ public class MaskConfiguration {
   private String host;
   private String port;
   private String database;
+  private String user;
+  private List<MaskingRule> rules;
 
   // Get these credentials from environment variable.
   private final String superUser;
   private final String superUserPassword;
   private final String username;
   private final String userPassword;
-
-  private String user;
-  private List<MaskingRule> rules;
 
   @JsonIgnore
   private TemplateConfiguration templateConfig;
@@ -93,8 +92,7 @@ public class MaskConfiguration {
 
   @Override
   public String toString() {
-    return "Configuration [host=" + host + ", port=" + port + ", database=" + database + ", user=" + user + ", rules="
-        + rules + "]";
+    return "MaskConfiguration [host=" + host + ", port=" + port + ", database=" + database + ", user=" + user
+        + ", rules=" + rules + ", templateConfig=" + templateConfig + "]";
   }
-
 }

@@ -1,13 +1,12 @@
 package com.hashedin.redmask.configurations;
 
+import java.util.List;
+
 public class MaskingRule {
 
   private String table;
-  
-  private String column;
-  
-  private MaskType rule;
-  
+  private List<ColumnRule> columns;
+
   public String getTable() {
     return table;
   }
@@ -16,25 +15,17 @@ public class MaskingRule {
     this.table = table;
   }
 
-  public String getColumn() {
-    return column;
+  public List<ColumnRule> getColumns() {
+    return columns;
   }
 
-  public void setColumn(String column) {
-    this.column = column;
-  }
-
-  public MaskType getRule() {
-    return rule;
-  }
-
-  public void setRule(MaskType rule) {
-    this.rule = rule;
+  public void setColumns(List<ColumnRule> columns) {
+    this.columns = columns;
   }
 
   @Override
   public String toString() {
-    return "MaskingRule [table=" + table + ", column=" + column + ", rule=" + rule + "]";
+    return "MaskingRule [table=" + table + ", columns=" + columns + "]";
   }
 
 }

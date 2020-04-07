@@ -11,8 +11,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hashedin.redmask.configurations.MaskConfiguration;
 import com.hashedin.redmask.service.MaskingService;
 
-import freemarker.template.Configuration;
-import freemarker.template.TemplateExceptionHandler;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -49,7 +47,7 @@ public class RedMaskApp implements Callable<Integer>  {
     } catch (Exception ex) {
       log.error("Exception while reading config.json file: " + ex);
     }
-    
+
     MaskingService service = new MaskingService(config, dryRun);
     service.generateSqlQueryForMasking();
     service.executeSqlQueryForMasking();

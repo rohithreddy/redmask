@@ -7,14 +7,15 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Reader;
-import java.io.StringWriter;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.ibatis.jdbc.ScriptRunner;
 import org.apache.logging.log4j.LogManager;
@@ -25,10 +26,10 @@ import com.hashedin.redmask.configurations.MaskingRule;
 
 import freemarker.core.ParseException;
 import freemarker.template.MalformedTemplateNameException;
-import freemarker.template.Template;
 import freemarker.template.TemplateException;
 import freemarker.template.TemplateNotFoundException;
 
+import com.hashedin.redmask.configurations.ColumnRule;
 import com.hashedin.redmask.configurations.MaskConfiguration;
 
 public class MaskingService {
@@ -62,14 +63,8 @@ public class MaskingService {
    * @throws TemplateException 
    */
   public void generateSqlQueryForMasking() throws IOException, SQLException, TemplateException {
-    // create a .sql file
-    File sqlFile = new File(MASKING_SQL_FILE_PATH);
-    if (!sqlFile.createNewFile()) {
-      // delete the existing file and create again.
-      sqlFile.delete();
-      sqlFile.createNewFile();
-    }
-    FileWriter writer = new FileWriter(MASKING_SQL_FILE_PATH);
+    //create a .sql file which would contain queries to create masked data.
+    FileWriter writer = createMaskingSqlFile();
 
     // TODO: find a better way without dropping schema.
     writer.append(BuildQueryUtil.dropSchemaQuery(MASKING_FUNCTION_SCHEMA));
@@ -82,24 +77,48 @@ public class MaskingService {
     /**
      * For each masking rule, create postgres mask function.
      * Create view for given table.
+     * 
+     * First generate query for creating function query for all the masking rule needed.
+     * Then we can generate query for creating masked view 
      */
-    for (MaskingRule maskingRule : config.getRules()) {
+    generateQueryToCreateMaskingFunctions(writer);
 
-      if (maskingRule.getRule() == MaskType.RANDOM_PHONE) {
-        maskPhoneData(maskingRule, writer);
-      }
-
-      if (maskingRule.getRule() == MaskType.DESTRUCTION) {
-        // create function for destruction masking rule.
-      }
-
-      if (maskingRule.getRule() == MaskType.EMAIL_MASKING) {
-        // create function for email masking rule.
-      }
+    // Generate query for each table and append in the writer.
+    for (int i = 0; i < config.getRules().size(); i++ ) {
+      MaskingRule rule = config.getRules().get(i);
+      buildQueryForView(rule, writer);
     }
+
     writer.flush();
     writer.close();
+  }
 
+  private void generateQueryToCreateMaskingFunctions(FileWriter writer)
+      throws TemplateNotFoundException, MalformedTemplateNameException,
+      ParseException, IOException, TemplateException {
+    Set<MaskType> maskingSet = new HashSet<>();
+    for (MaskingRule maskingRule : config.getRules()) {
+      for (ColumnRule col: maskingRule.getColumns()) {
+        maskingSet.add(col.getRule());
+      }
+    }
+    // create functions for all the required masking rule.
+    for(MaskType type: maskingSet) {
+      switch(type) {
+      case RANDOM_PHONE:
+        MaskingFunctionQuery.randomPhone(config, writer);
+        break;
+      case TEXT_MASKING:
+        MaskingFunctionQuery.maskString(config, writer);
+        break;
+      case EMAIL_MASKING:
+        // Do something for email masking
+        break;
+      case DESTRUCTION:
+        // Do something for destruction masking type.
+        break;
+      }
+    }
   }
 
   public void executeSqlQueryForMasking() throws SQLException, FileNotFoundException {
@@ -119,12 +138,13 @@ public class MaskingService {
     }
   }
 
-  private void maskPhoneData(MaskingRule maskingRule, FileWriter writer) 
-      throws SQLException, IOException, TemplateException {
+  private void buildQueryForView(MaskingRule rule, FileWriter writer) 
+      throws SQLException, IOException {
 
     // get all columns of given table.
-    String query = "SELECT * FROM " + maskingRule.getTable();
-    boolean maskingColumnExists = false;
+    String query = "SELECT * FROM " + rule.getTable();
+
+    // TODO: Use String builder here.
     String querySubstring = "";
     ResultSetMetaData rs = null;
 
@@ -134,11 +154,25 @@ public class MaskingService {
       rs = st.executeQuery(query).getMetaData();
     }
 
+    Map<String, MaskType> colMaskRuleMap = new HashMap<>();
+    for (ColumnRule col : rule.getColumns()) {
+      colMaskRuleMap.put(col.getName(), col.getRule());
+    }
+
+    // TODO: Add validation, if column to be masked does not exists.
+
     // Dynamically build sub query part for create view.
     for (int i = 1; i <= rs.getColumnCount(); i++) {
-      if (rs.getColumnName(i).equals(maskingRule.getColumn()) ) {
-        querySubstring = querySubstring + ", redmask.random_phone('0') as " + rs.getColumnName(i);
-        maskingColumnExists = true;
+      String colName = rs.getColumnName(i);
+      if (colMaskRuleMap.containsKey(colName)) {
+        // TODO: Remove this if conditions and improve logic here.
+        if (colMaskRuleMap.get(colName) == MaskType.RANDOM_PHONE)
+          querySubstring = querySubstring + ", " + MASKING_FUNCTION_SCHEMA + "." + "random_phone()" +" as " + colName;
+        if (colMaskRuleMap.get(colName) == MaskType.TEXT_MASKING) {
+          querySubstring = querySubstring + ", " + MASKING_FUNCTION_SCHEMA + "." 
+              + "anonymize(" + colName + ") as " + colName;
+        }
+
       } else if(querySubstring.isEmpty()){
         querySubstring = rs.getColumnName(i);
       } else {
@@ -146,27 +180,12 @@ public class MaskingService {
       }
     }
 
-    if (!maskingColumnExists) {
-      log.error("Column with name: " + maskingRule.getColumn() + " does not exist.");
-      return;
-    }
-
-    String createFunString = processTemplate("random_int_between");
-
-    // Create random phone number generation function.
-    writer.append("\n\n-- Postgres function to generate ranadom between given two integer.\n");
-    writer.append(MaskingFunctionQuery.randomIntegerBetween(createFunString.toString()));
-
-    String createPhoneFun = processTemplate("random_phone");
-    writer.append("\n\n-- Postgres function to generate ranadom phone number data.\n");
-    writer.append(MaskingFunctionQuery.randomPhone(createPhoneFun));
-
     // Create view
     StringBuilder sb = new StringBuilder();
-    sb.append(config.getUsername()).append(".").append(maskingRule.getTable());
+    sb.append(config.getUsername()).append(".").append(rule.getTable());
 
     String createViewQuery = "CREATE VIEW " + sb.toString() + " AS SELECT " +
-        querySubstring +  " FROM " + maskingRule.getTable() + ";";
+        querySubstring +  " FROM " + rule.getTable() + ";";
 
     writer.append("\n\n-- Create masked view.\n");
     writer.append(createViewQuery);
@@ -174,18 +193,15 @@ public class MaskingService {
     //TODO: Grant access of this masked view to user.
   }
 
-  private String processTemplate(String functionName)
-      throws TemplateNotFoundException, MalformedTemplateNameException, ParseException, IOException, TemplateException {
-    Map<String, String> input = new HashMap<String, String>();
-    input.put("schema", MASKING_FUNCTION_SCHEMA);
-    input.put("functionName", functionName);
-    Template temp = config.getTemplateConfig().getConfig().getTemplate("create_function.txt");
-    StringWriter stringWriter = new StringWriter();
-    temp.process(input, stringWriter);
-    String createFunString = stringWriter.toString();
-    stringWriter.close();
-    input.clear();
-    return createFunString;
+  private FileWriter createMaskingSqlFile() throws IOException {
+    // create a .sql file
+    File sqlFile = new File(MASKING_SQL_FILE_PATH);
+    if (!sqlFile.createNewFile()) {
+      // delete the existing file and create again.
+      sqlFile.delete();
+      sqlFile.createNewFile();
+    }
+    return new FileWriter(MASKING_SQL_FILE_PATH);
   }
 
 }
