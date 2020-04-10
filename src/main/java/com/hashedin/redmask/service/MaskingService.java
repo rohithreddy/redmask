@@ -9,27 +9,14 @@ import java.io.IOException;
 import java.io.Reader;
 import java.sql.Connection;
 import java.sql.DriverManager;
-import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-
 import org.apache.ibatis.jdbc.ScriptRunner;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import com.hashedin.redmask.configurations.MaskType;
 import com.hashedin.redmask.configurations.MaskingRule;
 
-import freemarker.core.ParseException;
-import freemarker.template.MalformedTemplateNameException;
 import freemarker.template.TemplateException;
-import freemarker.template.TemplateNotFoundException;
-
-import com.hashedin.redmask.configurations.ColumnRule;
 import com.hashedin.redmask.configurations.MaskConfiguration;
 
 public class MaskingService {
@@ -81,44 +68,16 @@ public class MaskingService {
      * First generate query for creating function query for all the masking rule needed.
      * Then we can generate query for creating masked view 
      */
-    generateQueryToCreateMaskingFunctions(writer);
+    BuildQueryUtil.generateQueryToCreateMaskingFunctions(writer, config);
 
     // Generate query for each table and append in the writer.
     for (int i = 0; i < config.getRules().size(); i++ ) {
       MaskingRule rule = config.getRules().get(i);
-      buildQueryForView(rule, writer);
+      BuildQueryUtil.buildQueryForView(rule, writer, config, url);
     }
 
     writer.flush();
     writer.close();
-  }
-
-  private void generateQueryToCreateMaskingFunctions(FileWriter writer)
-      throws TemplateNotFoundException, MalformedTemplateNameException,
-      ParseException, IOException, TemplateException {
-    Set<MaskType> maskingSet = new HashSet<>();
-    for (MaskingRule maskingRule : config.getRules()) {
-      for (ColumnRule col: maskingRule.getColumns()) {
-        maskingSet.add(col.getRule());
-      }
-    }
-    // create functions for all the required masking rule.
-    for(MaskType type: maskingSet) {
-      switch(type) {
-      case RANDOM_PHONE:
-        MaskingFunctionQuery.randomPhone(config, writer);
-        break;
-      case TEXT_MASKING:
-        MaskingFunctionQuery.maskString(config, writer);
-        break;
-      case EMAIL_MASKING:
-        // Do something for email masking
-        break;
-      case DESTRUCTION:
-        // Do something for destruction masking type.
-        break;
-      }
-    }
   }
 
   public void executeSqlQueryForMasking() throws SQLException, FileNotFoundException {
@@ -136,61 +95,6 @@ public class MaskingService {
         sr.runScript(reader);
       }
     }
-  }
-
-  private void buildQueryForView(MaskingRule rule, FileWriter writer) 
-      throws SQLException, IOException {
-
-    // get all columns of given table.
-    String query = "SELECT * FROM " + rule.getTable();
-
-    // TODO: Use String builder here.
-    String querySubstring = "";
-    ResultSetMetaData rs = null;
-
-    try(Connection conn = DriverManager.getConnection(url, 
-        config.getSuperUser(), config.getSuperUserPassword());
-        Statement st = conn.createStatement()) {
-      rs = st.executeQuery(query).getMetaData();
-    }
-
-    Map<String, MaskType> colMaskRuleMap = new HashMap<>();
-    for (ColumnRule col : rule.getColumns()) {
-      colMaskRuleMap.put(col.getName(), col.getRule());
-    }
-
-    // TODO: Add validation, if column to be masked does not exists.
-
-    // Dynamically build sub query part for create view.
-    for (int i = 1; i <= rs.getColumnCount(); i++) {
-      String colName = rs.getColumnName(i);
-      if (colMaskRuleMap.containsKey(colName)) {
-        // TODO: Remove this if conditions and improve logic here.
-        if (colMaskRuleMap.get(colName) == MaskType.RANDOM_PHONE)
-          querySubstring = querySubstring + ", " + MASKING_FUNCTION_SCHEMA + "." + "random_phone()" +" as " + colName;
-        if (colMaskRuleMap.get(colName) == MaskType.TEXT_MASKING) {
-          querySubstring = querySubstring + ", " + MASKING_FUNCTION_SCHEMA + "." 
-              + "anonymize(" + colName + ") as " + colName;
-        }
-
-      } else if(querySubstring.isEmpty()){
-        querySubstring = rs.getColumnName(i);
-      } else {
-        querySubstring = querySubstring + ", " + rs.getColumnName(i);
-      }
-    }
-
-    // Create view
-    StringBuilder sb = new StringBuilder();
-    sb.append(config.getUsername()).append(".").append(rule.getTable());
-
-    String createViewQuery = "CREATE VIEW " + sb.toString() + " AS SELECT " +
-        querySubstring +  " FROM " + rule.getTable() + ";";
-
-    writer.append("\n\n-- Create masked view.\n");
-    writer.append(createViewQuery);
-
-    //TODO: Grant access of this masked view to user.
   }
 
   private FileWriter createMaskingSqlFile() throws IOException {

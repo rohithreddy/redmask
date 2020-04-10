@@ -1,4 +1,4 @@
-CREATE OR REPLACE FUNCTION generate_string(ColName text, length integer)
+CREATE OR REPLACE FUNCTION redmask.generate_string(ColName text, length integer)
 RETURNS text
 AS $$
   SELECT array_to_string(

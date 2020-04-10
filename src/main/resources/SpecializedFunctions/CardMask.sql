@@ -1,7 +1,7 @@
 CREATE OR REPLACE FUNCTION redmask.cardmask(
     ColName text,
-    separator text default '',
     masktype text default 'last',
+    separator text default '',
     arg1 integer default 4,
     arg2 integer default 0 )
 RETURNS text AS $$

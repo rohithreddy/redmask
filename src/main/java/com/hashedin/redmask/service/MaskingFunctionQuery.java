@@ -4,6 +4,8 @@ import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.StringWriter;
+
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -47,7 +49,7 @@ public class MaskingFunctionQuery {
     return sb.toString();
   }
 
-  public static final void randomPhone(MaskConfiguration config, FileWriter writer) 
+  public static final void randomPhone(MaskConfiguration config, FileWriter writer)
       throws TemplateNotFoundException, MalformedTemplateNameException,
       ParseException, IOException, TemplateException {
     randomIntegerBetween(config, writer);
@@ -74,15 +76,109 @@ public class MaskingFunctionQuery {
     writer.append(sb.toString());
   }
 
-  public static final void maskString(MaskConfiguration config, FileWriter writer) 
+  public static final void maskString(FileWriter writer)
       throws IOException {
+    String filePath = "src/main/resources/strings/AnonymizePartial.sql";
+    String comment = "\n\n-- Postgres function to anonymize the string field.\n";
+    readFunctionQueryFromSqlFile(filePath, writer, comment);
+  }
+
+  public static final void maskEmail(FileWriter writer)
+      throws IOException {
+    String filePath = "src/main/resources/SpecializedFunctions/Email.sql";
+    String comment = "\n\n-- Postgres function to mask email type.\n";
+    readFunctionQueryFromSqlFile(filePath, writer, comment);
+  }
+
+  public static final void maskIntegerFixedSize(FileWriter writer)
+      throws IOException {
+    String filePath = "src/main/resources/Integer_float/Generate.sql";
+    String comment = "\n\n-- Postgres function to generate random number of fixed length.\n";
+    readFunctionQueryFromSqlFile(filePath, writer, comment);
+  }
+
+  public static final void maskIntegerInRange(FileWriter writer)
+      throws IOException {
+    String filePath = "src/main/resources/Integer_float/RandomInt.sql";
+    String comment = "\n\n-- Postgres function to generate a random number between a given range.\n";
+    readFunctionQueryFromSqlFile(filePath, writer, comment);
+  }
+
+  public static final void maskIntegerFixedValue(FileWriter writer)
+      throws IOException {
+    String filePath = "src/main/resources/Integer_float/ReplaceByInteger.sql";
+    String comment = "\n\n-- Postgres function to anonymize the integer field with given value.\n";
+    readFunctionQueryFromSqlFile(filePath, writer, comment);
+  }
+
+  public static final void maskFloatFixedValue(FileWriter writer)
+      throws IOException {
+    String filePath = "src/main/resources/Integer_float/ReplaceByFloat.sql";
+    String comment = "\n\n-- Postgres function to anonymize the float field with given value.\n";
+    readFunctionQueryFromSqlFile(filePath, writer, comment);
+  }
+
+  public static final void maskNumericRange(FileWriter writer)
+      throws IOException {
+    String filePath = "src/main/resources/Integer_float/RangeNumeric.sql";
+    String comment = "\n\n-- Postgres function to convert numeric type to a range.\n";
+    readFunctionQueryFromSqlFile(filePath, writer, comment);
+  }
+
+  public static final void maskIntegerRange(FileWriter writer)
+      throws IOException {
+    String filePath = "src/main/resources/Integer_float/RangeInt4.sql";
+    String comment = "\n\n-- Postgres function to convert to integer range.\n";
+    readFunctionQueryFromSqlFile(filePath, writer, comment);
+  }
+
+  public static final void maskBigIntRange(FileWriter writer)
+      throws IOException {
+    String filePath = "src/main/resources/Integer_float/RangeInt8.sql";
+    String comment = "\n\n-- Postgres function to convert to big integer range.\n";
+    readFunctionQueryFromSqlFile(filePath, writer, comment);
+  }
+
+  public static final void maskMean(FileWriter writer)
+      throws IOException {
+    String filePath = "src/main/resources/Integer_float/SubstituteMean.sql";
+    String comment = "\n\n-- Postgres function to anonymize the integer field by column mean.\n";
+    readFunctionQueryFromSqlFile(filePath, writer, comment);
+  }
+
+  public static final void maskMode(FileWriter writer)
+      throws IOException {
+    String filePath = "src/main/resources/Integer_float/SubstituteMode.sql";
+    String comment = "\n\n-- Postgres function to anonymize the integer field by column mode.\n";
+    readFunctionQueryFromSqlFile(filePath, writer, comment);
+  }
+
+  public static final void maskNumbers(FileWriter writer)
+      throws IOException {
+    String filePath = "src/main/resources/strings/AnonymizeNumber.sql";
+    String comment = "\n\n-- Postgres function to anonymize number in a string.\n";
+    readFunctionQueryFromSqlFile(filePath, writer, comment);
+  }
+
+  public static final void maskcard(FileWriter writer)
+      throws IOException {
+    maskNumbers(writer);
+    String filePath = "src/main/resources/SpecializedFunctions/CardMask.sql";
+    String comment = "\n\n-- Postgres function to anonymize card details.\n";
+    readFunctionQueryFromSqlFile(filePath, writer, comment);
+
+  }
+
+  private static void readFunctionQueryFromSqlFile(String filePath,
+      FileWriter writer, String comment) throws IOException {
 
     // Creating a reader object
-    FileInputStream sqlFunctionFile = new FileInputStream("src/main/resources/strings/AnonymizePartial.sql");
+    FileInputStream sqlFunctionFile = new FileInputStream(filePath);
 
-    // Create string anonymize function.
-    writer.append("\n\n-- Postgres function to anonymize the string field.\n");
-    writer.append(IOUtils.toString(sqlFunctionFile, "UTF-8"));
+    // Append function query.
+    writer.append(comment);
+    writer.append(IOUtils.toString(sqlFunctionFile, StandardCharsets.UTF_8));
+    sqlFunctionFile.close();
   }
 
   private static String processTemplate(MaskConfiguration config, String templateName, String functionName)
