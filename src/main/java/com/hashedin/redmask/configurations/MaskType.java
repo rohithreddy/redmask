@@ -3,8 +3,6 @@ package com.hashedin.redmask.configurations;
 public enum MaskType {
 
   STRING_MASKING,
-  RANDOM_PHONE,
-  DESTRUCTION,
 
   // Masking rule related to email field.
   EMAIL_SHOW_DOMAIN,
@@ -29,6 +27,9 @@ public enum MaskType {
   // Masking rule related to Credit card field.
   CREDIT_CARD_SHOW_FIRST,
   CREDIT_CARD_SHOW_LAST,
-  CREDIT_CARD_SHOW_FIRST_LAST
+  CREDIT_CARD_SHOW_FIRST_LAST,
+  
+  RANDOM_PHONE,
+  DESTRUCTION
 
 }

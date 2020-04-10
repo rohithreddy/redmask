@@ -54,12 +54,12 @@ public class MaskingService {
     FileWriter writer = createMaskingSqlFile();
 
     // TODO: find a better way without dropping schema.
-    writer.append(BuildQueryUtil.dropSchemaQuery(MASKING_FUNCTION_SCHEMA));
-    writer.append(BuildQueryUtil.dropSchemaQuery(config.getUser()));
+    writer.append(QueryBuilderUtil.dropSchemaQuery(MASKING_FUNCTION_SCHEMA));
+    writer.append(QueryBuilderUtil.dropSchemaQuery(config.getUser()));
 
     // Create Schema
-    writer.append(BuildQueryUtil.createSchemaQuery(MASKING_FUNCTION_SCHEMA));
-    writer.append(BuildQueryUtil.createSchemaQuery(config.getUser()));
+    writer.append(QueryBuilderUtil.createSchemaQuery(MASKING_FUNCTION_SCHEMA));
+    writer.append(QueryBuilderUtil.createSchemaQuery(config.getUser()));
 
     /**
      * For each masking rule, create postgres mask function.
@@ -68,13 +68,21 @@ public class MaskingService {
      * First generate query for creating function query for all the masking rule needed.
      * Then we can generate query for creating masked view 
      */
-    BuildQueryUtil.generateQueryToCreateMaskingFunctions(writer, config);
+    QueryBuilderUtil.generateQueryToCreateMaskingFunctions(writer, config);
 
     // Generate query for each table and append in the writer.
     for (int i = 0; i < config.getRules().size(); i++ ) {
       MaskingRule rule = config.getRules().get(i);
-      BuildQueryUtil.buildQueryForView(rule, writer, config, url);
+      QueryBuilderUtil.buildQueryForView(rule, writer, config, url);
     }
+    
+    // Grant access of this masked view to user.
+    writer.append("\n\n-- Grant access to current user on schema: " + MASKING_FUNCTION_SCHEMA + ".\n");
+    writer.append("GRANT USAGE ON SCHEMA "+ MASKING_FUNCTION_SCHEMA + " TO " + config.getUser() + ";");
+    
+    writer.append("\n\n-- Grant access to current user on schema: " + config.getUser() + ".\n");
+    writer.append("GRANT ALL PRIVILEGES ON ALL TABLES IN "
+        + "SCHEMA " + config.getUser() + " TO " + config.getUser() + ";");
 
     writer.flush();
     writer.close();

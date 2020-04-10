@@ -22,7 +22,7 @@ import freemarker.template.MalformedTemplateNameException;
 import freemarker.template.TemplateException;
 import freemarker.template.TemplateNotFoundException;
 
-public class BuildQueryUtil {
+public class QueryBuilderUtil {
 
   private static final String newLine = System.getProperty("line.separator");
   private static final String MASKING_FUNCTION_SCHEMA = "redmask";
@@ -55,41 +55,41 @@ public class BuildQueryUtil {
         case EMAIL_SHOW_DOMAIN: //Intentional fall-through
         case EMAIL_SHOW_FIRST_CHARACTER_DOMAIN:
         case EMAIL_MASK_ALPHANUMERIC:
-          MaskingFunctionQuery.maskEmail(writer);
+          MaskingFunctionQuery.maskEmail(config, writer);
           break;
         case RANDOM_INTEGER_FIXED_WIDTH:
-          MaskingFunctionQuery.maskIntegerInRange(writer);
-          MaskingFunctionQuery.maskIntegerFixedSize(writer);
+          MaskingFunctionQuery.maskIntegerInRange(config, writer);
+          MaskingFunctionQuery.maskIntegerFixedSize(config, writer);
           break;
         case RANDOM_INTEGER_WITHIN_RANGE:
-          MaskingFunctionQuery.maskIntegerInRange(writer);
+          MaskingFunctionQuery.maskIntegerInRange(config, writer);
           break;
         case INTEGER_FIXED_VALUE:
-          MaskingFunctionQuery.maskIntegerFixedValue(writer);
+          MaskingFunctionQuery.maskIntegerFixedValue(config, writer);
           break;
         case FLOAT_FIXED_VALUE:
-          MaskingFunctionQuery.maskFloatFixedValue(writer);
+          MaskingFunctionQuery.maskFloatFixedValue(config, writer);
           break;
         case NUMERIC_RANGE:
-          MaskingFunctionQuery.maskIntegerRange(writer);
-          MaskingFunctionQuery.maskNumericRange(writer);
+          MaskingFunctionQuery.maskIntegerRange(config, writer);
+          MaskingFunctionQuery.maskNumericRange(config, writer);
           break;
         case INTEGER_RANGE:
-          MaskingFunctionQuery.maskIntegerRange(writer);
+          MaskingFunctionQuery.maskIntegerRange(config, writer);
           break;
         case BIGINT_RANGE:
-          MaskingFunctionQuery.maskBigIntRange(writer);
+          MaskingFunctionQuery.maskBigIntRange(config, writer);
           break;
         case MEAN_VALUE:
-          MaskingFunctionQuery.maskMean(writer);
+          MaskingFunctionQuery.maskMean(config, writer);
           break;
         case MODE_VALUE:
-          MaskingFunctionQuery.maskMode(writer);
+          MaskingFunctionQuery.maskMode(config, writer);
           break;
         case CREDIT_CARD_SHOW_FIRST: //Intentional fall-through
         case CREDIT_CARD_SHOW_LAST:
         case CREDIT_CARD_SHOW_FIRST_LAST:
-          MaskingFunctionQuery.maskCard(writer);
+          MaskingFunctionQuery.maskCard(config, writer);
           break;
         case DESTRUCTION:
           // Do something for destruction masking type.
@@ -244,8 +244,6 @@ public class BuildQueryUtil {
 
     writer.append("\n\n-- Create masked view.\n");
     writer.append(createViewQuery);
-
-    //TODO: Grant access of this masked view to user.
   }
 
   public static String dropSchemaQuery(String schemaName) {
