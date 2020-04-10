@@ -47,10 +47,10 @@ public class BuildQueryUtil {
           MaskingFunctionQuery.randomPhone(config, writer);
           break;
         case STRING_MASKING:
-          MaskingFunctionQuery.maskString(writer);
+          MaskingFunctionQuery.maskString(config, writer);
           break;
         case EMAIL_SHOW_FIRST_CHARACTERS:
-          MaskingFunctionQuery.maskString(writer);
+          MaskingFunctionQuery.maskString(config, writer);
           break;
         case EMAIL_SHOW_DOMAIN: //Intentional fall-through
         case EMAIL_SHOW_FIRST_CHARACTER_DOMAIN:
@@ -89,7 +89,7 @@ public class BuildQueryUtil {
         case CREDIT_CARD_SHOW_FIRST: //Intentional fall-through
         case CREDIT_CARD_SHOW_LAST:
         case CREDIT_CARD_SHOW_FIRST_LAST:
-          MaskingFunctionQuery.maskcard(writer);
+          MaskingFunctionQuery.maskCard(writer);
           break;
         case DESTRUCTION:
           // Do something for destruction masking type.

@@ -19,19 +19,20 @@ import freemarker.template.Template;
 import freemarker.template.TemplateException;
 import freemarker.template.TemplateNotFoundException;
 
-public class MaskingFunctionQuery {
+import static com.hashedin.redmask.configurations.Constants.*;
+
+public class  MaskingFunctionQuery {
 
   private static final String MASKING_FUNCTION_SCHEMA = "redmask";
+  private static final String TEMPLATE_NAME = "create_function.txt";
 
   public static final String randomIntegerBetween(MaskConfiguration config, FileWriter writer) 
       throws TemplateNotFoundException, MalformedTemplateNameException, 
       ParseException, IOException, TemplateException {
 
-    String templateName = "create_function.txt";
-
-    String createFunString = processTemplate(config, templateName, "random_int_between");
+    String createFuncString = processTemplate(config, TEMPLATE_NAME, "random_int_between");
     StringBuilder sb = new StringBuilder();
-    sb.append(createFunString);
+    sb.append(createFuncString);
     String subQuery = "(int_start integer,\n" + 
         "  int_stop integer\n" + 
         ")\n" + 
@@ -43,7 +44,7 @@ public class MaskingFunctionQuery {
     sb.append(subQuery);
 
     // Create random phone number generation function.
-    writer.append("\n\n-- Postgres function to generate ranadom between given two integer.\n");
+    writer.append("\n\n-- Postgres function to generate random between given two integer.\n");
     writer.append(sb.toString());
 
     return sb.toString();
@@ -55,9 +56,9 @@ public class MaskingFunctionQuery {
     randomIntegerBetween(config, writer);
     String templateName = "create_function.txt";
 
-    String createFunString = processTemplate(config, templateName, "random_phone");
+    String createFuncString = processTemplate(config, TEMPLATE_NAME, "random_phone");
     StringBuilder sb = new StringBuilder();
-    sb.append(createFunString);
+    sb.append(createFuncString);
 
     String subQuery = "(\n" + 
         "  phone_prefix TEXT DEFAULT '0'\n" + 
@@ -76,96 +77,96 @@ public class MaskingFunctionQuery {
     writer.append(sb.toString());
   }
 
-  public static final void maskString(FileWriter writer)
-      throws IOException {
-    String filePath = "src/main/resources/strings/AnonymizePartial.sql";
-    String comment = "\n\n-- Postgres function to anonymize the string field.\n";
-    readFunctionQueryFromSqlFile(filePath, writer, comment);
+  public static final void maskString(MaskConfiguration config, FileWriter writer)
+      throws IOException, TemplateException {
+    String createFuncString = processTemplate(config, TEMPLATE_NAME, MASK_STRING_FUNC_NAME);
+    writer.append(createFuncString);
+    readFunctionQueryFromSqlFile(MASK_STRING_FILE, writer, MASK_STRING_COMMENT);
   }
 
-  public static final void maskEmail(FileWriter writer)
-      throws IOException {
-    String filePath = "src/main/resources/SpecializedFunctions/Email.sql";
-    String comment = "\n\n-- Postgres function to mask email type.\n";
-    readFunctionQueryFromSqlFile(filePath, writer, comment);
+  public static final void maskEmail(MaskConfiguration config, FileWriter writer)
+      throws IOException, TemplateException {
+    String createFuncString = processTemplate(config, TEMPLATE_NAME, MASK_EMAIL_FUNC_NAME);
+    writer.append(createFuncString);
+    readFunctionQueryFromSqlFile(MASK_EMAIL_FILE, writer, MASK_EMAIL_COMMENT);
   }
 
-  public static final void maskIntegerFixedSize(FileWriter writer)
-      throws IOException {
-    String filePath = "src/main/resources/Integer_float/Generate.sql";
-    String comment = "\n\n-- Postgres function to generate random number of fixed length.\n";
-    readFunctionQueryFromSqlFile(filePath, writer, comment);
+  public static final void maskIntegerFixedSize(MaskConfiguration config, FileWriter writer)
+      throws IOException, TemplateException  {
+    String createFuncString = processTemplate(config, TEMPLATE_NAME, MASK_INTEGER_FIXED_SIZE_FUNC_NAME);
+    writer.append(createFuncString);
+    readFunctionQueryFromSqlFile(MASK_INTEGER_FIXED_SIZE_FILE, writer, MASK_INTEGER_FIXED_SIZE_COMMENT);
   }
 
-  public static final void maskIntegerInRange(FileWriter writer)
-      throws IOException {
-    String filePath = "src/main/resources/Integer_float/RandomInt.sql";
-    String comment = "\n\n-- Postgres function to generate a random number between a given range.\n";
-    readFunctionQueryFromSqlFile(filePath, writer, comment);
+  public static final void maskIntegerInRange(MaskConfiguration config, FileWriter writer)
+      throws IOException, TemplateException  {
+    String createFuncString = processTemplate(config, TEMPLATE_NAME, MASK_INTEGER_WITHIN_RANGE_FUNC_NAME);
+    writer.append(createFuncString);
+    readFunctionQueryFromSqlFile(MASK_INTEGER_WITHIN_RANGE_FILE, writer, MASK_INTEGER_WITHIN_RANGE_COMMENT);
   }
 
-  public static final void maskIntegerFixedValue(FileWriter writer)
-      throws IOException {
-    String filePath = "src/main/resources/Integer_float/ReplaceByInteger.sql";
-    String comment = "\n\n-- Postgres function to anonymize the integer field with given value.\n";
-    readFunctionQueryFromSqlFile(filePath, writer, comment);
+  public static final void maskIntegerFixedValue(MaskConfiguration config, FileWriter writer)
+      throws IOException, TemplateException  {
+    String createFuncString = processTemplate(config, TEMPLATE_NAME, MASK_INTEGER_FIXED_VALUE_FUNC_NAME);
+    writer.append(createFuncString);
+    readFunctionQueryFromSqlFile(MASK_INTEGER_FIXED_VALUE_FILE, writer, MASK_INTEGER_FIXED_VALUE_COMMENT);
   }
 
-  public static final void maskFloatFixedValue(FileWriter writer)
-      throws IOException {
-    String filePath = "src/main/resources/Integer_float/ReplaceByFloat.sql";
-    String comment = "\n\n-- Postgres function to anonymize the float field with given value.\n";
-    readFunctionQueryFromSqlFile(filePath, writer, comment);
+  public static final void maskFloatFixedValue(MaskConfiguration config, FileWriter writer)
+      throws IOException, TemplateException  {
+    String createFuncString = processTemplate(config, TEMPLATE_NAME, MASK_FLOAT_FIXED_VALUE_FUNC_NAME);
+    writer.append(createFuncString);
+    readFunctionQueryFromSqlFile(MASK_FLOAT_FIXED_VALUE_FILE, writer, MASK_FLOAT_FIXED_VALUE_COMMENT);
   }
 
-  public static final void maskNumericRange(FileWriter writer)
-      throws IOException {
-    String filePath = "src/main/resources/Integer_float/RangeNumeric.sql";
-    String comment = "\n\n-- Postgres function to convert numeric type to a range.\n";
-    readFunctionQueryFromSqlFile(filePath, writer, comment);
+  public static final void maskNumericRange(MaskConfiguration config, FileWriter writer)
+      throws IOException, TemplateException  {
+    String createFuncString = processTemplate(config, TEMPLATE_NAME, MASK_NUMERIC_RANGE_FUNC_NAME);
+    writer.append(createFuncString);
+    readFunctionQueryFromSqlFile(MASK_NUMERIC_RANGE_FILE, writer, MASK_NUMERIC_RANGE_COMMENT);
   }
 
-  public static final void maskIntegerRange(FileWriter writer)
-      throws IOException {
-    String filePath = "src/main/resources/Integer_float/RangeInt4.sql";
-    String comment = "\n\n-- Postgres function to convert to integer range.\n";
-    readFunctionQueryFromSqlFile(filePath, writer, comment);
+  public static final void maskIntegerRange(MaskConfiguration config, FileWriter writer)
+      throws IOException, TemplateException  {
+    String createFuncString = processTemplate(config, TEMPLATE_NAME, MASK_INTEGER_RANGE_FUNC_NAME);
+    writer.append(createFuncString);
+    readFunctionQueryFromSqlFile(MASK_INTEGER_RANGE_FILE, writer, MASK_INTEGER_RANGE_COMMENT);
   }
 
-  public static final void maskBigIntRange(FileWriter writer)
-      throws IOException {
-    String filePath = "src/main/resources/Integer_float/RangeInt8.sql";
-    String comment = "\n\n-- Postgres function to convert to big integer range.\n";
-    readFunctionQueryFromSqlFile(filePath, writer, comment);
+  public static final void maskBigIntRange(MaskConfiguration config, FileWriter writer)
+      throws IOException, TemplateException  {
+    String createFuncString = processTemplate(config, TEMPLATE_NAME, MASK_BIGINT_RANGE_FUNC_NAME);
+    writer.append(createFuncString);
+    readFunctionQueryFromSqlFile(MASK_BIGINT_RANGE_FILE, writer, MASK_BIGINT_RANGE_COMMENT);
   }
 
-  public static final void maskMean(FileWriter writer)
-      throws IOException {
-    String filePath = "src/main/resources/Integer_float/SubstituteMean.sql";
-    String comment = "\n\n-- Postgres function to anonymize the integer field by column mean.\n";
-    readFunctionQueryFromSqlFile(filePath, writer, comment);
+  public static final void maskMean(MaskConfiguration config, FileWriter writer)
+      throws IOException, TemplateException  {
+    String createFuncString = processTemplate(config, TEMPLATE_NAME, MASK_MEAN_FUNC_NAME);
+    writer.append(createFuncString);
+    readFunctionQueryFromSqlFile(MASK_MEAN_FILE, writer, MASK_MEAN_COMMENT);
   }
 
-  public static final void maskMode(FileWriter writer)
-      throws IOException {
-    String filePath = "src/main/resources/Integer_float/SubstituteMode.sql";
-    String comment = "\n\n-- Postgres function to anonymize the integer field by column mode.\n";
-    readFunctionQueryFromSqlFile(filePath, writer, comment);
+  public static final void maskMode(MaskConfiguration config, FileWriter writer)
+      throws IOException, TemplateException  {
+    String createFuncString = processTemplate(config, TEMPLATE_NAME, MASK_MODE_FUNC_NAME);
+    writer.append(createFuncString);
+    readFunctionQueryFromSqlFile(MASK_MODE_FILE, writer, MASK_MODE_COMMENT);
   }
 
-  public static final void maskNumbers(FileWriter writer)
-      throws IOException {
-    String filePath = "src/main/resources/strings/AnonymizeNumber.sql";
-    String comment = "\n\n-- Postgres function to anonymize number in a string.\n";
-    readFunctionQueryFromSqlFile(filePath, writer, comment);
+  public static final void maskNumbers(MaskConfiguration config, FileWriter writer)
+      throws IOException, TemplateException  {
+    String createFuncString = processTemplate(config, TEMPLATE_NAME, MASK_NUMBERS_FUNC_NAME);
+    writer.append(createFuncString);
+    readFunctionQueryFromSqlFile(MASK_NUMBERS_FILE, writer, MASK_NUMBERS_COMMENT);
   }
 
-  public static final void maskcard(FileWriter writer)
-      throws IOException {
-    maskNumbers(writer);
-    String filePath = "src/main/resources/SpecializedFunctions/CardMask.sql";
-    String comment = "\n\n-- Postgres function to anonymize card details.\n";
-    readFunctionQueryFromSqlFile(filePath, writer, comment);
+  public static final void maskCard(MaskConfiguration config, FileWriter writer)
+      throws IOException, TemplateException  {
+    maskNumbers(config, writer);
+    String createFuncString = processTemplate(config, TEMPLATE_NAME, MASK_CARD_FUNC_NAME);
+    writer.append(createFuncString);
+    readFunctionQueryFromSqlFile(MASK_CARD_FILE, writer, MASK_CARD_COMMENT);
 
   }
 

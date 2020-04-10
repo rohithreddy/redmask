@@ -1,4 +1,4 @@
-CREATE OR REPLACE FUNCTION redmask.replaceby(ColName float, ReplacementNumber float default 0.0)
+(ColName float, ReplacementNumber float default 0.0)
 RETURNS float AS $$
 BEGIN
     RETURN  ReplacementNumber;

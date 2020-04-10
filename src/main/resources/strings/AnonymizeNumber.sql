@@ -1,4 +1,4 @@
-CREATE OR REPLACE FUNCTION redmask..anonymize_numbers(ColName text , Pattern character  default 'x',Prefix integer default 0,Suffix integer default 0)
+(ColName text , Pattern character  default 'x',Prefix integer default 0,Suffix integer default 0)
 RETURNS text AS $$
 DECLARE
     strlength integer;
