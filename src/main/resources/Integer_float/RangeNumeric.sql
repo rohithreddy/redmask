@@ -1,4 +1,4 @@
-CREATE OR REPLACE FUNCTION redmask.range_numeric(
+(
   val NUMERIC,
   step INTEGER DEFAULT 10
 )

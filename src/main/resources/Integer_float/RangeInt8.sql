@@ -1,4 +1,4 @@
-CREATE OR REPLACE FUNCTION redmask.range_int8(
+(
   val BIGINT,
   step BIGINT DEFAULT 10
 )

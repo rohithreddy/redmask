@@ -1,4 +1,4 @@
-CREATE OR REPLACE FUNCTION redmask.emailmask(
+(
     ColName text,
     masktype text default 'domain',
     arg1 integer default 4)

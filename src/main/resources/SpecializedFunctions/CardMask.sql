@@ -1,4 +1,4 @@
-CREATE OR REPLACE FUNCTION redmask.cardmask(
+(
     ColName text,
     masktype text default 'last',
     separator text default '',
