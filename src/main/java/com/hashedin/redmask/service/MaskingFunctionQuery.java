@@ -1,9 +1,6 @@
 package com.hashedin.redmask.service;
 
-import java.io.FileInputStream;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.StringWriter;
+import java.io.*;
 
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
@@ -21,148 +18,123 @@ import freemarker.template.TemplateNotFoundException;
 
 import static com.hashedin.redmask.configurations.MaskingConstants.*;
 
-public class  MaskingFunctionQuery {
+public class MaskingFunctionQuery {
 
   private static final String MASKING_FUNCTION_SCHEMA = "redmask";
   private static final String TEMPLATE_NAME = "create_function.txt";
 
-  public static final void randomIntegerBetween(MaskConfiguration config, FileWriter writer) 
-      throws TemplateNotFoundException, MalformedTemplateNameException, 
-      ParseException, IOException, TemplateException {
-    String createFuncString = processTemplate(config, TEMPLATE_NAME, MASK_INTEGER_WITHIN_RANGE_FUNC);
-    writer.append(createFuncString);
-    readFunctionQueryFromSqlFile(MASK_INTEGER_WITHIN_RANGE_FILE, writer, MASK_INTEGER_WITHIN_RANGE_COMMENT);
-  }
 
-  public static final void randomPhone(MaskConfiguration config, FileWriter writer)
+  public static final String randomPhone(MaskConfiguration config)
       throws TemplateNotFoundException, MalformedTemplateNameException,
       ParseException, IOException, TemplateException {
-    randomIntegerBetween(config, writer);
-
     String createFuncString = processTemplate(config, TEMPLATE_NAME, "random_phone");
     StringBuilder sb = new StringBuilder();
     sb.append(createFuncString);
 
-    String subQuery = "(\n" + 
-        "  phone_prefix TEXT DEFAULT '0'\n" + 
-        ")\n" + 
-        "RETURNS TEXT AS $$\n" + 
-        "BEGIN\n" + 
-        "  RETURN (SELECT  phone_prefix\n" + 
-        "          || CAST(redmask.random_int_between(100000000,999999999) AS TEXT)\n" + 
-        "          AS \"phone\");\n" + 
-        "END\n" + 
+    String subQuery = "(\n" +
+        "  phone_prefix TEXT DEFAULT '0'\n" +
+        ")\n" +
+        "RETURNS TEXT AS $$\n" +
+        "BEGIN\n" +
+        "  RETURN (SELECT  phone_prefix\n" +
+        "          || CAST(redmask.random_int_between(100000000,999999999) AS TEXT)\n" +
+        "          AS \"phone\");\n" +
+        "END\n" +
         "$$ LANGUAGE plpgsql;";
     sb.append(subQuery);
 
     // Create random phone number generation function.
-    writer.append("\n\n-- Postgres function to generate ranadom phone number data.\n");
-    writer.append(sb.toString());
+    String comment = "\n\n-- Postgres function to generate ranadom phone number data.\n";
+    return comment+sb.toString();
   }
 
-  public static final void maskString(MaskConfiguration config, FileWriter writer)
+  public static final String maskString(MaskConfiguration config)
       throws IOException, TemplateException {
     String createFuncString = processTemplate(config, TEMPLATE_NAME, MASK_STRING_FUNC);
-    writer.append(createFuncString);
-    readFunctionQueryFromSqlFile(MASK_STRING_FILE, writer, MASK_STRING_COMMENT);
+    return MASK_STRING_COMMENT + createFuncString + readFunctionQueryFromSqlFile(MASK_STRING_FILE);
   }
 
-  public static final void maskEmail(MaskConfiguration config, FileWriter writer)
+  //TODO change all function to the new pattern when the design os approved
+  public static final String maskEmail(MaskConfiguration config)
       throws IOException, TemplateException {
     String createFuncString = processTemplate(config, TEMPLATE_NAME, MASK_EMAIL_FUNC);
-    writer.append(createFuncString);
-    readFunctionQueryFromSqlFile(MASK_EMAIL_FILE, writer, MASK_EMAIL_COMMENT);
+    return MASK_EMAIL_COMMENT + createFuncString + readFunctionQueryFromSqlFile(MASK_EMAIL_FILE);
   }
 
-  public static final void maskIntegerFixedSize(MaskConfiguration config, FileWriter writer)
-      throws IOException, TemplateException  {
+  public static final String maskIntegerFixedSize(MaskConfiguration config)
+      throws IOException, TemplateException {
     String createFuncString = processTemplate(config, TEMPLATE_NAME, MASK_INTEGER_FIXED_SIZE_FUNC);
-    writer.append(createFuncString);
-    readFunctionQueryFromSqlFile(MASK_INTEGER_FIXED_SIZE_FILE, writer, MASK_INTEGER_FIXED_SIZE_COMMENT);
+    return MASK_INTEGER_FIXED_SIZE_COMMENT + createFuncString + readFunctionQueryFromSqlFile(MASK_INTEGER_FIXED_SIZE_FILE);
   }
 
-  public static final void maskIntegerInRange(MaskConfiguration config, FileWriter writer)
-      throws IOException, TemplateException  {
+  public static final String maskIntegerInRange(MaskConfiguration config)
+      throws IOException, TemplateException {
     String createFuncString = processTemplate(config, TEMPLATE_NAME, MASK_INTEGER_WITHIN_RANGE_FUNC);
-    writer.append(createFuncString);
-    readFunctionQueryFromSqlFile(MASK_INTEGER_WITHIN_RANGE_FILE, writer, MASK_INTEGER_WITHIN_RANGE_COMMENT);
+    return MASK_INTEGER_WITHIN_RANGE_COMMENT + createFuncString + readFunctionQueryFromSqlFile(MASK_INTEGER_WITHIN_RANGE_FILE);
   }
 
-  public static final void maskIntegerFixedValue(MaskConfiguration config, FileWriter writer)
-      throws IOException, TemplateException  {
+  public static final String maskIntegerFixedValue(MaskConfiguration config)
+      throws IOException, TemplateException {
     String createFuncString = processTemplate(config, TEMPLATE_NAME, MASK_INTEGER_FIXED_VALUE_FUNC);
-    writer.append(createFuncString);
-    readFunctionQueryFromSqlFile(MASK_INTEGER_FIXED_VALUE_FILE, writer, MASK_INTEGER_FIXED_VALUE_COMMENT);
+    return MASK_INTEGER_FIXED_VALUE_COMMENT + createFuncString + readFunctionQueryFromSqlFile(MASK_INTEGER_FIXED_VALUE_FILE);
+
   }
 
-  public static final void maskFloatFixedValue(MaskConfiguration config, FileWriter writer)
-      throws IOException, TemplateException  {
+  public static final String maskFloatFixedValue(MaskConfiguration config)
+      throws IOException, TemplateException {
     String createFuncString = processTemplate(config, TEMPLATE_NAME, MASK_FLOAT_FIXED_VALUE_FUNC);
-    writer.append(createFuncString);
-    readFunctionQueryFromSqlFile(MASK_FLOAT_FIXED_VALUE_FILE, writer, MASK_FLOAT_FIXED_VALUE_COMMENT);
+    return MASK_FLOAT_FIXED_VALUE_COMMENT + createFuncString + readFunctionQueryFromSqlFile(MASK_FLOAT_FIXED_VALUE_FILE);
   }
 
-  public static final void maskNumericRange(MaskConfiguration config, FileWriter writer)
-      throws IOException, TemplateException  {
+  public static final String maskNumericRange(MaskConfiguration config)
+      throws IOException, TemplateException {
     String createFuncString = processTemplate(config, TEMPLATE_NAME, MASK_NUMERIC_RANGE_FUNC);
-    writer.append(createFuncString);
-    readFunctionQueryFromSqlFile(MASK_NUMERIC_RANGE_FILE, writer, MASK_NUMERIC_RANGE_COMMENT);
+    return MASK_NUMERIC_RANGE_COMMENT + createFuncString + readFunctionQueryFromSqlFile(MASK_NUMERIC_RANGE_FILE);
   }
 
-  public static final void maskIntegerRange(MaskConfiguration config, FileWriter writer)
-      throws IOException, TemplateException  {
+  public static final String maskIntegerRange(MaskConfiguration config)
+      throws IOException, TemplateException {
     String createFuncString = processTemplate(config, TEMPLATE_NAME, MASK_INTEGER_RANGE_FUNC);
-    writer.append(createFuncString);
-    readFunctionQueryFromSqlFile(MASK_INTEGER_RANGE_FILE, writer, MASK_INTEGER_RANGE_COMMENT);
+    return MASK_INTEGER_RANGE_COMMENT + createFuncString + readFunctionQueryFromSqlFile(MASK_INTEGER_RANGE_FILE);
   }
 
-  public static final void maskBigIntRange(MaskConfiguration config, FileWriter writer)
-      throws IOException, TemplateException  {
+  public static final String maskBigIntRange(MaskConfiguration config)
+      throws IOException, TemplateException {
     String createFuncString = processTemplate(config, TEMPLATE_NAME, MASK_BIGINT_RANGE_FUNC);
-    writer.append(createFuncString);
-    readFunctionQueryFromSqlFile(MASK_BIGINT_RANGE_FILE, writer, MASK_BIGINT_RANGE_COMMENT);
+    return MASK_BIGINT_RANGE_COMMENT + createFuncString + readFunctionQueryFromSqlFile(MASK_BIGINT_RANGE_FILE);
   }
 
-  public static final void maskMean(MaskConfiguration config, FileWriter writer)
-      throws IOException, TemplateException  {
+  public static final String maskMean(MaskConfiguration config)
+      throws IOException, TemplateException {
     String createFuncString = processTemplate(config, TEMPLATE_NAME, MASK_MEAN_FUNC);
-    writer.append(createFuncString);
-    readFunctionQueryFromSqlFile(MASK_MEAN_FILE, writer, MASK_MEAN_COMMENT);
+    return MASK_MEAN_COMMENT + createFuncString + readFunctionQueryFromSqlFile(MASK_MEAN_FILE);
   }
 
-  public static final void maskMode(MaskConfiguration config, FileWriter writer)
-      throws IOException, TemplateException  {
+  public static final String maskMode(MaskConfiguration config)
+      throws IOException, TemplateException {
     String createFuncString = processTemplate(config, TEMPLATE_NAME, MASK_MODE_FUNC);
-    writer.append(createFuncString);
-    readFunctionQueryFromSqlFile(MASK_MODE_FILE, writer, MASK_MODE_COMMENT);
+    return MASK_MODE_COMMENT + createFuncString + readFunctionQueryFromSqlFile(MASK_MODE_FILE);
   }
 
-  public static final void maskNumbers(MaskConfiguration config, FileWriter writer)
-      throws IOException, TemplateException  {
+  public static final String maskNumbers(MaskConfiguration config)
+      throws IOException, TemplateException {
     String createFuncString = processTemplate(config, TEMPLATE_NAME, MASK_NUMBERS_FUNC);
-    writer.append(createFuncString);
-    readFunctionQueryFromSqlFile(MASK_NUMBERS_FILE, writer, MASK_NUMBERS_COMMENT);
+    return MASK_NUMBERS_COMMENT + createFuncString + readFunctionQueryFromSqlFile(MASK_NUMBERS_FILE);
   }
 
-  public static final void maskCard(MaskConfiguration config, FileWriter writer)
-      throws IOException, TemplateException  {
-    maskNumbers(config, writer);
+  public static final String maskCard(MaskConfiguration config)
+      throws IOException, TemplateException {
     String createFuncString = processTemplate(config, TEMPLATE_NAME, MASK_CARD_FUNC);
-    writer.append(createFuncString);
-    readFunctionQueryFromSqlFile(MASK_CARD_FILE, writer, MASK_CARD_COMMENT);
+    return MASK_CARD_COMMENT + createFuncString + readFunctionQueryFromSqlFile(MASK_CARD_FILE);
 
   }
 
-  private static void readFunctionQueryFromSqlFile(String filePath,
-      FileWriter writer, String comment) throws IOException {
+  private static String readFunctionQueryFromSqlFile(String filePath) throws IOException {
 
     // Creating a reader object
     FileInputStream sqlFunctionFile = new FileInputStream(filePath);
+    return IOUtils.toString(sqlFunctionFile, StandardCharsets.UTF_8);
 
-    // Append function query.
-    writer.append(comment);
-    writer.append(IOUtils.toString(sqlFunctionFile, StandardCharsets.UTF_8));
-    sqlFunctionFile.close();
   }
 
   private static String processTemplate(MaskConfiguration config, String templateName, String functionName)
@@ -178,5 +150,4 @@ public class  MaskingFunctionQuery {
     stringWriter.close();
     return createFunString;
   }
-
 }

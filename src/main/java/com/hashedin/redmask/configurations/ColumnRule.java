@@ -1,9 +1,35 @@
 package com.hashedin.redmask.configurations;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import freemarker.template.TemplateException;
+
+import java.io.IOException;
+import java.util.Set;
+
 public class ColumnRule {
 
   private String name;
-  private MaskType rule;
+  private MaskType maskType;
+  private JsonNode maskParams;
+
+  public ColumnRule() {
+  }
+
+  public void addFunctionDefinition(MaskConfiguration config, Set<String> funcSet)
+      throws IOException, TemplateException {
+  }
+
+  public String getSubQuery(String tableName){ 
+    return null;
+  }
+
+  public JsonNode getMaskParams() {
+    return maskParams;
+  }
+
+  public void setMaskParams(JsonNode maskParams) {
+    this.maskParams = maskParams;
+  }
 
   public String getName() {
     return name;
@@ -13,16 +39,17 @@ public class ColumnRule {
     this.name = name;
   }
 
-  public MaskType getRule() {
-    return rule;
+  public MaskType getMaskType() {
+    return maskType;
   }
 
-  public void setRule(MaskType rule) {
-    this.rule = rule;
+  public void setMaskType(MaskType maskType) {
+    this.maskType = maskType;
   }
 
   @Override
   public String toString() {
-    return "ColumnRule [name=" + name + ", rule=" + rule + "]";
+    return "ColumnRule [name=" + name + ", maskType=" + maskType + ", maskParams=" + maskParams + "]";
   }
+
 }
