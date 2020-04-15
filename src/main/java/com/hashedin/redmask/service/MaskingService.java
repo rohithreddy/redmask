@@ -32,7 +32,7 @@ public class MaskingService {
   public MaskingService(MaskConfiguration config, boolean dryRunEnabled) {
     this.config = config;
     this.url = url + config.getHost() + ":" + config.getPort() + "/" + config.getDatabase();
-    this.dryRunEnabled = dryRunEnabled;
+    this.dryRunEnabled = false;
   }
 
   /**
@@ -48,8 +48,10 @@ public class MaskingService {
    * @throws IOException 
    * @throws SQLException 
    * @throws TemplateException 
+   * @throws IllegalAccessException 
+   * @throws InstantiationException 
    */
-  public void generateSqlQueryForMasking() throws IOException, SQLException, TemplateException {
+  public void generateSqlQueryForMasking() throws IOException, SQLException, TemplateException, InstantiationException, IllegalAccessException {
     //create a .sql file which would contain queries to create masked data.
     FileWriter writer = createMaskingSqlFile();
 
@@ -68,18 +70,16 @@ public class MaskingService {
      * First generate query for creating function query for all the masking rule needed.
      * Then we can generate query for creating masked view 
      */
-    QueryBuilderUtil.generateQueryToCreateMaskingFunctions(writer, config);
-
     // Generate query for each table and append in the writer.
     for (int i = 0; i < config.getRules().size(); i++ ) {
       MaskingRule rule = config.getRules().get(i);
-      QueryBuilderUtil.buildQueryForView(rule, writer, config, url);
+      QueryBuilderUtil.buildFunctionsAndQueryForView(rule, writer, config, url);
     }
-    
+
     // Grant access of this masked view to user.
     writer.append("\n\n-- Grant access to current user on schema: " + MASKING_FUNCTION_SCHEMA + ".\n");
     writer.append("GRANT USAGE ON SCHEMA "+ MASKING_FUNCTION_SCHEMA + " TO " + config.getUser() + ";");
-    
+
     writer.append("\n\n-- Grant access to current user on schema: " + config.getUser() + ".\n");
     writer.append("GRANT ALL PRIVILEGES ON ALL TABLES IN "
         + "SCHEMA " + config.getUser() + " TO " + config.getUser() + ";");
