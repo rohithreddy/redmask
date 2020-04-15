@@ -2,10 +2,14 @@ package com.hashedin.redmask.MaskingFunction;
 
 import com.hashedin.redmask.configurations.ColumnRule;
 import com.hashedin.redmask.configurations.MaskConfiguration;
+import com.hashedin.redmask.configurations.MaskingConstants;
 import com.hashedin.redmask.service.MaskingFunctionQuery;
+import com.hashedin.redmask.service.QueryBuilderUtil;
 import freemarker.template.TemplateException;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 public class EmailMasking extends ColumnRule {
@@ -17,22 +21,29 @@ public class EmailMasking extends ColumnRule {
   }
 
   @Override
-  public String getSubQuery(String tableName) {
+  public String getSubQuery(MaskConfiguration config, String tableName) throws IOException, TemplateException {
+    List<String> paramsList = new ArrayList<>();
+    paramsList.add(this.getName());
     switch (this.getMaskType()) {
       case EMAIL_SHOW_DOMAIN:
-        return " redmask.emailmask(" + this.getName() + ")" + " as " + this.getName();
+        paramsList.add("'domain'");
+        break;
 
       case EMAIL_SHOW_FIRST_CHARACTER_DOMAIN:
-        return " redmask.emailmask(" + this.getName() + ",'firstndomain') as " + this.getName();
+        paramsList.add("'firstndomain'");
+        break;
 
       case EMAIL_SHOW_FIRST_CHARACTERS:
-        return " redmask.emailmask(" + this.getName() + ",'firstN') as " + this.getName();
+        paramsList.add("'firstN'");
+        break;
 
       case EMAIL_MASK_ALPHANUMERIC:
-        return " redmask.emailmask(" + this.getName() + ",'nonspecialcharacter') as " + this.getName();
+        paramsList.add("'nonspecialcharacter'");
+        break;
 
       default:
         return this.getName();
     }
+    return QueryBuilderUtil.processQueryTemplate(config, MaskingConstants.MASK_EMAIL_FUNC, paramsList);
   }
 }

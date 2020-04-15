@@ -2,10 +2,14 @@ package com.hashedin.redmask.MaskingFunction;
 
 import com.hashedin.redmask.configurations.ColumnRule;
 import com.hashedin.redmask.configurations.MaskConfiguration;
+import com.hashedin.redmask.configurations.MaskingConstants;
 import com.hashedin.redmask.service.MaskingFunctionQuery;
+import com.hashedin.redmask.service.QueryBuilderUtil;
 import freemarker.template.TemplateException;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 public class CardMasking extends ColumnRule {
@@ -16,19 +20,29 @@ public class CardMasking extends ColumnRule {
   }
 
   @Override
-  public String getSubQuery(String tableName) {
+  public String getSubQuery(MaskConfiguration config, String tableName) throws IOException, TemplateException {
+    List<String> paramsList = new ArrayList<>();
+    paramsList.add(this.getName());
 
     switch (this.getMaskType()) {
       case CREDIT_CARD_SHOW_FIRST:
-        return "redmask.cardmask(" + this.getName() + ",'first') as " + this.getName();
+        paramsList.add("'first'");
+        break;
 
       case CREDIT_CARD_SHOW_LAST:
-        return " redmask.cardmask(" + this.getName() + ") as " + this.getName();
+        break;
 
       case CREDIT_CARD_SHOW_FIRST_LAST: {
-        return " redmask.cardmask(" + this.getName() + ",'firstnlast','',4,4) as " + this.getName();
+        paramsList.add("'firstnlast'");
+        paramsList.add("''");
+        paramsList.add("4");
+        paramsList.add("4");
+        break;
       }
+      default:
+        return this.getName();
+
     }
-    return this.getName();
+    return QueryBuilderUtil.processQueryTemplate(config, MaskingConstants.MASK_CARD_FUNC, paramsList);
   }
 }

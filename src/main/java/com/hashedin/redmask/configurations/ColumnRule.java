@@ -19,7 +19,7 @@ public class ColumnRule {
       throws IOException, TemplateException {
   }
 
-  public String getSubQuery(String tableName){ 
+  public String getSubQuery(MaskConfiguration config,String tableName) throws IOException, TemplateException {
     return null;
   }
 
