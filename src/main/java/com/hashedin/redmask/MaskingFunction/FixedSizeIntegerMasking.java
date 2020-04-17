@@ -11,6 +11,7 @@ import java.util.Set;
 public class FixedSizeIntegerMasking extends ColumnRule {
   @Override
   public void addFunctionDefinition(MaskConfiguration config, Set<String> funcSet) throws IOException, TemplateException {
+    funcSet.add(MaskingFunctionQuery.maskIntegerInRange(config));
     funcSet.add(MaskingFunctionQuery.maskIntegerFixedSize(config));
   }
 
