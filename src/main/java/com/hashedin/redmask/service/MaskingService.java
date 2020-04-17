@@ -25,14 +25,14 @@ public class MaskingService {
   private static final String MASKING_FUNCTION_SCHEMA = "redmask";
   private static final String MASKING_SQL_FILE_PATH = "src/main/resources/masking.sql";
 
-  private MaskConfiguration config;
+  private final MaskConfiguration config;
   private String url = "jdbc:postgresql://";
-  private boolean dryRunEnabled;
+  private final boolean dryRunEnabled;
 
   public MaskingService(MaskConfiguration config, boolean dryRunEnabled) {
     this.config = config;
     this.url = url + config.getHost() + ":" + config.getPort() + "/" + config.getDatabase();
-    this.dryRunEnabled = false;
+    this.dryRunEnabled = dryRunEnabled;
   }
 
   /**
@@ -73,6 +73,7 @@ public class MaskingService {
     // Generate query for each table and append in the writer.
     for (int i = 0; i < config.getRules().size(); i++ ) {
       MaskingRule rule = config.getRules().get(i);
+      
       QueryBuilderUtil.buildFunctionsAndQueryForView(rule, writer, config, url);
     }
 

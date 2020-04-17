@@ -1,6 +1,7 @@
 package com.hashedin.redmask.configurations;
 
 import com.hashedin.redmask.MaskingFunction.*;
+import com.hashedin.redmask.service.MaskingRuleDef;
 
 public enum MaskType {
 
@@ -34,21 +35,21 @@ public enum MaskType {
   RANDOM_PHONE(RandomPhoneMasking.class),
   DESTRUCTION;
 
-  Class<? extends ColumnRule> classType;
+  Class<? extends MaskingRuleDef> classType;
 
-  MaskType(Class<? extends ColumnRule> classType) {
+  MaskType(Class<? extends MaskingRuleDef> classType) {
     this.classType = classType;
   }
-  
+
   MaskType() {
     this.classType = null;
   }
 
-  public Class<? extends ColumnRule> getClassType() {
+  public Class<? extends MaskingRuleDef> getClassType() {
     return classType;
   }
 
-  public void setClassType(Class<? extends ColumnRule> classType) {
+  public void setClassType(Class<? extends MaskingRuleDef> classType) {
     this.classType = classType;
   }
 }

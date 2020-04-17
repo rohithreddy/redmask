@@ -1,14 +1,16 @@
 package com.hashedin.redmask.configurations;
 
+import com.hashedin.redmask.service.MaskingRuleDef;
+
 public class MaskingRuleFactory {
 
-  public ColumnRule getColumnMaskingRule(ColumnRule columnRule) 
+  public MaskingRuleDef getColumnMaskingRule(MaskingRuleDef ruleDef) 
       throws IllegalAccessException, InstantiationException {
 
-    ColumnRule specificRule = columnRule.getMaskType().getClassType().newInstance();
-    specificRule.setName(columnRule.getName());
-    specificRule.setMaskType(columnRule.getMaskType());
-    specificRule.setMaskParams(columnRule.getMaskParams());
+    MaskingRuleDef specificRule = ruleDef.getMaskType().getClassType().newInstance();
+    specificRule.setColumnName(ruleDef.getColumnName());
+    specificRule.setMaskType(ruleDef.getMaskType());
+    specificRule.setMaskParams(ruleDef.getMaskParams());
     return specificRule;
   }
 

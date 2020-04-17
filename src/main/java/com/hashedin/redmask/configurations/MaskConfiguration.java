@@ -34,16 +34,8 @@ public class MaskConfiguration {
     return host;
   }
 
-  public void setHost(String host) {
-    this.host = host;
-  }
-
   public String getPort() {
     return port;
-  }
-
-  public void setPort(String port) {
-    this.port = port;
   }
 
   public String getSuperUser() {
@@ -66,24 +58,12 @@ public class MaskConfiguration {
     return user;
   }
 
-  public void setUser(String user) {
-    this.user = user;
-  }
-
   public String getDatabase() {
     return database;
   }
 
-  public void setDatabase(String database) {
-    this.database = database;
-  }
-
   public List<MaskingRule> getRules() {
     return rules;
-  }
-
-  public void setRules(List<MaskingRule> rules) {
-    this.rules = rules;
   }
 
   public TemplateConfiguration getTemplateConfig() {
