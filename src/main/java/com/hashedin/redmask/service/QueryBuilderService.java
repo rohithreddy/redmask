@@ -6,6 +6,7 @@ import com.hashedin.redmask.configurations.ColumnRule;
 import com.hashedin.redmask.configurations.MaskConfiguration;
 import com.hashedin.redmask.configurations.MaskingRule;
 import com.hashedin.redmask.configurations.MaskingRuleFactory;
+import com.hashedin.redmask.configurations.TemplateConfiguration;
 import freemarker.template.TemplateException;
 import org.apache.logging.log4j.util.Strings;
 
@@ -36,6 +37,7 @@ public class QueryBuilderService {
     Set<String> functionDefinitionSet = new LinkedHashSet<>();
     List<String> querySubstring = new ArrayList<>();
     ResultSetMetaData rs = null;
+    TemplateConfiguration templateConfig=config.getTemplateConfig();
 
     // get all columns of given table.
     String query = SELECT_QUERY + rule.getTable();
@@ -61,8 +63,8 @@ public class QueryBuilderService {
     for (int i = 1; i <= rs.getColumnCount(); i++) {
       String colName = rs.getColumnName(i);
       if (colMaskRuleMap.containsKey(colName)) {
-          querySubstring.add(colMaskRuleMap.get(colName).getSubQuery(config, rule.getTable()));
-          colMaskRuleMap.get(colName).addFunctionDefinition(config, functionDefinitionSet);
+          querySubstring.add(colMaskRuleMap.get(colName).getSubQuery(templateConfig, rule.getTable()));
+          colMaskRuleMap.get(colName).addFunctionDefinition(templateConfig, functionDefinitionSet);
       } else {
         querySubstring.add(rs.getColumnName(i));
       }
@@ -117,19 +119,15 @@ public class QueryBuilderService {
 
       @Override
       public void addFunctionDefinition(
-          MaskConfiguration config,
+          TemplateConfiguration config,
           Set<String> funcSet) {
       }
 
       @Override
-      public String getSubQuery(MaskConfiguration config, String tableName) {
+      public String getSubQuery(TemplateConfiguration config, String tableName) {
         return Strings.EMPTY;
       }
 
-      @Override
-      protected boolean validateAndAddParameters(List<String> parameters) {
-        return false;
-      }
     };
   }
 }

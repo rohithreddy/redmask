@@ -1,8 +1,8 @@
 package com.hashedin.redmask.MaskingFunction;
 
-import com.hashedin.redmask.configurations.MaskConfiguration;
 import com.hashedin.redmask.configurations.MaskType;
 import com.hashedin.redmask.configurations.MaskingConstants;
+import com.hashedin.redmask.configurations.TemplateConfiguration;
 import com.hashedin.redmask.service.MaskingQueryUtil;
 import com.hashedin.redmask.service.MaskingRuleDef;
 import freemarker.template.TemplateException;
@@ -27,13 +27,13 @@ public class StringMasking extends MaskingRuleDef {
   }
 
   @Override
-  public void addFunctionDefinition(MaskConfiguration config, Set<String> funcSet)
+  public void addFunctionDefinition(TemplateConfiguration config, Set<String> funcSet)
       throws IOException, TemplateException {
     funcSet.add(MaskingQueryUtil.maskString(config));
   }
 
   @Override
-  public String getSubQuery(MaskConfiguration config, String tableName) throws IOException, TemplateException {
+  public String getSubQuery(TemplateConfiguration config, String tableName) throws IOException, TemplateException {
     List<String> paramsList = new ArrayList<>();
     paramsList.add(this.getColumnName());
     if (validateAndAddParameters(paramsList))
@@ -41,7 +41,6 @@ public class StringMasking extends MaskingRuleDef {
     return this.getColumnName();
   }
 
-  @Override
   protected boolean validateAndAddParameters(List<String> parameters) {
     if (this.getMaskParams().containsKey("separator") && this.getMaskParams().containsKey("prefix")
         && this.getMaskParams().containsKey("suffix")) {
