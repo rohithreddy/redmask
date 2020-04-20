@@ -1,13 +1,13 @@
 package com.hashedin.redmask.service;
 
-import java.io.IOException;
-import java.util.Map;
-import java.util.Set;
-
 import com.hashedin.redmask.configurations.MaskConfiguration;
 import com.hashedin.redmask.configurations.MaskType;
-
 import freemarker.template.TemplateException;
+
+import java.io.IOException;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * This is a abstract class which contains parameters and function 
@@ -36,7 +36,10 @@ public abstract class MaskingRuleDef {
   public abstract void addFunctionDefinition(MaskConfiguration config, Set<String> funcSet)
       throws IOException, TemplateException;
 
-  public abstract String getSubQuery(String tableName);
+  public abstract String getSubQuery(MaskConfiguration config, String tableName)
+      throws IOException, TemplateException;
+
+  protected abstract boolean validateAndAddParameters(List<String> parameters);
 
   public String getColumnName() {
     return columnName;

@@ -1,20 +1,20 @@
 package com.hashedin.redmask.service;
 
-import java.io.*;
-
-import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
-import java.util.Map;
-
-import org.apache.commons.io.IOUtils;
-
 import com.hashedin.redmask.configurations.MaskConfiguration;
-
 import freemarker.core.ParseException;
 import freemarker.template.MalformedTemplateNameException;
 import freemarker.template.Template;
 import freemarker.template.TemplateException;
 import freemarker.template.TemplateNotFoundException;
+import org.apache.commons.io.IOUtils;
+
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.StringWriter;
+import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import static com.hashedin.redmask.configurations.MaskingConstants.*;
 
@@ -106,6 +106,20 @@ public class MaskingQueryUtil {
     input.put(SCHEMA, MASKING_FUNCTION_SCHEMA);
     input.put(MASKING_FUNCTION_Name, functionName);
     Template temp = config.getTemplateConfig().getConfig().getTemplate(templateName);
+    StringWriter stringWriter = new StringWriter();
+    temp.process(input, stringWriter);
+    String createFunString = stringWriter.toString();
+    stringWriter.close();
+    return createFunString;
+  }
+
+  public static String processQueryTemplate(MaskConfiguration config, String functionName, List<String> parameters)
+      throws IOException, TemplateException {
+    Map<String, Object> input = new HashMap<String, Object>();
+    input.put("schema", MASKING_FUNCTION_SCHEMA);
+    input.put("functionName", functionName);
+    input.put("parameters", parameters);
+    Template temp = config.getTemplateConfig().getConfig().getTemplate("view_function_query.txt");
     StringWriter stringWriter = new StringWriter();
     temp.process(input, stringWriter);
     String createFunString = stringWriter.toString();
