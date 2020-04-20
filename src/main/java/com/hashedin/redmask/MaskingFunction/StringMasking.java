@@ -20,7 +20,6 @@ public class StringMasking extends MaskingRuleDef {
       MaskType maskType,
       Map<String, String> maskParams) {
     super(columnName, maskType, maskParams);
-
   }
 
   public StringMasking() {
@@ -36,8 +35,9 @@ public class StringMasking extends MaskingRuleDef {
   public String getSubQuery(TemplateConfiguration config, String tableName) throws IOException, TemplateException {
     List<String> paramsList = new ArrayList<>();
     paramsList.add(this.getColumnName());
-    if (validateAndAddParameters(paramsList))
+    if (validateAndAddParameters(paramsList)) {
       return MaskingQueryUtil.processQueryTemplate(config, MaskingConstants.MASK_STRING_FUNC, paramsList);
+    }
     return this.getColumnName();
   }
 
@@ -48,8 +48,9 @@ public class StringMasking extends MaskingRuleDef {
       int prefix = Integer.parseInt(this.getMaskParams().get("prefix"));
       int suffix = Integer.parseInt(this.getMaskParams().get("suffix"));
 
-      if ((prefix < 0) || (suffix < 0))
+      if ((prefix < 0) || (suffix < 0)) {
         return false;
+      }
       parameters.add(separator);
       parameters.add(String.valueOf(prefix));
       parameters.add(String.valueOf(suffix));

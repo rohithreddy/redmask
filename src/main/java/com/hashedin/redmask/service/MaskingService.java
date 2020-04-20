@@ -48,7 +48,7 @@ public class MaskingService {
    * Create View using those masking function.
    * Provide access to user to read data from masked view.
    * 
-   * TODO: proper error handling.
+   * TODO :proper error handling.
    * @throws IOException 
    * @throws SQLException 
    * @throws TemplateException 
@@ -63,7 +63,7 @@ public class MaskingService {
 
     /*
      * Drop and Create redmask Schema and user schema.
-     * TODO: find a better way without dropping schema.
+     * TODO :find a better way without dropping schema.
      */
     writer.append(queryBuilder.dropSchemaQuery(MASKING_FUNCTION_SCHEMA));
     writer.append(queryBuilder.dropSchemaQuery(config.getUser()));
@@ -78,7 +78,7 @@ public class MaskingService {
      * Then we can generate query for creating masked view 
      */
     // Generate query for each table and append in the writer.
-    for (int i = 0; i < config.getRules().size(); i++ ) {
+    for (int i = 0; i < config.getRules().size(); i++) {
       MaskingRule rule = config.getRules().get(i);
 
       queryBuilder.buildFunctionsAndQueryForView(rule, writer, config, url);
@@ -86,7 +86,7 @@ public class MaskingService {
 
     // Grant access of this masked view to user.
     writer.append("\n\n-- Grant access to current user on schema: " + MASKING_FUNCTION_SCHEMA + ".\n");
-    writer.append("GRANT USAGE ON SCHEMA "+ MASKING_FUNCTION_SCHEMA + " TO " + config.getUser() + ";");
+    writer.append("GRANT USAGE ON SCHEMA " + MASKING_FUNCTION_SCHEMA + " TO " + config.getUser() + ";");
 
     writer.append("\n\n-- Grant access to current user on schema: " + config.getUser() + ".\n");
     writer.append("GRANT ALL PRIVILEGES ON ALL TABLES IN "
@@ -98,10 +98,10 @@ public class MaskingService {
 
   public void executeSqlQueryForMasking() throws SQLException, FileNotFoundException {
     if (!dryRunEnabled) {
-      try(Connection conn = DriverManager.getConnection(url, 
+      try (Connection CONN = DriverManager.getConnection(url, 
           config.getSuperUser(), config.getSuperUserPassword())) {
         //Initialize the script runner
-        ScriptRunner sr = new ScriptRunner(conn);
+        ScriptRunner sr = new ScriptRunner(CONN);
 
         //Creating a reader object
         Reader reader = new BufferedReader(new FileReader(tempFilePath));

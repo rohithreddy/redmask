@@ -16,14 +16,50 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static com.hashedin.redmask.configurations.MaskingConstants.*;
+import static com.hashedin.redmask.configurations.MaskingConstants.MASK_STRING_FUNC;
+import static com.hashedin.redmask.configurations.MaskingConstants.MASK_STRING_FILE;
+import static com.hashedin.redmask.configurations.MaskingConstants.MASK_EMAIL_FUNC;
+import static com.hashedin.redmask.configurations.MaskingConstants.MASK_STRING_COMMENT;
+import static com.hashedin.redmask.configurations.MaskingConstants.MASK_EMAIL_FILE;
+import static com.hashedin.redmask.configurations.MaskingConstants.MASK_INTEGER_FIXED_SIZE_FUNC;
+import static com.hashedin.redmask.configurations.MaskingConstants.MASK_INTEGER_FIXED_SIZE_FILE;
+import static com.hashedin.redmask.configurations.MaskingConstants.MASK_INTEGER_WITHIN_RANGE_FUNC;
+import static com.hashedin.redmask.configurations.MaskingConstants.MASK_EMAIL_COMMENT;
+import static com.hashedin.redmask.configurations.MaskingConstants.MASK_INTEGER_FIXED_SIZE_COMMENT;
+import static com.hashedin.redmask.configurations.MaskingConstants.MASK_INTEGER_FIXED_VALUE_COMMENT;
+import static com.hashedin.redmask.configurations.MaskingConstants.MASK_INTEGER_WITHIN_RANGE_COMMENT;
+import static com.hashedin.redmask.configurations.MaskingConstants.MASK_INTEGER_WITHIN_RANGE_FILE;
+import static com.hashedin.redmask.configurations.MaskingConstants.MASK_INTEGER_FIXED_VALUE_FUNC;
+import static com.hashedin.redmask.configurations.MaskingConstants.MASK_FLOAT_FIXED_VALUE_FILE;
+import static com.hashedin.redmask.configurations.MaskingConstants.MASK_INTEGER_FIXED_VALUE_FILE;
+import static com.hashedin.redmask.configurations.MaskingConstants.MASK_FLOAT_FIXED_VALUE_FUNC;
+import static com.hashedin.redmask.configurations.MaskingConstants.MASK_FLOAT_FIXED_VALUE_COMMENT;
+import static com.hashedin.redmask.configurations.MaskingConstants.MASK_NUMERIC_RANGE_FUNC;
+import static com.hashedin.redmask.configurations.MaskingConstants.MASK_NUMERIC_RANGE_FILE;
+import static com.hashedin.redmask.configurations.MaskingConstants.MASK_NUMERIC_RANGE_COMMENT;
+import static com.hashedin.redmask.configurations.MaskingConstants.MASK_INTEGER_RANGE_FUNC;
+import static com.hashedin.redmask.configurations.MaskingConstants.MASK_INTEGER_RANGE_FILE;
+import static com.hashedin.redmask.configurations.MaskingConstants.MASK_INTEGER_RANGE_COMMENT;
+import static com.hashedin.redmask.configurations.MaskingConstants.MASK_BIGINT_RANGE_FUNC;
+import static com.hashedin.redmask.configurations.MaskingConstants.MASK_BIGINT_RANGE_FILE;
+import static com.hashedin.redmask.configurations.MaskingConstants.MASK_BIGINT_RANGE_COMMENT;
+import static com.hashedin.redmask.configurations.MaskingConstants.MASK_NUMBERS_FUNC;
+import static com.hashedin.redmask.configurations.MaskingConstants.MASK_NUMBERS_FILE;
+import static com.hashedin.redmask.configurations.MaskingConstants.MASK_NUMBERS_COMMENT;
+import static com.hashedin.redmask.configurations.MaskingConstants.MASK_CARD_FUNC;
+import static com.hashedin.redmask.configurations.MaskingConstants.MASK_CARD_FILE;
+import static com.hashedin.redmask.configurations.MaskingConstants.MASK_CARD_COMMENT;
 
 public class MaskingQueryUtil {
 
   private static final String MASKING_FUNCTION_SCHEMA = "redmask";
   private static final String TEMPLATE_NAME = "create_function.txt";
   private static final String SCHEMA = "schema";
-  private static final String MASKING_FUNCTION_Name = "functionName";
+  private static final String MASKING_FUNCTION_NAME = "functionName";
+  
+  private MaskingQueryUtil() {
+    // No Use.
+  }
 
   public static final String maskString(TemplateConfiguration config)
       throws IOException, TemplateException {
@@ -104,7 +140,7 @@ public class MaskingQueryUtil {
       ParseException, IOException, TemplateException {
     Map<String, String> input = new HashMap<String, String>();
     input.put(SCHEMA, MASKING_FUNCTION_SCHEMA);
-    input.put(MASKING_FUNCTION_Name, functionName);
+    input.put(MASKING_FUNCTION_NAME, functionName);
     Template temp = config.getConfig().getTemplate(templateName);
     StringWriter stringWriter = new StringWriter();
     temp.process(input, stringWriter);
@@ -116,8 +152,8 @@ public class MaskingQueryUtil {
   public static String processQueryTemplate(TemplateConfiguration config, String functionName, List<String> parameters)
       throws IOException, TemplateException {
     Map<String, Object> input = new HashMap<String, Object>();
-    input.put("schema", MASKING_FUNCTION_SCHEMA);
-    input.put("functionName", functionName);
+    input.put(SCHEMA, MASKING_FUNCTION_SCHEMA);
+    input.put(MASKING_FUNCTION_NAME, functionName);
     input.put("parameters", parameters);
     Template temp = config.getConfig().getTemplate("view_function_query.txt");
     StringWriter stringWriter = new StringWriter();

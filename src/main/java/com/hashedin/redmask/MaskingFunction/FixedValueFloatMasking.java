@@ -35,8 +35,9 @@ public class FixedValueFloatMasking extends MaskingRuleDef {
   public String getSubQuery(TemplateConfiguration config, String tableName) throws IOException, TemplateException {
     List<String> paramsList = new ArrayList<>();
     paramsList.add(this.getColumnName());
-    if (this.validateAndAddParameters(paramsList))
+    if (this.validateAndAddParameters(paramsList)) {
       return MaskingQueryUtil.processQueryTemplate(config, MaskingConstants.MASK_FLOAT_FIXED_VALUE_FUNC, paramsList);
+    }
     return this.getColumnName();
   }
 

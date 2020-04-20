@@ -36,8 +36,9 @@ public class CardMasking extends MaskingRuleDef {
   public String getSubQuery(TemplateConfiguration config, String tableName) throws IOException, TemplateException {
     List<String> paramsList = new ArrayList<>();
     paramsList.add(this.getColumnName());
-    if (validateAndAddParameters(paramsList))
+    if (validateAndAddParameters(paramsList)) {
       return MaskingQueryUtil.processQueryTemplate(config, MaskingConstants.MASK_CARD_FUNC, paramsList);
+    }
     return this.getColumnName();
 
   }
@@ -49,8 +50,9 @@ public class CardMasking extends MaskingRuleDef {
       int val1 = Integer.parseInt(this.getMaskParams().get("val1"));
       int val2 = Integer.parseInt(this.getMaskParams().get("val2"));
 
-      if ((val1 < 0) || (val2 < 0))
+      if ((val1 < 0) || (val2 < 0)) {
         return false;
+      }
 
       switch (this.getMaskType()) {
         case CREDIT_CARD_SHOW_FIRST:
@@ -64,15 +66,17 @@ public class CardMasking extends MaskingRuleDef {
         case CREDIT_CARD_SHOW_FIRST_LAST:
           parameters.add("'firstnlast'");
           break;
+        default:
+          break;
       }
       parameters.add(separator);
       parameters.add(String.valueOf(val1));
       parameters.add(String.valueOf(val2));
 
       return true;
-    } else
+    } else {
       return false;
-
+    }
 
   }
 

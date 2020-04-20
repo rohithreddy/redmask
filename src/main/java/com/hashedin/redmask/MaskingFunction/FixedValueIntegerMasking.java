@@ -35,8 +35,9 @@ public class FixedValueIntegerMasking extends MaskingRuleDef {
   public String getSubQuery(TemplateConfiguration config, String tableName) throws IOException, TemplateException {
     List<String> paramsList = new ArrayList<>();
     paramsList.add(this.getColumnName());
-    if (validateAndAddParameters(paramsList))
+    if (validateAndAddParameters(paramsList)) {
       return MaskingQueryUtil.processQueryTemplate(config, MaskingConstants.MASK_INTEGER_FIXED_VALUE_FUNC, paramsList);
+    }
     return this.getColumnName();
   }
 

@@ -28,7 +28,6 @@ public class QueryBuilderService {
 
   private static final String NEW_LINE = System.getProperty("line.separator");
   private static final String SELECT_QUERY = "SELECT * FROM ";
-  private static final String MASKING_FUNCTION_SCHEMA = "redmask";
 
   public void buildFunctionsAndQueryForView(MaskingRule rule, FileWriter writer,
       MaskConfiguration config, String url)
@@ -37,15 +36,15 @@ public class QueryBuilderService {
     Set<String> functionDefinitionSet = new LinkedHashSet<>();
     List<String> querySubstring = new ArrayList<>();
     ResultSetMetaData rs = null;
-    TemplateConfiguration templateConfig=config.getTemplateConfig();
+    TemplateConfiguration templateConfig = config.getTemplateConfig();
 
     // get all columns of given table.
     String query = SELECT_QUERY + rule.getTable();
 
-    try(Connection conn = DriverManager.getConnection(url,
+    try (Connection CONN = DriverManager.getConnection(url,
         config.getSuperUser(), config.getSuperUserPassword());
-        Statement st = conn.createStatement()) {
-      rs = st.executeQuery(query).getMetaData();
+        Statement STATEMENT = CONN.createStatement()) {
+      rs = STATEMENT.executeQuery(query).getMetaData();
     }
 
     MaskingRuleFactory columnRuleFactory = new MaskingRuleFactory();
@@ -57,7 +56,7 @@ public class QueryBuilderService {
       colMaskRuleMap.put(col.getColumnName(), columnRuleFactory.getColumnMaskingRule(def));
     }
 
-    // TODO: Add validation, if column to be masked does not exists.
+    // TODO :Add validation, if column to be masked does not exists.
 
     // Dynamically build sub query part for create view.
     for (int i = 1; i <= rs.getColumnCount(); i++) {
@@ -79,8 +78,8 @@ public class QueryBuilderService {
     StringBuilder sb = new StringBuilder();
     sb.append(config.getUsername()).append(".").append(rule.getTable());
 
-    String createViewQuery = "CREATE VIEW " + sb.toString() + " AS SELECT " +
-        queryString +  " FROM " + rule.getTable() + ";";
+    String createViewQuery = "CREATE VIEW " + sb.toString() + " AS SELECT "
+        + queryString +  " FROM " + rule.getTable() + ";";
 
     writer.append("\n\n-- Create masked view.\n");
     writer.append(createViewQuery);

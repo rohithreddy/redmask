@@ -36,8 +36,9 @@ public class EmailMasking extends MaskingRuleDef {
   public String getSubQuery(TemplateConfiguration config, String tableName) throws IOException, TemplateException {
     List<String> paramsList = new ArrayList<>();
     paramsList.add(this.getColumnName());
-    if (validateAndAddParameters(paramsList))
+    if (validateAndAddParameters(paramsList)) {
       return MaskingQueryUtil.processQueryTemplate(config, MaskingConstants.MASK_EMAIL_FUNC, paramsList);
+    }
     return this.getColumnName();
   }
 
@@ -51,17 +52,18 @@ public class EmailMasking extends MaskingRuleDef {
         parameters.add("'firstndomain'");
         break;
 
-      case EMAIL_SHOW_FIRST_CHARACTERS: {
+      case EMAIL_SHOW_FIRST_CHARACTERS:
         parameters.add("'firstN'");
         if (this.getMaskParams().containsKey("val")) {
           int val = Integer.parseInt(this.getMaskParams().get("val"));
-          if (val < 0)
+          if (val < 0) {
             return false;
+          }
           parameters.add(String.valueOf(val));
-        } else
+        } else {
           return false;
+        }
         break;
-      }
 
       case EMAIL_MASK_ALPHANUMERIC:
         parameters.add("'nonspecialcharacter'");

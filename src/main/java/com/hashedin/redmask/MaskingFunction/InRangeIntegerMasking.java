@@ -35,8 +35,9 @@ public class InRangeIntegerMasking extends MaskingRuleDef {
   public String getSubQuery(TemplateConfiguration config, String tableName) throws IOException, TemplateException {
     List<String> paramsList = new ArrayList<>();
     paramsList.add(this.getColumnName());
-    if (validateAndAddParameters(paramsList))
+    if (validateAndAddParameters(paramsList)) {
       return MaskingQueryUtil.processQueryTemplate(config, MaskingConstants.MASK_INTEGER_WITHIN_RANGE_FUNC, paramsList);
+    }
     return this.getColumnName();
   }
 

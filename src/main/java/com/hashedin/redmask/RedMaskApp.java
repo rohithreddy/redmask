@@ -32,7 +32,7 @@ public class RedMaskApp implements Callable<Integer>  {
           + "It will not make any chnages to DB.")
   private boolean dryRun = true;
 
-  public static void main( String[] args ) throws IOException {
+  public static void main(String[] args) throws IOException {
     log.info("Starting redmask application.");
     System.exit(new CommandLine(new RedMaskApp()).execute(args));
   }

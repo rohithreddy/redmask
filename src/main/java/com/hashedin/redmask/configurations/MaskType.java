@@ -1,6 +1,16 @@
 package com.hashedin.redmask.configurations;
 
-import com.hashedin.redmask.MaskingFunction.*;
+import com.hashedin.redmask.MaskingFunction.StringMasking;
+import com.hashedin.redmask.MaskingFunction.EmailMasking;
+import com.hashedin.redmask.MaskingFunction.FixedSizeIntegerMasking;
+import com.hashedin.redmask.MaskingFunction.InRangeIntegerMasking;
+import com.hashedin.redmask.MaskingFunction.FixedValueIntegerMasking;
+import com.hashedin.redmask.MaskingFunction.FixedValueFloatMasking;
+import com.hashedin.redmask.MaskingFunction.NumericRangeMasking;
+import com.hashedin.redmask.MaskingFunction.IntegerRangeMasking;
+import com.hashedin.redmask.MaskingFunction.BigIntRangeMasking;
+import com.hashedin.redmask.MaskingFunction.CardMasking;
+
 import com.hashedin.redmask.service.MaskingRuleDef;
 
 public enum MaskType {
@@ -31,7 +41,7 @@ public enum MaskType {
 
   DESTRUCTION;
 
-  Class<? extends MaskingRuleDef> classType;
+  private Class<? extends MaskingRuleDef> classType;
 
   MaskType(Class<? extends MaskingRuleDef> classType) {
     this.classType = classType;

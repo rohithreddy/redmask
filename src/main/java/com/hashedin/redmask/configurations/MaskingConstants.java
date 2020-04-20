@@ -1,6 +1,10 @@
 package com.hashedin.redmask.configurations;
 
 public class MaskingConstants {
+  
+  private MaskingConstants() {
+  //not called
+  }
 
   public static final String DB_SUPER_USER = "DB_SUPER_USER";
   public static final String DB_SUPER_USER_PASSWORD = "DB_SUPER_USER_PASSWORD";
@@ -50,4 +54,5 @@ public class MaskingConstants {
   public static final String MASK_CARD_FUNC = "cardmask";
   public static final String MASK_CARD_FILE = "src/main/resources/SpecializedFunctions/CardMask.sql";
   public static final String MASK_CARD_COMMENT = "\n\n-- Postgres function to anonymize card details.\n";
+
 }
