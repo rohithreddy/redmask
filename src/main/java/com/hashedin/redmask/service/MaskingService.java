@@ -23,16 +23,20 @@ public class MaskingService {
 
   private static final Logger log = LogManager.getLogger(MaskingService.class);
   private static final String MASKING_FUNCTION_SCHEMA = "redmask";
-  private static final String MASKING_SQL_FILE_PATH = "src/main/resources/masking.sql";
 
   private final MaskConfiguration config;
   private String url = "jdbc:postgresql://";
   private final boolean dryRunEnabled;
 
-  public MaskingService(MaskConfiguration config, boolean dryRunEnabled) {
+  // This temp would contain queries to create masked data.
+  private final File tempFilePath;
+
+  public MaskingService(MaskConfiguration config, boolean dryRunEnabled)
+      throws IOException {
     this.config = config;
     this.url = url + config.getHost() + ":" + config.getPort() + "/" + config.getDatabase();
     this.dryRunEnabled = dryRunEnabled;
+    this.tempFilePath = createMaskingSqlFile();
   }
 
   /**
@@ -51,16 +55,18 @@ public class MaskingService {
    * @throws IllegalAccessException 
    * @throws InstantiationException 
    */
-  public void generateSqlQueryForMasking() throws IOException, SQLException, TemplateException, InstantiationException, IllegalAccessException {
-    //create a .sql file which would contain queries to create masked data.
+  public void generateSqlQueryForMasking() throws IOException,
+  SQLException, TemplateException, InstantiationException, IllegalAccessException {
+
     QueryBuilderService queryBuilder = new QueryBuilderService();
-    FileWriter writer = createMaskingSqlFile();
-    
-    // TODO: find a better way without dropping schema.
+    FileWriter writer = new FileWriter(tempFilePath);
+
+    /*
+     * Drop and Create redmask Schema and user schema.
+     * TODO: find a better way without dropping schema.
+     */
     writer.append(queryBuilder.dropSchemaQuery(MASKING_FUNCTION_SCHEMA));
     writer.append(queryBuilder.dropSchemaQuery(config.getUser()));
-
-    // Create Schema
     writer.append(queryBuilder.createSchemaQuery(MASKING_FUNCTION_SCHEMA));
     writer.append(queryBuilder.createSchemaQuery(config.getUser()));
 
@@ -74,7 +80,7 @@ public class MaskingService {
     // Generate query for each table and append in the writer.
     for (int i = 0; i < config.getRules().size(); i++ ) {
       MaskingRule rule = config.getRules().get(i);
-      
+
       queryBuilder.buildFunctionsAndQueryForView(rule, writer, config, url);
     }
 
@@ -98,7 +104,7 @@ public class MaskingService {
         ScriptRunner sr = new ScriptRunner(conn);
 
         //Creating a reader object
-        Reader reader = new BufferedReader(new FileReader(MASKING_SQL_FILE_PATH));
+        Reader reader = new BufferedReader(new FileReader(tempFilePath));
 
         //Running the script
         sr.setSendFullScript(true);
@@ -107,15 +113,11 @@ public class MaskingService {
     }
   }
 
-  private FileWriter createMaskingSqlFile() throws IOException {
-    // create a .sql file
-    File sqlFile = new File(MASKING_SQL_FILE_PATH);
-    if (!sqlFile.createNewFile()) {
-      // delete the existing file and create again.
-      sqlFile.delete();
-      sqlFile.createNewFile();
-    }
-    return new FileWriter(MASKING_SQL_FILE_PATH);
+  private File createMaskingSqlFile() throws IOException {
+    // create a temp .sql file
+    File sqlFile = File.createTempFile("redmask-masking", ".sql");
+    log.info("Created a temp file at location: {}", sqlFile.getAbsolutePath());
+    return sqlFile;
   }
 
 }
