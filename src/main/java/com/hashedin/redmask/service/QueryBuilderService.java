@@ -1,5 +1,15 @@
 package com.hashedin.redmask.service;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.hashedin.redmask.configurations.ColumnRule;
+import com.hashedin.redmask.configurations.MaskConfiguration;
+import com.hashedin.redmask.configurations.MaskingRule;
+import com.hashedin.redmask.configurations.MaskingRuleFactory;
+import com.hashedin.redmask.configurations.TemplateConfiguration;
+import freemarker.template.TemplateException;
+import org.apache.logging.log4j.util.Strings;
+
 import java.io.FileWriter;
 import java.io.IOException;
 import java.sql.Connection;
@@ -7,20 +17,18 @@ import java.sql.DriverManager;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.*;
-
-import org.apache.logging.log4j.util.Strings;
-
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.hashedin.redmask.configurations.*;
-
-import freemarker.template.TemplateException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class QueryBuilderService {
 
   private static final String NEW_LINE = System.getProperty("line.separator");
   private static final String SELECT_QUERY = "SELECT * FROM ";
+  private static final String MASKING_FUNCTION_SCHEMA = "redmask";
 
   public void buildFunctionsAndQueryForView(MaskingRule rule, FileWriter writer,
       MaskConfiguration config, String url)
@@ -29,6 +37,7 @@ public class QueryBuilderService {
     Set<String> functionDefinitionSet = new LinkedHashSet<>();
     List<String> querySubstring = new ArrayList<>();
     ResultSetMetaData rs = null;
+    TemplateConfiguration templateConfig=config.getTemplateConfig();
 
     // get all columns of given table.
     String query = SELECT_QUERY + rule.getTable();
@@ -53,9 +62,9 @@ public class QueryBuilderService {
     // Dynamically build sub query part for create view.
     for (int i = 1; i <= rs.getColumnCount(); i++) {
       String colName = rs.getColumnName(i);
-      if (colMaskRuleMap.containsKey(colName)) {        
-        querySubstring.add(colMaskRuleMap.get(colName).getSubQuery(rule.getTable()));
-        colMaskRuleMap.get(colName).addFunctionDefinition(config, functionDefinitionSet);
+      if (colMaskRuleMap.containsKey(colName)) {
+          querySubstring.add(colMaskRuleMap.get(colName).getSubQuery(templateConfig, rule.getTable()));
+          colMaskRuleMap.get(colName).addFunctionDefinition(templateConfig, functionDefinitionSet);
       } else {
         querySubstring.add(rs.getColumnName(i));
       }
@@ -102,22 +111,23 @@ public class QueryBuilderService {
   private MaskingRuleDef buildMaskingRuleDef(ColumnRule colRule) {
     Map<String, String> maskParams = new ObjectMapper().
         convertValue(colRule.getMaskParams(),
-            new TypeReference<Map<String, String>>(){});
+            new TypeReference<Map<String, String>>() {
+            });
 
     return new MaskingRuleDef(colRule.getColumnName(),
         colRule.getMaskType(), maskParams) {
 
       @Override
       public void addFunctionDefinition(
-          MaskConfiguration config,
+          TemplateConfiguration config,
           Set<String> funcSet) {
       }
 
       @Override
-      public String getSubQuery(String tableName) {
+      public String getSubQuery(TemplateConfiguration config, String tableName) {
         return Strings.EMPTY;
       }
+
     };
   }
-
 }
