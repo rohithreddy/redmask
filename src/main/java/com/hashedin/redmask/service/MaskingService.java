@@ -53,15 +53,16 @@ public class MaskingService {
    */
   public void generateSqlQueryForMasking() throws IOException, SQLException, TemplateException, InstantiationException, IllegalAccessException {
     //create a .sql file which would contain queries to create masked data.
+    QueryBuilderService queryBuilder = new QueryBuilderService();
     FileWriter writer = createMaskingSqlFile();
-
+    
     // TODO: find a better way without dropping schema.
-    writer.append(QueryBuilderUtil.dropSchemaQuery(MASKING_FUNCTION_SCHEMA));
-    writer.append(QueryBuilderUtil.dropSchemaQuery(config.getUser()));
+    writer.append(queryBuilder.dropSchemaQuery(MASKING_FUNCTION_SCHEMA));
+    writer.append(queryBuilder.dropSchemaQuery(config.getUser()));
 
     // Create Schema
-    writer.append(QueryBuilderUtil.createSchemaQuery(MASKING_FUNCTION_SCHEMA));
-    writer.append(QueryBuilderUtil.createSchemaQuery(config.getUser()));
+    writer.append(queryBuilder.createSchemaQuery(MASKING_FUNCTION_SCHEMA));
+    writer.append(queryBuilder.createSchemaQuery(config.getUser()));
 
     /**
      * For each masking rule, create postgres mask function.
@@ -74,7 +75,7 @@ public class MaskingService {
     for (int i = 0; i < config.getRules().size(); i++ ) {
       MaskingRule rule = config.getRules().get(i);
       
-      QueryBuilderUtil.buildFunctionsAndQueryForView(rule, writer, config, url);
+      queryBuilder.buildFunctionsAndQueryForView(rule, writer, config, url);
     }
 
     // Grant access of this masked view to user.

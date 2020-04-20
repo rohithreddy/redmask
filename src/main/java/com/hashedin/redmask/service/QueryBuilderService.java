@@ -17,12 +17,12 @@ import com.hashedin.redmask.configurations.*;
 
 import freemarker.template.TemplateException;
 
-public class QueryBuilderUtil {
+public class QueryBuilderService {
 
   private static final String NEW_LINE = System.getProperty("line.separator");
   private static final String SELECT_QUERY = "SELECT * FROM ";
 
-  public static void buildFunctionsAndQueryForView(MaskingRule rule, FileWriter writer,
+  public void buildFunctionsAndQueryForView(MaskingRule rule, FileWriter writer,
       MaskConfiguration config, String url)
           throws SQLException, IOException, InstantiationException, IllegalAccessException, TemplateException {
 
@@ -77,7 +77,7 @@ public class QueryBuilderUtil {
     writer.append(createViewQuery);
   }
 
-  public static String dropSchemaQuery(String schemaName) {
+  public String dropSchemaQuery(String schemaName) {
     StringBuilder sb = new StringBuilder();
     sb.append(NEW_LINE)
     .append("-- Drop " + schemaName + "Schema if it exists.")
@@ -88,7 +88,7 @@ public class QueryBuilderUtil {
     return sb.toString();
   }
 
-  public static String createSchemaQuery(String schemaName) {
+  public String createSchemaQuery(String schemaName) {
     StringBuilder sb = new StringBuilder();
     sb.append(NEW_LINE)
     .append("-- Create " + schemaName + " schema.")
@@ -99,7 +99,7 @@ public class QueryBuilderUtil {
     return sb.toString();
   }
 
-  private static MaskingRuleDef buildMaskingRuleDef(ColumnRule colRule) {
+  private MaskingRuleDef buildMaskingRuleDef(ColumnRule colRule) {
     Map<String, String> maskParams = new ObjectMapper().
         convertValue(colRule.getMaskParams(),
             new TypeReference<Map<String, String>>(){});

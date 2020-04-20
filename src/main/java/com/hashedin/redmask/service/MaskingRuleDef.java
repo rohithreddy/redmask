@@ -9,6 +9,12 @@ import com.hashedin.redmask.configurations.MaskType;
 
 import freemarker.template.TemplateException;
 
+/**
+ * This is a abstract class which contains parameters and function 
+ * needed to implement/construct masking function definition.
+ * 
+ * All Specific masking function class needs to extend this class.
+ */
 public abstract class MaskingRuleDef {
 
   private String columnName; 

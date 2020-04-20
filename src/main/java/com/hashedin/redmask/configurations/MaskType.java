@@ -24,15 +24,11 @@ public enum MaskType {
   INTEGER_RANGE(IntegerRangeMasking.class),
   BIGINT_RANGE(BigIntRangeMasking.class),
 
-  MEAN_VALUE(MeanValueMasking.class),
-  MODE_VALUE(ModeValueMasking.class),
-
   // Masking rule related to Credit card field.
   CREDIT_CARD_SHOW_FIRST(CardMasking.class),
   CREDIT_CARD_SHOW_LAST(CardMasking.class),
   CREDIT_CARD_SHOW_FIRST_LAST(CardMasking.class),
 
-  RANDOM_PHONE(RandomPhoneMasking.class),
   DESTRUCTION;
 
   Class<? extends MaskingRuleDef> classType;

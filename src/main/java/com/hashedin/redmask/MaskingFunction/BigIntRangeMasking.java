@@ -2,7 +2,7 @@ package com.hashedin.redmask.MaskingFunction;
 
 import com.hashedin.redmask.configurations.MaskConfiguration;
 import com.hashedin.redmask.configurations.MaskType;
-import com.hashedin.redmask.service.MaskingFunctionQuery;
+import com.hashedin.redmask.service.MaskingQueryUtil;
 import com.hashedin.redmask.service.MaskingRuleDef;
 
 import freemarker.template.TemplateException;
@@ -25,7 +25,7 @@ public class BigIntRangeMasking extends MaskingRuleDef {
   @Override
   public void addFunctionDefinition(MaskConfiguration config, Set<String> funcSet)
       throws IOException, TemplateException {
-    funcSet.add(MaskingFunctionQuery.maskBigIntRange(config));
+    funcSet.add(MaskingQueryUtil.maskBigIntRange(config));
   }
 
   @Override

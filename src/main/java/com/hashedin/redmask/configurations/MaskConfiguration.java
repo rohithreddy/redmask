@@ -5,6 +5,8 @@ import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import com.hashedin.redmask.configurations.MaskingConstants;
+
 public class MaskConfiguration {
 
   private String host;
@@ -23,10 +25,10 @@ public class MaskConfiguration {
   private TemplateConfiguration templateConfig;
 
   public MaskConfiguration() throws IOException {
-    this.superUser = System.getenv("DB_SUPER_USER");
-    this.superUserPassword = System.getenv("DB_SUPER_USER_PASSWORD");
-    this.username = System.getenv("DB_USER");
-    this.userPassword = System.getenv("DB_USER_PASSWORD");
+    this.superUser = System.getenv(MaskingConstants.DB_SUPER_USER);
+    this.superUserPassword = System.getenv(MaskingConstants.DB_SUPER_USER_PASSWORD);
+    this.username = System.getenv(MaskingConstants.DB_USER);
+    this.userPassword = System.getenv(MaskingConstants.DB_USER_PASSWORD);
     this.templateConfig = new TemplateConfiguration();
   }
 

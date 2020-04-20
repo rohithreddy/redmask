@@ -17,7 +17,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
-public class MaskingFunctionITTest {
+public class MaskingFunctionIT {
 
   private static Connection connection;
   private static String url = "jdbc:postgresql://localhost:5432/maskable_database";
@@ -27,11 +27,20 @@ public class MaskingFunctionITTest {
   private static final String SQLFunctionDeclaration = "CREATE OR REPLACE FUNCTION %s.%s";
 
   @BeforeClass
-  public static void DBConnection() {
+  public static void createDBConnection() {
     try {
       connection = DriverManager.getConnection(url, superUser, superUserPassword);
     } catch (SQLException err) {
       err.printStackTrace();
+    }
+  }
+
+  @AfterClass
+  public static void closeDBConnection(){
+    try {
+      connection.close();
+    } catch (SQLException throwables) {
+      throwables.printStackTrace();
     }
   }
 
@@ -349,15 +358,6 @@ public class MaskingFunctionITTest {
       rs.next();
       Assert.assertEquals("[20,40)",rs.getString(1));
     } catch (SQLException | IOException throwables) {
-      throwables.printStackTrace();
-    }
-  }
-
-  @AfterClass
-  public static void DBConnectionClose(){
-    try {
-      connection.close();
-    } catch (SQLException throwables) {
       throwables.printStackTrace();
     }
   }

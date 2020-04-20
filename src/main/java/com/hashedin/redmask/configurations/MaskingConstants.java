@@ -2,6 +2,11 @@ package com.hashedin.redmask.configurations;
 
 public class MaskingConstants {
 
+  public static final String DB_SUPER_USER = "DB_SUPER_USER";
+  public static final String DB_SUPER_USER_PASSWORD = "DB_SUPER_USER_PASSWORD";
+  public static final String DB_USER = "DB_USER";
+  public static final String DB_USER_PASSWORD = "DB_USER_PASSWORD";
+
   public static final String MASK_STRING_FUNC = "anonymize";
   public static final String MASK_STRING_FILE = "src/main/resources/strings/AnonymizePartial.sql";
   public static final String MASK_STRING_COMMENT = "\n\n-- Postgres function to anonymize the string field.\n";
@@ -37,14 +42,6 @@ public class MaskingConstants {
   public static final String MASK_BIGINT_RANGE_FUNC = "range_int8";
   public static final String MASK_BIGINT_RANGE_FILE = "src/main/resources/Integer_float/RangeInt8.sql";
   public static final String MASK_BIGINT_RANGE_COMMENT = "\n\n-- Postgres function to convert to big integer range.\n";
-
-  public static final String MASK_MEAN_FUNC = "substitute_mean";
-  public static final String MASK_MEAN_FILE = "src/main/resources/Integer_float/SubstituteMean.sql";
-  public static final String MASK_MEAN_COMMENT = "\n\n-- Postgres function to anonymize the integer field by column mean.\n";
-
-  public static final String MASK_MODE_FUNC = "substitute_mode";
-  public static final String MASK_MODE_FILE =  "src/main/resources/Integer_float/SubstituteMode.sql";
-  public static final String MASK_MODE_COMMENT = "\n\n-- Postgres function to anonymize the integer field by column mode.\n";
 
   public static final String MASK_NUMBERS_FUNC = "anonymize_numbers";
   public static final String MASK_NUMBERS_FILE = "src/main/resources/strings/AnonymizeNumber.sql";
