@@ -18,7 +18,7 @@ import java.sql.SQLException;
 
 public class BasePostgresTestContainer {
 
-  protected static final Logger log = LogManager.getLogger(BasePostgresTestContainer.class);
+  private static final Logger log = LogManager.getLogger(BasePostgresTestContainer.class);
   protected static final String SCHEMA = "redmask";
   protected static Connection connection;
   

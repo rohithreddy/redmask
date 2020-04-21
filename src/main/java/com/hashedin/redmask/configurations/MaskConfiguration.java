@@ -38,30 +38,32 @@ public class MaskConfiguration {
   /**
    * This constructor will only be used for Integration Testing
    */
-  public MaskConfiguration(String superUser, String superUserPassword, String username, String userPassword) throws IOException {
+  public MaskConfiguration(
+      String superUser,
+      String superUserPassword,
+      String username,
+      String userPassword,
+      String host,
+      String port,
+      String database,
+      String user) throws IOException {
+
     this.superUser = superUser;
     this.superUserPassword = superUserPassword;
     this.username = username;
     this.userPassword = userPassword;
     this.templateConfig = new TemplateConfiguration();
-  }
-
-  public void setHost(String host) {
     this.host = host;
-  }
-
-  public void setPort(String port) {
     this.port = port;
-  }
-
-  public void setDatabase(String database) {
     this.database = database;
-  }
-
-  public void setUser(String user) {
     this.user = user;
   }
 
+  /**
+   * This function is used to set masking rules only during integration testing
+   *
+   * @param rules List of masking rule for the following table
+   */
   public void setRules(List<MaskingRule> rules) {
     this.rules = rules;
   }

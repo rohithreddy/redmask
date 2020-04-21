@@ -22,7 +22,7 @@ public class NumericRangeMasking extends MaskingRuleDef {
     super(columnName, maskType, maskParams);
   }
 
-  NumericRangeMasking() {
+  public NumericRangeMasking() {
   }
 
   @Override
