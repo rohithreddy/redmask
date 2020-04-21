@@ -22,7 +22,7 @@ public class InRangeIntegerMasking extends MaskingRuleDef {
     super(columnName, maskType, maskParams);
   }
 
-  InRangeIntegerMasking() {
+  public InRangeIntegerMasking() {
   }
 
   @Override

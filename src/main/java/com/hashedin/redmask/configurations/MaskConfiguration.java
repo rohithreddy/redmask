@@ -1,9 +1,9 @@
 package com.hashedin.redmask.configurations;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import java.io.IOException;
 import java.util.List;
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import static com.hashedin.redmask.configurations.MaskingConstants.DB_SUPER_USER;
 import static com.hashedin.redmask.configurations.MaskingConstants.DB_SUPER_USER_PASSWORD;
@@ -33,6 +33,41 @@ public class MaskConfiguration {
     this.username = System.getenv(DB_USER);
     this.userPassword = System.getenv(DB_USER_PASSWORD);
     this.templateConfig = new TemplateConfiguration();
+  }
+
+  /**
+   * This constructor will only be used for Integration Testing
+   */
+  public MaskConfiguration(String superUser, String superUserPassword, String username, String userPassword) throws IOException {
+    this.superUser = superUser;
+    this.superUserPassword = superUserPassword;
+    this.username = username;
+    this.userPassword = userPassword;
+    this.templateConfig = new TemplateConfiguration();
+  }
+
+  public void setHost(String host) {
+    this.host = host;
+  }
+
+  public void setPort(String port) {
+    this.port = port;
+  }
+
+  public void setDatabase(String database) {
+    this.database = database;
+  }
+
+  public void setUser(String user) {
+    this.user = user;
+  }
+
+  public void setRules(List<MaskingRule> rules) {
+    this.rules = rules;
+  }
+
+  public void setTemplateConfig(TemplateConfiguration templateConfig) {
+    this.templateConfig = templateConfig;
   }
 
   public String getHost() {
