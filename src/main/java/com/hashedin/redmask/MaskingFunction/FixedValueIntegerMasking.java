@@ -22,7 +22,7 @@ public class FixedValueIntegerMasking extends MaskingRuleDef {
     super(columnName, maskType, maskParams);
   }
 
-  FixedValueIntegerMasking() {
+  public FixedValueIntegerMasking() {
   }
 
   @Override

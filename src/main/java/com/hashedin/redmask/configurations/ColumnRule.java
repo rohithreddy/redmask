@@ -12,7 +12,13 @@ public class ColumnRule {
   private MaskType maskType; 
 
   // A map(key, value) of additional parameters needed for this masking rule.
-  private JsonNode maskParams; 
+  private JsonNode maskParams;
+
+  public ColumnRule(String columnName, MaskType maskType, JsonNode maskParams) {
+    this.columnName = columnName;
+    this.maskType = maskType;
+    this.maskParams = maskParams;
+  }
 
   public JsonNode getMaskParams() {
     return maskParams;

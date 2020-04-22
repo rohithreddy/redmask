@@ -22,7 +22,7 @@ public class FixedValueFloatMasking extends MaskingRuleDef {
     super(columnName, maskType, maskParams);
   }
 
-  FixedValueFloatMasking() {
+  public FixedValueFloatMasking() {
   }
 
   @Override
