@@ -1,5 +1,12 @@
 package com.hashedin.redmask.service;
 
+import com.hashedin.redmask.configurations.MaskConfiguration;
+import com.hashedin.redmask.configurations.MaskingRule;
+import com.hashedin.redmask.configurations.MissingParameterException;
+import org.apache.ibatis.jdbc.ScriptRunner;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -10,14 +17,6 @@ import java.io.Reader;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
-import org.apache.ibatis.jdbc.ScriptRunner;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
-import com.hashedin.redmask.configurations.MaskingRule;
-
-import freemarker.template.TemplateException;
-import com.hashedin.redmask.configurations.MaskConfiguration;
 
 public class MaskingService {
 
@@ -31,8 +30,7 @@ public class MaskingService {
   // This temp would contain queries to create masked data.
   private final File tempFilePath;
 
-  public MaskingService(MaskConfiguration config, boolean dryRunEnabled)
-      throws IOException {
+  public MaskingService(MaskConfiguration config, boolean dryRunEnabled) throws MissingParameterException {
     this.config = config;
     this.url = url + config.getHost() + ":" + config.getPort() + "/" + config.getDatabase();
     this.dryRunEnabled = dryRunEnabled;
@@ -40,65 +38,64 @@ public class MaskingService {
   }
 
   /**
-   * Steps: 
-   * 
-   * Create a masking.sql file. This will contain all required masking queries. 
+   * Steps:
+   * <p>
+   * Create a masking.sql file. This will contain all required masking queries.
    * Create Schema.
    * Create masking function for given masking rule.
    * Create View using those masking function.
    * Provide access to user to read data from masked view.
-   * 
-   * TODO :proper error handling.
-   * @throws IOException 
-   * @throws SQLException 
-   * @throws TemplateException 
-   * @throws IllegalAccessException 
-   * @throws InstantiationException 
    */
-  public void generateSqlQueryForMasking() throws IOException,
-  SQLException, TemplateException, InstantiationException, IllegalAccessException {
+  public void generateSqlQueryForMasking() {
 
     QueryBuilderService queryBuilder = new QueryBuilderService();
-    FileWriter writer = new FileWriter(tempFilePath);
+    try {
+      FileWriter writer = new FileWriter(tempFilePath);
 
-    /*
-     * Drop and Create redmask Schema and user schema.
-     * TODO :find a better way without dropping schema.
-     */
-    writer.append(queryBuilder.dropSchemaQuery(MASKING_FUNCTION_SCHEMA));
-    writer.append(queryBuilder.dropSchemaQuery(config.getUser()));
-    writer.append(queryBuilder.createSchemaQuery(MASKING_FUNCTION_SCHEMA));
-    writer.append(queryBuilder.createSchemaQuery(config.getUser()));
+      /*
+       * Drop and Create redmask Schema and user schema.
+       * TODO :find a better way without dropping schema.
+       */
+      log.info("Creating or replacing existing table view.");
+      writer.append(queryBuilder.dropSchemaQuery(MASKING_FUNCTION_SCHEMA));
+      writer.append(queryBuilder.dropSchemaQuery(config.getUser()));
+      writer.append(queryBuilder.createSchemaQuery(MASKING_FUNCTION_SCHEMA));
+      writer.append(queryBuilder.createSchemaQuery(config.getUser()));
 
-    /**
-     * For each masking rule, create postgres mask function.
-     * Create view for given table.
-     * 
-     * First generate query for creating function query for all the masking rule needed.
-     * Then we can generate query for creating masked view 
-     */
-    // Generate query for each table and append in the writer.
-    for (int i = 0; i < config.getRules().size(); i++) {
-      MaskingRule rule = config.getRules().get(i);
+      /**
+       * For each masking rule, create postgres mask function.
+       * Create view for given table.
+       *
+       * First generate query for creating function query for all the masking rule needed.
+       * Then we can generate query for creating masked view
+       */
+      // Generate query for each table and append in the writer.
+      log.info("Adding function and custom queries to build view.");
+      for (int i = 0; i < config.getRules().size(); i++) {
+        MaskingRule rule = config.getRules().get(i);
 
-      queryBuilder.buildFunctionsAndQueryForView(rule, writer, config, url);
+        queryBuilder.buildFunctionsAndQueryForView(rule, writer, config, url);
+      }
+
+      // Grant access of this masked view to user.
+      log.info("Required permission have been granted to the specified user.");
+      writer.append("\n\n-- Grant access to current user on schema: " + MASKING_FUNCTION_SCHEMA + ".\n");
+      writer.append("GRANT USAGE ON SCHEMA " + MASKING_FUNCTION_SCHEMA + " TO " + config.getUser() + ";");
+
+      writer.append("\n\n-- Grant access to current user on schema: " + config.getUser() + ".\n");
+      writer.append("GRANT ALL PRIVILEGES ON ALL TABLES IN "
+          + "SCHEMA " + config.getUser() + " TO " + config.getUser() + ";");
+
+      writer.flush();
+    } catch (IOException ex) {
+      log.error("Error while writing to file {}", tempFilePath.getName(), ex);
     }
-
-    // Grant access of this masked view to user.
-    writer.append("\n\n-- Grant access to current user on schema: " + MASKING_FUNCTION_SCHEMA + ".\n");
-    writer.append("GRANT USAGE ON SCHEMA " + MASKING_FUNCTION_SCHEMA + " TO " + config.getUser() + ";");
-
-    writer.append("\n\n-- Grant access to current user on schema: " + config.getUser() + ".\n");
-    writer.append("GRANT ALL PRIVILEGES ON ALL TABLES IN "
-        + "SCHEMA " + config.getUser() + " TO " + config.getUser() + ";");
-
-    writer.flush();
-    writer.close();
   }
 
-  public void executeSqlQueryForMasking() throws SQLException, FileNotFoundException {
+  public void executeSqlQueryForMasking() {
     if (!dryRunEnabled) {
-      try (Connection CONN = DriverManager.getConnection(url, 
+      log.info("Executing script in order to create view in the database ");
+      try (Connection CONN = DriverManager.getConnection(url,
           config.getSuperUser(), config.getSuperUserPassword())) {
         //Initialize the script runner
         ScriptRunner sr = new ScriptRunner(CONN);
@@ -109,14 +106,23 @@ public class MaskingService {
         //Running the script
         sr.setSendFullScript(true);
         sr.runScript(reader);
+      } catch (SQLException ex) {
+        log.error("Database Connection Error while executing masking script.", ex);
+      } catch (FileNotFoundException e) {
+        log.error("File {} Not Found", tempFilePath.getName(), e);
       }
     }
   }
 
-  private File createMaskingSqlFile() throws IOException {
+  private File createMaskingSqlFile() {
     // create a temp .sql file
-    File sqlFile = File.createTempFile("redmask-masking", ".sql");
-    log.info("Created a temp file at location: {}", sqlFile.getAbsolutePath());
+    File sqlFile = null;
+    try {
+      sqlFile = File.createTempFile("redmask-masking", ".sql");
+      log.info("Created a temp file at location: {}", sqlFile.getAbsolutePath());
+    } catch (IOException e) {
+      log.error("Error while creating tempfile redmask-masking.sql");
+    }
     return sqlFile;
   }
 

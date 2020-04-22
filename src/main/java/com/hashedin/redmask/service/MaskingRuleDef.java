@@ -1,10 +1,9 @@
 package com.hashedin.redmask.service;
 
 import com.hashedin.redmask.configurations.MaskType;
+import com.hashedin.redmask.configurations.MissingParameterException;
 import com.hashedin.redmask.configurations.TemplateConfiguration;
-import freemarker.template.TemplateException;
 
-import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
 
@@ -32,11 +31,9 @@ public abstract class MaskingRuleDef {
 
   public MaskingRuleDef() {}
 
-  public abstract void addFunctionDefinition(TemplateConfiguration config, Set<String> funcSet)
-      throws IOException, TemplateException;
+  public abstract void addFunctionDefinition(TemplateConfiguration config, Set<String> funcSet);
 
-  public abstract String getSubQuery(TemplateConfiguration config, String tableName)
-      throws IOException, TemplateException;
+  public abstract String getSubQuery(TemplateConfiguration config, String tableName) throws MissingParameterException;
 
   public String getColumnName() {
     return columnName;
