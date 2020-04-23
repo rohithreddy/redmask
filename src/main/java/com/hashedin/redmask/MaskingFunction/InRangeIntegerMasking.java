@@ -41,7 +41,7 @@ public class InRangeIntegerMasking extends MaskingRuleDef {
     return this.getColumnName();
   }
 
-  protected boolean validateAndAddParameters(List<String> parameters) {
+  private boolean validateAndAddParameters(List<String> parameters) {
     if ((this.getMaskParams().containsKey("min")) && (this.getMaskParams().containsKey("max"))) {
       int min = Integer.parseInt(this.getMaskParams().get("min"));
       int max = Integer.parseInt(this.getMaskParams().get("max"));

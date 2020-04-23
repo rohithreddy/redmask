@@ -2,7 +2,6 @@ package com.hashedin.redmask.service;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -91,12 +90,13 @@ public class MaskingService {
     writer.append("\n\n-- Grant access to current user on schema: " + config.getUser() + ".\n");
     writer.append("GRANT ALL PRIVILEGES ON ALL TABLES IN "
         + "SCHEMA " + config.getUser() + " TO " + config.getUser() + ";");
+    writer.append("\nGRANT USAGE ON SCHEMA " + config.getUser() + " TO " + config.getUser() + ";");
 
     writer.flush();
     writer.close();
   }
 
-  public void executeSqlQueryForMasking() throws SQLException, FileNotFoundException {
+  public void executeSqlQueryForMasking() throws SQLException, IOException {
     if (!dryRunEnabled) {
       try (Connection CONN = DriverManager.getConnection(url, 
           config.getSuperUser(), config.getSuperUserPassword())) {
@@ -109,6 +109,7 @@ public class MaskingService {
         //Running the script
         sr.setSendFullScript(true);
         sr.runScript(reader);
+        reader.close();
       }
     }
   }

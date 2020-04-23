@@ -14,6 +14,8 @@ public class ColumnRule {
   // A map(key, value) of additional parameters needed for this masking rule.
   private JsonNode maskParams;
 
+  public ColumnRule() {}
+
   public ColumnRule(String columnName, MaskType maskType, JsonNode maskParams) {
     this.columnName = columnName;
     this.maskType = maskType;

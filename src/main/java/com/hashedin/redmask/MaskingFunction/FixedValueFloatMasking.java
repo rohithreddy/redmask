@@ -41,7 +41,7 @@ public class FixedValueFloatMasking extends MaskingRuleDef {
     return this.getColumnName();
   }
 
-  protected boolean validateAndAddParameters(List<String> parameters) {
+  private boolean validateAndAddParameters(List<String> parameters) {
     if (this.getMaskParams().containsKey("value")) {
       // to assure the value is of Float type
       Float value = Float.parseFloat(this.getMaskParams().get("value"));

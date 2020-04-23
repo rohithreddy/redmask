@@ -26,7 +26,7 @@ public class BasePostgresTestContainer {
   public static PostgreSQLContainer postgres = new PostgreSQLContainer();
 
   @BeforeClass
-  public static void createDBConnection() {
+  public static void setup() {
     try {
       connection = DriverManager.getConnection(
           postgres.getJdbcUrl(),
@@ -45,7 +45,7 @@ public class BasePostgresTestContainer {
   }
 
   @AfterClass
-  public static void closeDBConnection(){
+  public static void tearDown(){
     try {
       connection.close();
       postgres.close();

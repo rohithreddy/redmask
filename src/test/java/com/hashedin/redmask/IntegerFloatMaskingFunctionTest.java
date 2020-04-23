@@ -16,7 +16,6 @@ import java.sql.Statement;
 public class IntegerFloatMaskingFunctionTest extends BasePostgresTestContainer {
 
   private static final Logger log = LogManager.getLogger(IntegerFloatMaskingFunctionTest.class);
-
   private static final String CREATE_FUNCTION = "CREATE OR REPLACE FUNCTION %s.%s";
 
   @Test

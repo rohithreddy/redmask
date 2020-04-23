@@ -16,7 +16,6 @@ import java.sql.Statement;
 public class StringMaskingFunctionTest extends BasePostgresTestContainer {
 
   private static final Logger log = LogManager.getLogger(StringMaskingFunctionTest.class);
-
   private static final String CREATE_FUNCTION = "CREATE OR REPLACE FUNCTION %s.%s";
 
   @BeforeClass

@@ -14,9 +14,11 @@ import java.util.List;
 
 public class RedMaskITUtils {
 
+  private static final String TABLE_NAME = "customer"; 
+
   public static List<MaskingRule> createMaskRule(ColumnRule columnRule) {
     MaskingRule rule = new MaskingRule();
-    rule.setTable("test_table");
+    rule.setTable(TABLE_NAME);
     rule.setColumns(Collections.singletonList(columnRule));
     List<MaskingRule> maskingRuleList = new LinkedList<>();
     maskingRuleList.add(rule);
