@@ -121,7 +121,7 @@ public class MaskingService {
       sqlFile = File.createTempFile("redmask-masking", ".sql");
       log.info("Created a temp file at location: {}", sqlFile.getAbsolutePath());
     } catch (IOException e) {
-      log.error("Error while creating tempfile redmask-masking.sql");
+      log.error("Error while creating temporary file \'redmask-masking.sql\'");
     }
     return sqlFile;
   }

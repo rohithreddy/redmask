@@ -42,7 +42,7 @@ public class QueryBuilderService {
     TemplateConfiguration templateConfig = config.getTemplateConfig();
 
     // get all columns of given table.
-    log.info("getting column data from existing table");
+    log.info("Getting column metadata from existing table.");
     String query = SELECT_QUERY + rule.getTable();
 
     try (Connection CONN = DriverManager.getConnection(url,
@@ -52,7 +52,7 @@ public class QueryBuilderService {
 
 
       MaskingRuleFactory columnRuleFactory = new MaskingRuleFactory();
-      log.info("Storing masking function names required to create the intended view");
+      log.info("Storing masking function names required to create the intended view.");
       Map<String, MaskingRuleDef> colMaskRuleMap = new HashMap<>();
       for (ColumnRule col : rule.getColumns()) {
         // Build MaskingRuleDef object.
@@ -77,7 +77,7 @@ public class QueryBuilderService {
     }
 
 
-    log.info("Appending Masking function definition to the temporary file.");
+    log.info("Appending Masking function definition to the temporary redmask-masking.sql file.");
     for (String functionDefinition : functionDefinitionSet) {
       //Appending each masking function to redmask-masking.sql file
       writer.append(functionDefinition);
