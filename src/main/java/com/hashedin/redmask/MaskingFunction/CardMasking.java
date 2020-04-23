@@ -60,7 +60,7 @@ public class CardMasking extends MaskingRuleDef {
 
   }
 
-  protected boolean validateAndAddParameters(List<String> parameters) {
+  private boolean validateAndAddParameters(List<String> parameters) {
     if (this.getMaskParams().containsKey("separator") && this.getMaskParams().containsKey("val1")
         && this.getMaskParams().containsKey("val2")) {
       String separator = this.getMaskParams().get("separator");

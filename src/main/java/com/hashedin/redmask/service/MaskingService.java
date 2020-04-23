@@ -81,10 +81,10 @@ public class MaskingService {
       log.info("Required permission have been granted to the specified user.");
       writer.append("\n\n-- Grant access to current user on schema: " + MASKING_FUNCTION_SCHEMA + ".\n");
       writer.append("GRANT USAGE ON SCHEMA " + MASKING_FUNCTION_SCHEMA + " TO " + config.getUser() + ";");
-
       writer.append("\n\n-- Grant access to current user on schema: " + config.getUser() + ".\n");
       writer.append("GRANT ALL PRIVILEGES ON ALL TABLES IN "
           + "SCHEMA " + config.getUser() + " TO " + config.getUser() + ";");
+      writer.append("\nGRANT USAGE ON SCHEMA " + config.getUser() + " TO " + config.getUser() + ";");
 
       writer.flush();
     } catch (IOException ex) {
@@ -106,10 +106,13 @@ public class MaskingService {
         //Running the script
         sr.setSendFullScript(true);
         sr.runScript(reader);
+        reader.close();
       } catch (SQLException ex) {
         log.error("Database Connection Error while executing masking script.", ex);
       } catch (FileNotFoundException e) {
         log.error("File {} Not Found", tempFilePath.getName(), e);
+      } catch (IOException e) {
+        log.error("Unable to close reader object", e);
       }
     }
   }

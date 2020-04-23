@@ -57,7 +57,7 @@ public class StringMasking extends MaskingRuleDef {
     return this.getColumnName();
   }
 
-  protected boolean validateAndAddParameters(List<String> parameters) {
+  private boolean validateAndAddParameters(List<String> parameters) {
     if (this.getMaskParams().containsKey("separator") && this.getMaskParams().containsKey("prefix")
         && this.getMaskParams().containsKey("suffix")) {
       String separator = this.getMaskParams().get("separator");

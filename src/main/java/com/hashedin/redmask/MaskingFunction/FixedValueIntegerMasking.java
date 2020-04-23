@@ -27,7 +27,7 @@ public class FixedValueIntegerMasking extends MaskingRuleDef {
     super(columnName, maskType, maskParams);
   }
 
-  FixedValueIntegerMasking() {
+  public FixedValueIntegerMasking() {
   }
 
   @Override
@@ -56,7 +56,7 @@ public class FixedValueIntegerMasking extends MaskingRuleDef {
     return this.getColumnName();
   }
 
-  protected boolean validateAndAddParameters(List<String> parameters) {
+  private boolean validateAndAddParameters(List<String> parameters) {
     if (this.getMaskParams().containsKey("value")) {
       // to assure the value is of Integer type
       int value = Integer.parseInt(this.getMaskParams().get("value"));

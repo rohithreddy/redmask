@@ -28,7 +28,7 @@ public class IntegerRangeMasking extends MaskingRuleDef {
     super(columnName, maskType, maskParams);
   }
 
-  IntegerRangeMasking() {
+  public IntegerRangeMasking() {
   }
 
   @Override
@@ -58,7 +58,7 @@ public class IntegerRangeMasking extends MaskingRuleDef {
 
   }
 
-  protected boolean validateAndAddParameters(List<String> parameters) {
+  private boolean validateAndAddParameters(List<String> parameters) {
     if (this.getMaskParams().containsKey("step")) {
       int step = Integer.parseInt(this.getMaskParams().get("step"));
       if (step > 0) {

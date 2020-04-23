@@ -60,7 +60,7 @@ public class EmailMasking extends MaskingRuleDef {
     return this.getColumnName();
   }
 
-  protected boolean validateAndAddParameters(List<String> parameters) {
+  private boolean validateAndAddParameters(List<String> parameters) {
     switch (this.getMaskType()) {
       case EMAIL_SHOW_DOMAIN:
         parameters.add("'domain'");

@@ -59,7 +59,7 @@ public class FixedSizeIntegerMasking extends MaskingRuleDef {
 
   }
 
-  protected boolean validateAndAddParameters(List<String> parameters) {
+  private boolean validateAndAddParameters(List<String> parameters) {
     if (this.getMaskParams().containsKey("size")) {
       int size = Integer.parseInt(this.getMaskParams().get("size"));
       if (size > 0) {
