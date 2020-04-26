@@ -53,7 +53,7 @@ public class MaskingQueryUtil {
   private static final String TEMPLATE_NAME = "create_function.txt";
   private static final String SCHEMA = "schema";
   private static final String MASKING_FUNCTION_NAME = "functionName";
-  
+
   private MaskingQueryUtil() {
     // No Use.
   }
@@ -73,50 +73,59 @@ public class MaskingQueryUtil {
   public static final String maskIntegerFixedSize(TemplateConfiguration config)
       throws IOException, TemplateException {
     String createFuncString = processTemplate(config, TEMPLATE_NAME, MASK_INTEGER_FIXED_SIZE_FUNC);
-    return MASK_INTEGER_FIXED_SIZE_COMMENT + createFuncString + readFunctionQueryFromSqlFile(MASK_INTEGER_FIXED_SIZE_FILE);
+    return MASK_INTEGER_FIXED_SIZE_COMMENT + createFuncString
+        + readFunctionQueryFromSqlFile(MASK_INTEGER_FIXED_SIZE_FILE);
   }
 
   public static final String maskIntegerInRange(TemplateConfiguration config)
       throws IOException, TemplateException {
-    String createFuncString = processTemplate(config, TEMPLATE_NAME, MASK_INTEGER_WITHIN_RANGE_FUNC);
-    return MASK_INTEGER_WITHIN_RANGE_COMMENT + createFuncString + readFunctionQueryFromSqlFile(MASK_INTEGER_WITHIN_RANGE_FILE);
+    String createFuncString = processTemplate(config, TEMPLATE_NAME,
+        MASK_INTEGER_WITHIN_RANGE_FUNC);
+    return MASK_INTEGER_WITHIN_RANGE_COMMENT + createFuncString
+        + readFunctionQueryFromSqlFile(MASK_INTEGER_WITHIN_RANGE_FILE);
   }
 
   public static final String maskIntegerFixedValue(TemplateConfiguration config)
       throws IOException, TemplateException {
     String createFuncString = processTemplate(config, TEMPLATE_NAME, MASK_INTEGER_FIXED_VALUE_FUNC);
-    return MASK_INTEGER_FIXED_VALUE_COMMENT + createFuncString + readFunctionQueryFromSqlFile(MASK_INTEGER_FIXED_VALUE_FILE);
+    return MASK_INTEGER_FIXED_VALUE_COMMENT + createFuncString
+        + readFunctionQueryFromSqlFile(MASK_INTEGER_FIXED_VALUE_FILE);
 
   }
 
   public static final String maskFloatFixedValue(TemplateConfiguration config)
       throws IOException, TemplateException {
     String createFuncString = processTemplate(config, TEMPLATE_NAME, MASK_FLOAT_FIXED_VALUE_FUNC);
-    return MASK_FLOAT_FIXED_VALUE_COMMENT + createFuncString + readFunctionQueryFromSqlFile(MASK_FLOAT_FIXED_VALUE_FILE);
+    return MASK_FLOAT_FIXED_VALUE_COMMENT + createFuncString
+        + readFunctionQueryFromSqlFile(MASK_FLOAT_FIXED_VALUE_FILE);
   }
 
   public static final String maskNumericRange(TemplateConfiguration config)
       throws IOException, TemplateException {
     String createFuncString = processTemplate(config, TEMPLATE_NAME, MASK_NUMERIC_RANGE_FUNC);
-    return MASK_NUMERIC_RANGE_COMMENT + createFuncString + readFunctionQueryFromSqlFile(MASK_NUMERIC_RANGE_FILE);
+    return MASK_NUMERIC_RANGE_COMMENT + createFuncString
+        + readFunctionQueryFromSqlFile(MASK_NUMERIC_RANGE_FILE);
   }
 
   public static final String maskIntegerRange(TemplateConfiguration config)
       throws IOException, TemplateException {
     String createFuncString = processTemplate(config, TEMPLATE_NAME, MASK_INTEGER_RANGE_FUNC);
-    return MASK_INTEGER_RANGE_COMMENT + createFuncString + readFunctionQueryFromSqlFile(MASK_INTEGER_RANGE_FILE);
+    return MASK_INTEGER_RANGE_COMMENT + createFuncString
+        + readFunctionQueryFromSqlFile(MASK_INTEGER_RANGE_FILE);
   }
 
   public static final String maskBigIntRange(TemplateConfiguration config)
       throws IOException, TemplateException {
     String createFuncString = processTemplate(config, TEMPLATE_NAME, MASK_BIGINT_RANGE_FUNC);
-    return MASK_BIGINT_RANGE_COMMENT + createFuncString + readFunctionQueryFromSqlFile(MASK_BIGINT_RANGE_FILE);
+    return MASK_BIGINT_RANGE_COMMENT + createFuncString
+        + readFunctionQueryFromSqlFile(MASK_BIGINT_RANGE_FILE);
   }
 
   public static final String maskNumbers(TemplateConfiguration config)
       throws IOException, TemplateException {
     String createFuncString = processTemplate(config, TEMPLATE_NAME, MASK_NUMBERS_FUNC);
-    return MASK_NUMBERS_COMMENT + createFuncString + readFunctionQueryFromSqlFile(MASK_NUMBERS_FILE);
+    return MASK_NUMBERS_COMMENT + createFuncString
+        + readFunctionQueryFromSqlFile(MASK_NUMBERS_FILE);
   }
 
   public static final String maskCard(TemplateConfiguration config)
@@ -134,8 +143,10 @@ public class MaskingQueryUtil {
 
 
   //To generate schema specific function definition
-  private static String processTemplate(TemplateConfiguration config, String templateName, String functionName)
-      throws  IOException, TemplateException {
+  private static String processTemplate(TemplateConfiguration config,
+                                        String templateName,
+                                        String functionName)
+      throws IOException, TemplateException {
     Map<String, String> input = new HashMap<String, String>();
     input.put(SCHEMA, MASKING_FUNCTION_SCHEMA);
     input.put(MASKING_FUNCTION_NAME, functionName);
@@ -149,7 +160,9 @@ public class MaskingQueryUtil {
 
 
   //TO generate sub queries with variable parameter length
-  public static String processQueryTemplate(TemplateConfiguration config, String functionName, List<String> parameters)
+  public static String processQueryTemplate(TemplateConfiguration config,
+                                            String functionName,
+                                            List<String> parameters)
       throws IOException, TemplateException {
     Map<String, Object> input = new HashMap<String, Object>();
     input.put(SCHEMA, MASKING_FUNCTION_SCHEMA);

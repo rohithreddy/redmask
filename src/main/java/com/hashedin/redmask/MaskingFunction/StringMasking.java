@@ -30,7 +30,7 @@ public class StringMasking extends MaskingRuleDef {
   private static final String PARAM_SHOW_LAST = "show_last";
   private static final String PARAM_SHOW_LAST_DEFAULT = "0";
 
-  private static final List<String> expectedParametersList = new ArrayList<String>(
+  private static final List<String> EXPECTED_PARAMETERS_LIST = new ArrayList<String>(
       Arrays.asList(PARAM_REPLACEMENT_PATTERN, PARAM_SHOW_FIRST, PARAM_SHOW_LAST));
 
   public StringMasking(
@@ -74,7 +74,7 @@ public class StringMasking extends MaskingRuleDef {
   private boolean validateAndAddParameters(List<String> parameters)
       throws InvalidParameterValueException, UnknownParameterException {
     for (String key : this.getMaskParams().keySet()) {
-      if (!expectedParametersList.contains(key)) {
+      if (!EXPECTED_PARAMETERS_LIST.contains(key)) {
         throw new UnknownParameterException("Unrecognised parameter" + key + " supplied to "
             + this.getMaskType() + " for column " + this.getColumnName());
       }

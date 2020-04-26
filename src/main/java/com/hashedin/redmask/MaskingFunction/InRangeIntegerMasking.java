@@ -27,7 +27,7 @@ public class InRangeIntegerMasking extends MaskingRuleDef {
   private static final String PARAM_MAXIMUM = "max";
   private static final String PARAM_MAXIMUM__DEFAULT = "10";
 
-  private static final List<String> expectedParametersList = new ArrayList<String>(
+  private static final List<String> EXPECTED_PARAMETERS_LIST = new ArrayList<String>(
       Arrays.asList(PARAM_MAXIMUM, PARAM_MINIMUM));
 
   public InRangeIntegerMasking(
@@ -69,7 +69,7 @@ public class InRangeIntegerMasking extends MaskingRuleDef {
   private boolean validateAndAddParameters(List<String> parameters)
       throws InvalidParameterValueException, UnknownParameterException {
     for (String key : this.getMaskParams().keySet()) {
-      if (!expectedParametersList.contains(key)) {
+      if (!EXPECTED_PARAMETERS_LIST.contains(key)) {
         throw new UnknownParameterException("Unrecognised parameter" + key + " supplied to "
             + this.getMaskType() + " for column " + this.getColumnName());
       }

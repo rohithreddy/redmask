@@ -62,11 +62,7 @@ public class RedMaskITTest extends BaseITPostgresTestContainer {
   public static void setup() throws SQLException {
     try {
       // Create a developer user.
-      connection = DriverManager.getConnection(
-          postgres.getJdbcUrl(),
-          postgres.getUsername(),
-          postgres.getPassword()
-      );
+      connection = DriverManager.getConnection(URL, SUPER_USER, SUPER_USER_PASSWORD);
       Statement statement = connection.createStatement();
       String createUser = "CREATE USER " + DEV_USER + " WITH PASSWORD '" + DEV_USER_PASSWORD + "'";
       statement.executeUpdate(createUser);
@@ -109,7 +105,7 @@ public class RedMaskITTest extends BaseITPostgresTestContainer {
 
       // Create a connection object using developer user.
       devConnection = DriverManager.getConnection(
-          postgres.getJdbcUrl(),
+          URL,
           DEV_USER,
           DEV_USER_PASSWORD
       );

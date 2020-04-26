@@ -89,10 +89,10 @@ public class EmailMasking extends MaskingRuleDef {
         if (this.getMaskParams().isEmpty() || this.getMaskParams() == null) {
           parameters.add(PARAM_SHOW_FIRST_CHARACTERS_DEFAULT);
         }
-        int show_characters = Integer.parseInt(this.getMaskParams()
+        int showCharacters = Integer.parseInt(this.getMaskParams()
             .getOrDefault(PARAM_SHOW_FIRST_CHARACTERS, PARAM_SHOW_FIRST_CHARACTERS_DEFAULT));
-        if (show_characters > 0) {
-          parameters.add(String.valueOf(show_characters));
+        if (showCharacters > 0) {
+          parameters.add(String.valueOf(showCharacters));
         } else {
           throw new InvalidParameterValueException(
               String.format("\'%s\' value should be greater than 0",

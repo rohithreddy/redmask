@@ -37,7 +37,9 @@ public class RedMaskITUtils {
     String json = "{ \"val\":4}";
     ObjectMapper objectMapper = new ObjectMapper();
     JsonNode maskParams = objectMapper.readTree(json);
-    ColumnRule columnRule = new ColumnRule("email", MaskType.EMAIL_SHOW_DOMAIN, maskParams);
+    ColumnRule columnRule = new ColumnRule("email",
+        MaskType.EMAIL_SHOW_DOMAIN,
+        maskParams);
     return createMaskRule(columnRule);
   }
 
@@ -45,7 +47,9 @@ public class RedMaskITUtils {
     String json = "{ \"val\":4}";
     ObjectMapper objectMapper = new ObjectMapper();
     JsonNode maskParams = objectMapper.readTree(json);
-    ColumnRule columnRule = new ColumnRule("email", MaskType.EMAIL_SHOW_FIRST_CHARACTER_DOMAIN, maskParams);
+    ColumnRule columnRule = new ColumnRule("email",
+        MaskType.EMAIL_SHOW_FIRST_CHARACTER_DOMAIN,
+        maskParams);
     return createMaskRule(columnRule);
   }
 
@@ -53,7 +57,9 @@ public class RedMaskITUtils {
     String json = "{ \"val\":4}";
     ObjectMapper objectMapper = new ObjectMapper();
     JsonNode maskParams = objectMapper.readTree(json);
-    ColumnRule columnRule = new ColumnRule("email", MaskType.EMAIL_SHOW_FIRST_CHARACTERS, maskParams);
+    ColumnRule columnRule = new ColumnRule("email",
+        MaskType.EMAIL_SHOW_FIRST_CHARACTERS,
+        maskParams);
     return createMaskRule(columnRule);
   }
 
@@ -61,7 +67,9 @@ public class RedMaskITUtils {
     String json = "{ \"val\":4}";
     ObjectMapper objectMapper = new ObjectMapper();
     JsonNode maskParams = objectMapper.readTree(json);
-    ColumnRule columnRule = new ColumnRule("email", MaskType.EMAIL_MASK_ALPHANUMERIC, maskParams);
+    ColumnRule columnRule = new ColumnRule("email",
+        MaskType.EMAIL_MASK_ALPHANUMERIC,
+        maskParams);
     return createMaskRule(columnRule);
   }
 
@@ -69,7 +77,9 @@ public class RedMaskITUtils {
     String json = "{ \"size\":4}";
     ObjectMapper objectMapper = new ObjectMapper();
     JsonNode maskParams = objectMapper.readTree(json);
-    ColumnRule columnRule = new ColumnRule("age", MaskType.RANDOM_INTEGER_FIXED_WIDTH, maskParams);
+    ColumnRule columnRule = new ColumnRule("age",
+        MaskType.RANDOM_INTEGER_FIXED_WIDTH,
+        maskParams);
     return createMaskRule(columnRule);
   }
 
@@ -78,7 +88,9 @@ public class RedMaskITUtils {
     String json = "{ \"min\":1, \"max\":10 }";
     ObjectMapper objectMapper = new ObjectMapper();
     JsonNode maskParams = objectMapper.readTree(json);
-    ColumnRule columnRule = new ColumnRule("age", MaskType.RANDOM_INTEGER_WITHIN_RANGE, maskParams);
+    ColumnRule columnRule = new ColumnRule("age",
+        MaskType.RANDOM_INTEGER_WITHIN_RANGE,
+        maskParams);
     return createMaskRule(columnRule);
   }
 
@@ -86,7 +98,9 @@ public class RedMaskITUtils {
     String json = "{ \"value\":4}";
     ObjectMapper objectMapper = new ObjectMapper();
     JsonNode maskParams = objectMapper.readTree(json);
-    ColumnRule columnRule = new ColumnRule("age", MaskType.INTEGER_FIXED_VALUE, maskParams);
+    ColumnRule columnRule = new ColumnRule("age",
+        MaskType.INTEGER_FIXED_VALUE,
+        maskParams);
     return createMaskRule(columnRule);
   }
 
@@ -94,7 +108,9 @@ public class RedMaskITUtils {
     String json = "{ \"value\":3.5}";
     ObjectMapper objectMapper = new ObjectMapper();
     JsonNode maskParams = objectMapper.readTree(json);
-    ColumnRule columnRule = new ColumnRule("interest", MaskType.FLOAT_FIXED_VALUE, maskParams);
+    ColumnRule columnRule = new ColumnRule("interest",
+        MaskType.FLOAT_FIXED_VALUE,
+        maskParams);
     return createMaskRule(columnRule);
   }
 
@@ -126,7 +142,9 @@ public class RedMaskITUtils {
     String json = "{ \"separator\":\"-\", \"val1\":5, \"val2\":0,}";
     ObjectMapper objectMapper = new ObjectMapper();
     JsonNode maskParams = objectMapper.readTree(json);
-    ColumnRule columnRule = new ColumnRule("card", MaskType.CREDIT_CARD_SHOW_FIRST, maskParams);
+    ColumnRule columnRule = new ColumnRule("card",
+        MaskType.CREDIT_CARD_SHOW_FIRST,
+        maskParams);
     return createMaskRule(columnRule);
   }
 
@@ -134,7 +152,9 @@ public class RedMaskITUtils {
     String json = "{ \"separator\":\"-\", \"val1\":0, \"val2\":5,}";
     ObjectMapper objectMapper = new ObjectMapper();
     JsonNode maskParams = objectMapper.readTree(json);
-    ColumnRule columnRule = new ColumnRule("card", MaskType.CREDIT_CARD_SHOW_LAST, maskParams);
+    ColumnRule columnRule = new ColumnRule("card",
+        MaskType.CREDIT_CARD_SHOW_LAST,
+        maskParams);
     return createMaskRule(columnRule);
   }
 
@@ -142,7 +162,9 @@ public class RedMaskITUtils {
     String json = "{ \"separator\":\"-\", \"val1\":3, \"val2\":3,}";
     ObjectMapper objectMapper = new ObjectMapper();
     JsonNode maskParams = objectMapper.readTree(json);
-    ColumnRule columnRule = new ColumnRule("card", MaskType.CREDIT_CARD_SHOW_FIRST_LAST, maskParams);
+    ColumnRule columnRule = new ColumnRule("card",
+        MaskType.CREDIT_CARD_SHOW_FIRST_LAST,
+        maskParams);
     return createMaskRule(columnRule);
   }
 

@@ -84,12 +84,15 @@ public class MaskingService {
 
       // Grant access of this masked view to user.
       log.info("Required permission have been granted to the specified user.");
-      writer.append("\n\n-- Grant access to current user on schema: " + MASKING_FUNCTION_SCHEMA + ".\n");
-      writer.append("GRANT USAGE ON SCHEMA " + MASKING_FUNCTION_SCHEMA + " TO " + config.getUser() + ";");
+      writer.append("\n\n-- Grant access to current user on schema: "
+          + MASKING_FUNCTION_SCHEMA + ".\n");
+      writer.append("GRANT USAGE ON SCHEMA " + MASKING_FUNCTION_SCHEMA
+          + " TO " + config.getUser() + ";");
       writer.append("\n\n-- Grant access to current user on schema: " + config.getUser() + ".\n");
       writer.append("GRANT ALL PRIVILEGES ON ALL TABLES IN "
           + "SCHEMA " + config.getUser() + " TO " + config.getUser() + ";");
-      writer.append("\nGRANT USAGE ON SCHEMA " + config.getUser() + " TO " + config.getUser() + ";");
+      writer.append("\nGRANT USAGE ON SCHEMA " + config.getUser()
+          + " TO " + config.getUser() + ";");
 
       writer.flush();
     } catch (IOException ex) {

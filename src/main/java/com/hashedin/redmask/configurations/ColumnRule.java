@@ -36,7 +36,9 @@ public class ColumnRule {
 
   @Override
   public String toString() {
-    return "ColumnRule [columnName=" + columnName + ", maskType=" + maskType + ", maskParams=" + maskParams + "]";
+    return "ColumnRule [columnName=" + columnName
+        + ", maskType=" + maskType
+        + ", maskParams=" + maskParams + "]";
   }
 
 }

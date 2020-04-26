@@ -78,7 +78,8 @@ public class QueryBuilderService {
       for (int i = 1; i <= rs.getColumnCount(); i++) {
         String colName = rs.getColumnName(i);
         if (colMaskRuleMap.containsKey(colName)) {
-          querySubstring.add(colMaskRuleMap.get(colName).getSubQuery(templateConfig, rule.getTable()));
+          querySubstring.add(colMaskRuleMap.get(colName)
+              .getSubQuery(templateConfig, rule.getTable()));
           colMaskRuleMap.get(colName).addFunctionDefinition(templateConfig, functionDefinitionSet);
         } else {
           querySubstring.add(rs.getColumnName(i));

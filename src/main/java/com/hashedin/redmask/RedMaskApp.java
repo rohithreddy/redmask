@@ -55,8 +55,8 @@ public class RedMaskApp implements Callable<Integer> {
       service.executeSqlQueryForMasking();
       log.info("Closing redmask application.");
       return 0;
-    } catch (UnknownParameterException | InvalidParameterValueException | TableNotFoundException |
-        ColumnNotFoundException ex) {
+    } catch (UnknownParameterException | InvalidParameterValueException | TableNotFoundException
+        | ColumnNotFoundException ex) {
       log.error("Error occurred while executing", ex);
     }
     return 0;
