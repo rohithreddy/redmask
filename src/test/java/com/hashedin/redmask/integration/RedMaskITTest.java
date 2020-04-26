@@ -1,7 +1,9 @@
 package com.hashedin.redmask.integration;
 
+import com.hashedin.redmask.configurations.ColumnNotFoundException;
 import com.hashedin.redmask.configurations.InvalidParameterValueException;
 import com.hashedin.redmask.configurations.MaskConfiguration;
+import com.hashedin.redmask.configurations.TableNotFoundException;
 import com.hashedin.redmask.configurations.UnknownParameterException;
 import com.hashedin.redmask.service.MaskingService;
 import org.apache.ibatis.jdbc.ScriptRunner;
@@ -47,12 +49,14 @@ public class RedMaskITTest extends BaseITPostgresTestContainer {
 
   /**
    * TODO Verify for masked data in respective column for string and card type.
-   * TODO add negative test cases
+   * TODO add negative test cases with exception
+   * TODO replace the below test with test on adding additional data, delete update of data on multiple tables and columns
    */
 
   /**
    * Creating table test_table and populating it
-   * @throws SQLException 
+   *
+   * @throws SQLException
    */
   @BeforeClass
   public static void setup() throws SQLException {
@@ -62,7 +66,7 @@ public class RedMaskITTest extends BaseITPostgresTestContainer {
           postgres.getJdbcUrl(),
           postgres.getUsername(),
           postgres.getPassword()
-          );
+      );
       Statement statement = connection.createStatement();
       String createUser = "CREATE USER " + DEV_USER + " WITH PASSWORD '" + DEV_USER_PASSWORD + "'";
       statement.executeUpdate(createUser);
@@ -101,14 +105,14 @@ public class RedMaskITTest extends BaseITPostgresTestContainer {
           URL,
           SUPER_USER,
           SUPER_USER_PASSWORD
-          );  
+      );
 
       // Create a connection object using developer user.
       devConnection = DriverManager.getConnection(
           postgres.getJdbcUrl(),
           DEV_USER,
           DEV_USER_PASSWORD
-          );
+      );
     } catch (SQLException e) {
       log.error("error creating connection object", e);
     }
@@ -134,7 +138,7 @@ public class RedMaskITTest extends BaseITPostgresTestContainer {
       config.setRules(getMaskRuleIntegerWithinRange());
       runRedMaskApp(config);
       Statement statement = devConnection.createStatement();
-      ResultSet rs = statement.executeQuery("SELECT age FROM " +  DEV_USER + "." + TABLE_NAME);
+      ResultSet rs = statement.executeQuery("SELECT age FROM " + DEV_USER + "." + TABLE_NAME);
       int rowCount = 0;
       while (rs.next()) {
         rowCount += 1;
@@ -157,7 +161,7 @@ public class RedMaskITTest extends BaseITPostgresTestContainer {
       config.setRules(getMaskRuleIntegerFixedSize());
       runRedMaskApp(config);
       Statement statement = devConnection.createStatement();
-      ResultSet rs = statement.executeQuery("SELECT age FROM " +  DEV_USER + "." + TABLE_NAME);
+      ResultSet rs = statement.executeQuery("SELECT age FROM " + DEV_USER + "." + TABLE_NAME);
       int rowCount = 0;
       while (rs.next()) {
         rowCount += 1;
@@ -180,7 +184,7 @@ public class RedMaskITTest extends BaseITPostgresTestContainer {
       config.setRules(getMaskRuleIntegerFixedValue());
       runRedMaskApp(config);
       Statement statement = devConnection.createStatement();
-      ResultSet rs = statement.executeQuery("SELECT age FROM " +  DEV_USER + "." + TABLE_NAME);
+      ResultSet rs = statement.executeQuery("SELECT age FROM " + DEV_USER + "." + TABLE_NAME);
       int rowCount = 0;
       while (rs.next()) {
         rowCount += 1;
@@ -202,7 +206,7 @@ public class RedMaskITTest extends BaseITPostgresTestContainer {
       config.setRules(getMaskRuleFloatFixedValue());
       runRedMaskApp(config);
       Statement statement = devConnection.createStatement();
-      ResultSet rs = statement.executeQuery("SELECT interest FROM " +  DEV_USER + "." + TABLE_NAME);
+      ResultSet rs = statement.executeQuery("SELECT interest FROM " + DEV_USER + "." + TABLE_NAME);
       int rowCount = 0;
       while (rs.next()) {
         rowCount += 1;
@@ -224,7 +228,7 @@ public class RedMaskITTest extends BaseITPostgresTestContainer {
       config.setRules(getMaskRuleIntegerRange());
       runRedMaskApp(config);
       Statement statement = devConnection.createStatement();
-      ResultSet rs = statement.executeQuery("SELECT age FROM " +  DEV_USER + "." + TABLE_NAME);
+      ResultSet rs = statement.executeQuery("SELECT age FROM " + DEV_USER + "." + TABLE_NAME);
       int rowCount = 0;
       while (rs.next()) {
         rowCount += 1;
@@ -246,7 +250,7 @@ public class RedMaskITTest extends BaseITPostgresTestContainer {
       config.setRules(getMaskRuleBigIntRange());
       runRedMaskApp(config);
       Statement statement = devConnection.createStatement();
-      ResultSet rs = statement.executeQuery("SELECT age FROM " +  DEV_USER + "." + TABLE_NAME);
+      ResultSet rs = statement.executeQuery("SELECT age FROM " + DEV_USER + "." + TABLE_NAME);
       int rowCount = 0;
       while (rs.next()) {
         rowCount += 1;
@@ -268,7 +272,7 @@ public class RedMaskITTest extends BaseITPostgresTestContainer {
       config.setRules(getMaskRuleNumericRange());
       runRedMaskApp(config);
       Statement statement = devConnection.createStatement();
-      ResultSet rs = statement.executeQuery("SELECT age FROM " +  DEV_USER + "." + TABLE_NAME);
+      ResultSet rs = statement.executeQuery("SELECT age FROM " + DEV_USER + "." + TABLE_NAME);
       int rowCount = 0;
       while (rs.next()) {
         rowCount += 1;
@@ -289,7 +293,8 @@ public class RedMaskITTest extends BaseITPostgresTestContainer {
       MaskingService service = new MaskingService(config, false);
       service.generateSqlQueryForMasking();
       service.executeSqlQueryForMasking();
-    } catch (UnknownParameterException | InvalidParameterValueException ex) {
+    } catch (UnknownParameterException | InvalidParameterValueException |
+        TableNotFoundException | ColumnNotFoundException ex) {
       log.error("Exception occurred while running the RedMaskApp", ex);
     }
   }

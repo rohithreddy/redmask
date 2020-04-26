@@ -1,8 +1,10 @@
 package com.hashedin.redmask;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.hashedin.redmask.configurations.ColumnNotFoundException;
 import com.hashedin.redmask.configurations.InvalidParameterValueException;
 import com.hashedin.redmask.configurations.MaskConfiguration;
+import com.hashedin.redmask.configurations.TableNotFoundException;
 import com.hashedin.redmask.configurations.UnknownParameterException;
 import com.hashedin.redmask.service.MaskingService;
 import org.apache.logging.log4j.LogManager;
@@ -16,10 +18,10 @@ import java.io.IOException;
 import java.util.concurrent.Callable;
 
 @Command(description = "Redmask Tool",
-  name = "redmask",
-  mixinStandardHelpOptions = true,
-  version = "redmask 1.0")
-public class RedMaskApp implements Callable<Integer>  {
+    name = "redmask",
+    mixinStandardHelpOptions = true,
+    version = "redmask 1.0")
+public class RedMaskApp implements Callable<Integer> {
 
   private static final Logger log = LogManager.getLogger(RedMaskApp.class);
 
@@ -53,7 +55,8 @@ public class RedMaskApp implements Callable<Integer>  {
       service.executeSqlQueryForMasking();
       log.info("Closing redmask application.");
       return 0;
-    } catch (UnknownParameterException | InvalidParameterValueException ex) {
+    } catch (UnknownParameterException | InvalidParameterValueException | TableNotFoundException |
+        ColumnNotFoundException ex) {
       log.error("Error occurred while executing", ex);
     }
     return 0;

@@ -1,8 +1,10 @@
 package com.hashedin.redmask.service;
 
+import com.hashedin.redmask.configurations.ColumnNotFoundException;
 import com.hashedin.redmask.configurations.InvalidParameterValueException;
 import com.hashedin.redmask.configurations.MaskConfiguration;
 import com.hashedin.redmask.configurations.MaskingRule;
+import com.hashedin.redmask.configurations.TableNotFoundException;
 import com.hashedin.redmask.configurations.UnknownParameterException;
 import org.apache.ibatis.jdbc.ScriptRunner;
 import org.apache.logging.log4j.LogManager;
@@ -48,7 +50,8 @@ public class MaskingService {
    * Provide access to user to read data from masked view.
    */
   public void generateSqlQueryForMasking()
-      throws InvalidParameterValueException, UnknownParameterException {
+      throws InvalidParameterValueException, UnknownParameterException, TableNotFoundException,
+      ColumnNotFoundException {
 
     QueryBuilderService queryBuilder = new QueryBuilderService();
     try {
