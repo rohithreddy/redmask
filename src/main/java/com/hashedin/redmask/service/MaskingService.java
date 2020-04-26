@@ -1,8 +1,9 @@
 package com.hashedin.redmask.service;
 
+import com.hashedin.redmask.configurations.InvalidParameterValueException;
 import com.hashedin.redmask.configurations.MaskConfiguration;
 import com.hashedin.redmask.configurations.MaskingRule;
-import com.hashedin.redmask.configurations.MissingParameterException;
+import com.hashedin.redmask.configurations.UnknownParameterException;
 import org.apache.ibatis.jdbc.ScriptRunner;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -30,7 +31,7 @@ public class MaskingService {
   // This temp would contain queries to create masked data.
   private final File tempFilePath;
 
-  public MaskingService(MaskConfiguration config, boolean dryRunEnabled) throws MissingParameterException {
+  public MaskingService(MaskConfiguration config, boolean dryRunEnabled) {
     this.config = config;
     this.url = url + config.getHost() + ":" + config.getPort() + "/" + config.getDatabase();
     this.dryRunEnabled = dryRunEnabled;
@@ -46,7 +47,8 @@ public class MaskingService {
    * Create View using those masking function.
    * Provide access to user to read data from masked view.
    */
-  public void generateSqlQueryForMasking() {
+  public void generateSqlQueryForMasking()
+      throws InvalidParameterValueException, UnknownParameterException {
 
     QueryBuilderService queryBuilder = new QueryBuilderService();
     try {

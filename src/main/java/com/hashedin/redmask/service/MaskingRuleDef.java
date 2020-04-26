@@ -1,24 +1,23 @@
 package com.hashedin.redmask.service;
 
 import com.hashedin.redmask.configurations.MaskType;
-import com.hashedin.redmask.configurations.MissingParameterException;
 import com.hashedin.redmask.configurations.TemplateConfiguration;
 
 import java.util.Map;
 import java.util.Set;
 
 /**
- * This is a abstract class which contains parameters and function 
+ * This is a abstract class which contains parameters and function
  * needed to implement/construct masking function definition.
- * 
+ * <p>
  * All Specific masking function class needs to extend this class.
  */
 public abstract class MaskingRuleDef {
 
-  private String columnName; 
+  private String columnName;
 
   // Value from MaskType enum.
-  private MaskType maskType; 
+  private MaskType maskType;
 
   // A map(key, value) of additional parameters needed for this masking rule.
   private Map<String, String> maskParams;
@@ -29,11 +28,12 @@ public abstract class MaskingRuleDef {
     this.maskParams = maskParams;
   }
 
-  public MaskingRuleDef() {}
+  public MaskingRuleDef() {
+  }
 
   public abstract void addFunctionDefinition(TemplateConfiguration config, Set<String> funcSet);
 
-  public abstract String getSubQuery(TemplateConfiguration config, String tableName) throws MissingParameterException;
+  public abstract String getSubQuery(TemplateConfiguration config, String tableName);
 
   public String getColumnName() {
     return columnName;

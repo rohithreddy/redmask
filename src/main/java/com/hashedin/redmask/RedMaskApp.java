@@ -3,7 +3,7 @@ package com.hashedin.redmask;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hashedin.redmask.configurations.InvalidParameterValueException;
 import com.hashedin.redmask.configurations.MaskConfiguration;
-import com.hashedin.redmask.configurations.MissingParameterException;
+import com.hashedin.redmask.configurations.UnknownParameterException;
 import com.hashedin.redmask.service.MaskingService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -53,7 +53,7 @@ public class RedMaskApp implements Callable<Integer>  {
       service.executeSqlQueryForMasking();
       log.info("Closing redmask application.");
       return 0;
-    } catch (MissingParameterException | InvalidParameterValueException ex) {
+    } catch (UnknownParameterException | InvalidParameterValueException ex) {
       log.error("Error occurred while executing", ex);
     }
     return 0;

@@ -3,11 +3,12 @@ package com.hashedin.redmask.service;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hashedin.redmask.configurations.ColumnRule;
+import com.hashedin.redmask.configurations.InvalidParameterValueException;
 import com.hashedin.redmask.configurations.MaskConfiguration;
 import com.hashedin.redmask.configurations.MaskingRule;
 import com.hashedin.redmask.configurations.MaskingRuleFactory;
-import com.hashedin.redmask.configurations.MissingParameterException;
 import com.hashedin.redmask.configurations.TemplateConfiguration;
+import com.hashedin.redmask.configurations.UnknownParameterException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.util.Strings;
@@ -33,8 +34,12 @@ public class QueryBuilderService {
   private static final String NEW_LINE = System.getProperty("line.separator");
   private static final String SELECT_QUERY = "SELECT * FROM ";
 
-  public void buildFunctionsAndQueryForView(MaskingRule rule, FileWriter writer,
-                                            MaskConfiguration config, String url) throws IOException, MissingParameterException {
+  public void buildFunctionsAndQueryForView(
+      MaskingRule rule,
+      FileWriter writer,
+      MaskConfiguration config,
+      String url)
+      throws IOException, InvalidParameterValueException, UnknownParameterException {
 
     Set<String> functionDefinitionSet = new LinkedHashSet<>();
     List<String> querySubstring = new ArrayList<>();
@@ -135,7 +140,7 @@ public class QueryBuilderService {
       }
 
       @Override
-      public String getSubQuery(TemplateConfiguration config, String tableName) throws MissingParameterException {
+      public String getSubQuery(TemplateConfiguration config, String tableName) {
         return Strings.EMPTY;
       }
 

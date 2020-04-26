@@ -1,8 +1,9 @@
 package com.hashedin.redmask.integration;
 
+import com.hashedin.redmask.configurations.InvalidParameterValueException;
 import com.hashedin.redmask.configurations.MaskConfiguration;
+import com.hashedin.redmask.configurations.UnknownParameterException;
 import com.hashedin.redmask.service.MaskingService;
-import freemarker.template.TemplateException;
 import org.apache.ibatis.jdbc.ScriptRunner;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -288,7 +289,7 @@ public class RedMaskITTest extends BaseITPostgresTestContainer {
       MaskingService service = new MaskingService(config, false);
       service.generateSqlQueryForMasking();
       service.executeSqlQueryForMasking();
-    } catch (IOException | InstantiationException | SQLException | IllegalAccessException | TemplateException ex) {
+    } catch (UnknownParameterException | InvalidParameterValueException ex) {
       log.error("Exception occurred while running the RedMaskApp", ex);
     }
   }

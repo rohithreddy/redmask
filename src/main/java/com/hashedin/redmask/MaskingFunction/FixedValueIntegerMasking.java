@@ -1,9 +1,10 @@
 package com.hashedin.redmask.MaskingFunction;
 
+import com.hashedin.redmask.configurations.InvalidParameterValueException;
 import com.hashedin.redmask.configurations.MaskType;
 import com.hashedin.redmask.configurations.MaskingConstants;
-import com.hashedin.redmask.configurations.MissingParameterException;
 import com.hashedin.redmask.configurations.TemplateConfiguration;
+import com.hashedin.redmask.configurations.UnknownParameterException;
 import com.hashedin.redmask.service.MaskingQueryUtil;
 import com.hashedin.redmask.service.MaskingRuleDef;
 import freemarker.template.TemplateException;
@@ -19,6 +20,9 @@ import java.util.Set;
 public class FixedValueIntegerMasking extends MaskingRuleDef {
   private static final Logger log = LogManager.getLogger(BigIntRangeMasking.class);
 
+  private static final String PARAM_VALUE = "value";
+
+  private static final String PARAM_VALUE_DEFAULT = "0";
 
   public FixedValueIntegerMasking(
       String columnName,
@@ -41,14 +45,14 @@ public class FixedValueIntegerMasking extends MaskingRuleDef {
   }
 
   @Override
-  public String getSubQuery(TemplateConfiguration config, String tableName) throws MissingParameterException {
+  public String getSubQuery(TemplateConfiguration config, String tableName)
+      throws InvalidParameterValueException, UnknownParameterException {
     List<String> paramsList = new ArrayList<>();
     paramsList.add(this.getColumnName());
     try {
       if (validateAndAddParameters(paramsList)) {
-        return MaskingQueryUtil.processQueryTemplate(config, MaskingConstants.MASK_INTEGER_FIXED_VALUE_FUNC, paramsList);
-      } else {
-        throw new MissingParameterException("Expected parameters: value ");
+        return MaskingQueryUtil.processQueryTemplate(config,
+            MaskingConstants.MASK_INTEGER_FIXED_VALUE_FUNC, paramsList);
       }
     } catch (IOException | TemplateException ex) {
       log.error("Error occurred while adding MaskFunction for Mask Type {} ", this.getMaskType());
@@ -56,13 +60,21 @@ public class FixedValueIntegerMasking extends MaskingRuleDef {
     return this.getColumnName();
   }
 
-  private boolean validateAndAddParameters(List<String> parameters) {
-    if (this.getMaskParams().containsKey("value")) {
-      // to assure the value is of Integer type
-      int value = Integer.parseInt(this.getMaskParams().get("value"));
-      parameters.add(String.valueOf(value));
+  private boolean validateAndAddParameters(List<String> parameters)
+      throws InvalidParameterValueException, UnknownParameterException {
+    for (String key : this.getMaskParams().keySet()) {
+      if (!key.equals(PARAM_VALUE)) {
+        throw new UnknownParameterException("Unrecognised parameter" + key + " supplied to "
+            + this.getMaskType() + " for column " + this.getColumnName());
+      }
+    }
+    if (this.getMaskParams().isEmpty() || this.getMaskParams() == null) {
+      parameters.add(PARAM_VALUE);
       return true;
     }
-    return false;
+    int value = Integer.parseInt(this.getMaskParams()
+        .getOrDefault(PARAM_VALUE, PARAM_VALUE_DEFAULT));
+    parameters.add(String.valueOf(value));
+    return true;
   }
 }
