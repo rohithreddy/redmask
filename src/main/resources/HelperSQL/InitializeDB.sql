@@ -13,3 +13,12 @@ insert into customer VALUES ('User Delta','userdelta@email.com',4,'2019-04-23',3
 insert into customer VALUES ('User Echo','userecho@email.com',5,'2019-03-22',2.9,'1234-5679-7892-0934');
 insert into customer VALUES ('User Foxtrot','userfoxtrot@email.com',5,'2019-02-21',10.25,'1234-4783-4234-7923');
 
+CREATE TABLE cashier(
+  name text,
+  sales numeric(15,2),
+  aadhaarNo bigint
+);
+
+insert into cashier VALUES ('Lucas Scott',1232.34,859734858437);
+insert into cashier VALUES ('Brooke Davis',47368.64,347892774389);
+insert into cashier VALUES ('Peyton Sawyer',34794.70,134974732856);

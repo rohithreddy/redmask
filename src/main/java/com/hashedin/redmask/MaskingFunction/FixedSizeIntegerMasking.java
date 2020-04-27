@@ -20,7 +20,7 @@ import java.util.Set;
 public class FixedSizeIntegerMasking extends MaskingRuleDef {
   private static final Logger log = LogManager.getLogger(BigIntRangeMasking.class);
 
-  private static final String PARAM_SIZE = "step";
+  private static final String PARAM_SIZE = "size";
   private static final String PARAM_SIZE_DEFAULT = "2";
 
   public FixedSizeIntegerMasking(

@@ -1,0 +1,1 @@
+DELETE FROM customer where name in ('User Delta', 'User Alpha');

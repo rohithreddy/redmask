@@ -12,7 +12,7 @@ public class BaseITPostgresTestContainer {
 
   private static final Logger log = LogManager.getLogger(BaseITPostgresTestContainer.class);
 
-  protected static final String TEST_DATA_FILE = "src/main/resources/HelperSQL/populateDB.sql";
+  protected static final String TEST_DATA_FILE = "src/main/resources/HelperSQL/InitializeDB.sql";
 
   protected static final String SCHEMA = "redmask";
   protected static Connection connection;
@@ -23,6 +23,7 @@ public class BaseITPostgresTestContainer {
   protected static final String DEV_USER = "developer";
   protected static final String DEV_USER_PASSWORD = "password";
   protected static final String TABLE_NAME = "customer";
+  protected static final String TABLE_NAME_2 = "cashier";
 
   @AfterClass
   public static void tearDown() {
