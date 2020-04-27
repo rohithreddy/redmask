@@ -7,10 +7,7 @@ import com.hashedin.redmask.configurations.MaskConfiguration;
 import com.hashedin.redmask.configurations.MaskingRule;
 import com.hashedin.redmask.configurations.MaskingRuleFactory;
 import com.hashedin.redmask.configurations.TemplateConfiguration;
-import com.hashedin.redmask.exception.ColumnNotFoundException;
-import com.hashedin.redmask.exception.InvalidParameterValueException;
-import com.hashedin.redmask.exception.TableNotFoundException;
-import com.hashedin.redmask.exception.UnknownParameterException;
+import com.hashedin.redmask.exception.RedmaskConfigException;
 
 import java.io.FileWriter;
 import java.io.IOException;
@@ -38,13 +35,8 @@ public class QueryBuilderService {
   private static final String NEW_LINE = System.getProperty("line.separator");
   private static final String SELECT_QUERY = "SELECT * FROM ";
 
-  public void buildFunctionsAndQueryForView(
-      MaskingRule rule,
-      FileWriter writer,
-      MaskConfiguration config,
-      String url)
-      throws IOException, InvalidParameterValueException, UnknownParameterException,
-      TableNotFoundException, ColumnNotFoundException {
+  public void buildFunctionsAndQueryForView(MaskingRule rule, FileWriter writer,
+      MaskConfiguration config, String url) throws IOException, RedmaskConfigException {
 
     Set<String> functionDefinitionSet = new LinkedHashSet<>();
     List<String> querySubstring = new ArrayList<>();
@@ -58,7 +50,7 @@ public class QueryBuilderService {
         config.getSuperUser(), config.getSuperUserPassword());
          Statement STATEMENT = CONN.createStatement()) {
       if (!isValidTable(CONN, rule.getTable())) {
-        throw new TableNotFoundException(rule.getTable());
+        throw new RedmaskConfigException(String.format("{} was not found.", rule.getTable()));
       }
       rs = STATEMENT.executeQuery(query).getMetaData();
       MaskingRuleFactory columnRuleFactory = new MaskingRuleFactory();
@@ -67,7 +59,9 @@ public class QueryBuilderService {
       for (ColumnRule col : rule.getColumns()) {
         // Build MaskingRuleDef object.
         if (!isValidTableColumn(CONN, rule.getTable(), col.getColumnName())) {
-          throw new ColumnNotFoundException(col.getColumnName(), rule.getTable());
+          
+          throw new RedmaskConfigException(
+              String.format("{} was not found in {} table.", col.getColumnName(), rule.getTable()));
         } else {
           MaskingRuleDef def = buildMaskingRuleDef(col);
           colMaskRuleMap.put(col.getColumnName(), columnRuleFactory.getColumnMaskingRule(def));

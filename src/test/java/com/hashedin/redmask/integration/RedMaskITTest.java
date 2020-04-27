@@ -1,10 +1,6 @@
 package com.hashedin.redmask.integration;
 
 import com.hashedin.redmask.configurations.MaskConfiguration;
-import com.hashedin.redmask.exception.ColumnNotFoundException;
-import com.hashedin.redmask.exception.InvalidParameterValueException;
-import com.hashedin.redmask.exception.TableNotFoundException;
-import com.hashedin.redmask.exception.UnknownParameterException;
 import com.hashedin.redmask.service.MaskingService;
 import org.apache.ibatis.jdbc.ScriptRunner;
 import org.junit.After;
@@ -237,13 +233,8 @@ public class RedMaskITTest extends BaseITPostgresTestContainer {
   }
 
   private void runRedMaskApp(MaskConfiguration config) {
-    try {
-      MaskingService service = new MaskingService(config, false);
-      service.generateSqlQueryForMasking();
-      service.executeSqlQueryForMasking();
-    } catch (UnknownParameterException | InvalidParameterValueException |
-        TableNotFoundException | ColumnNotFoundException ex) {
-      log.error("Exception occurred while running the RedMaskApp", ex);
-    }
+    MaskingService service = new MaskingService(config, false);
+    service.generateSqlQueryForMasking();
+    service.executeSqlQueryForMasking();
   }
 }

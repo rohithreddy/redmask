@@ -2,10 +2,6 @@ package com.hashedin.redmask;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hashedin.redmask.configurations.MaskConfiguration;
-import com.hashedin.redmask.exception.ColumnNotFoundException;
-import com.hashedin.redmask.exception.InvalidParameterValueException;
-import com.hashedin.redmask.exception.TableNotFoundException;
-import com.hashedin.redmask.exception.UnknownParameterException;
 import com.hashedin.redmask.service.MaskingService;
 
 import picocli.CommandLine;
@@ -64,8 +60,7 @@ public class RedMaskApp implements Callable<Integer> {
       service.executeSqlQueryForMasking();
       log.info("Closing redmask application.");
       return 0;
-    } catch (UnknownParameterException | InvalidParameterValueException | TableNotFoundException
-        | ColumnNotFoundException ex) {
+    } catch (Exception ex) {
       log.error("Error occurred while executing redmask application:", ex);
       log.error("Terminating the Redmask Application.");
     }
