@@ -2,6 +2,7 @@ package com.hashedin.redmask.integration;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.hashedin.redmask.configurations.MaskConfiguration;
+import com.hashedin.redmask.exception.RedmaskConfigException;
 import com.hashedin.redmask.service.MaskingService;
 import org.apache.ibatis.jdbc.ScriptRunner;
 import org.junit.After;
@@ -44,9 +45,9 @@ public class RedMaskITTest extends BaseITPostgresTestContainer {
   private static final int ORIGINAL_TABLE_1_ROW_COUNT = 6;
   private static final int ORIGINAL_TABLE_2_ROW_COUNT = 3;
 
-  private static final String INSERT_DATA_FILE = "src/main/resources/HelperSQL/InsertDB.sql";
-  private static final String UPDATE_DATA_FILE = "src/main/resources/HelperSQL/UpdateDB.sql";
-  private static final String DELETE_DATA_FILE = "src/main/resources/HelperSQL/DeleteDB.sql";
+  private static final String INSERT_DATA_FILE = "src/test/java/com/hashedin/redmask/resources/HelperSQL/InsertDB.sql";
+  private static final String UPDATE_DATA_FILE = "src/test/java/com/hashedin/redmask/resources/HelperSQL/UpdateDB.sql";
+  private static final String DELETE_DATA_FILE = "src/test/java/com/hashedin/redmask/resources/HelperSQL/DeleteDB.sql";
 
 
   private static MaskConfiguration config = null;
@@ -281,25 +282,33 @@ public class RedMaskITTest extends BaseITPostgresTestContainer {
     statement.close();
   }
 
-  @Test()
+  @Test(expected = RedmaskConfigException.class)
   public void testInvalidTableName() {
     config.setRules(createMaskingRuleVersionTwo());
-    runRedMaskApp(config);
+    try {
+      runRedMaskApp(config);
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
   }
 
-  @Test()
+  @Test(expected = RedmaskConfigException.class)
   public void testInvalidColumnName() throws IOException {
     config.setRules(createMaskingRuleVersionThree());
     runRedMaskApp(config);
   }
 
-  @Test()
+  @Test(expected = RedmaskConfigException.class)
   public void testInvalidParameterValue() throws JsonProcessingException {
     config.setRules(createMaskingRuleVersionFour());
-    runRedMaskApp(config);
+    try {
+      runRedMaskApp(config);
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
   }
 
-  @Test()
+  @Test(expected = RedmaskConfigException.class)
   public void testUnknownParameterSpecified() throws IOException {
     config.setRules(createMaskingRuleVersionFive());
     runRedMaskApp(config);
@@ -336,15 +345,10 @@ public class RedMaskITTest extends BaseITPostgresTestContainer {
 
   }
 
-
-  private void runRedMaskApp(MaskConfiguration config) {
-    try {
+  private void runRedMaskApp(MaskConfiguration config) throws IOException {
       MaskingService service = new MaskingService(config, false);
       service.generateSqlQueryForMasking();
       service.executeSqlQueryForMasking();
-    } catch (Exception ex) {
-      log.error("Exception occurred while running the RedMaskApp", ex);
-    }
   }
 
   private void addDataToTable() throws FileNotFoundException, SQLException {

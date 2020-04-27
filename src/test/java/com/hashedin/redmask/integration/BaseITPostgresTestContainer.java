@@ -12,7 +12,7 @@ public class BaseITPostgresTestContainer {
 
   private static final Logger log = LoggerFactory.getLogger(BaseITPostgresTestContainer.class);
 
-  protected static final String TEST_DATA_FILE = "src/main/resources/HelperSQL/InitializeDB.sql";
+  protected static final String TEST_DATA_FILE = "src/test/java/com/hashedin/redmask/resources/HelperSQL/InitializeDB.sql";
 
   protected static final String SCHEMA = "redmask";
   protected static Connection connection;

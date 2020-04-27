@@ -16,6 +16,13 @@ public class ColumnRule {
 
   public ColumnRule() {}
 
+  /**
+   * This function is only be used while writing integration test case to generate masking
+   * rule on a column
+   * @param columnName The column on which the mask is to be applied on.
+   * @param maskType The type of masking function to be used to mask the data.
+   * @param maskParams Additional configuration parameters for the mask type.
+   */
   public ColumnRule(String columnName, MaskType maskType, JsonNode maskParams) {
     this.columnName = columnName;
     this.maskType = maskType;

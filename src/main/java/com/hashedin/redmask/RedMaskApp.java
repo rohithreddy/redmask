@@ -48,7 +48,7 @@ public class RedMaskApp implements Callable<Integer> {
       config = new ObjectMapper().readValue(new File(configFilePath), MaskConfiguration.class);
     } catch (Exception ex) {
       // log the exception and exit the application.
-      log.error("Exception while reading masking config json file: " + ex);
+      log.error("Exception while reading masking config json file: ", ex);
       log.error("Terminating the Redmask Application.");
       return 0;
     }
@@ -59,7 +59,7 @@ public class RedMaskApp implements Callable<Integer> {
       log.info("Closing redmask application.");
       return 0;
     } catch (Exception ex) {
-      log.error("Error occurred while executing redmask application:", ex);
+      log.error("Error occurred while executing redmask application: ", ex);
       log.error("Terminating the Redmask Application.");
     }
     return 0;

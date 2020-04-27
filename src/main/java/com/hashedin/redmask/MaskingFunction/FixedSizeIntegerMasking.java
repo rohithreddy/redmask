@@ -4,6 +4,7 @@ import com.hashedin.redmask.configurations.MaskType;
 import com.hashedin.redmask.configurations.MaskingConstants;
 import com.hashedin.redmask.configurations.TemplateConfiguration;
 import com.hashedin.redmask.exception.RedmaskConfigException;
+import com.hashedin.redmask.exception.RedmaskRuntimeException;
 import com.hashedin.redmask.service.MaskingQueryUtil;
 import com.hashedin.redmask.service.MaskingRuleDef;
 import freemarker.template.TemplateException;
@@ -17,6 +18,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * This masking function generates a random number having a fixed number of digits as passed as the
+ * size parameter. This function can be applied on any integer type column.
+ */
 public class FixedSizeIntegerMasking extends MaskingRuleDef {
 
   private static final Logger log = LoggerFactory.getLogger(FixedSizeIntegerMasking.class);
@@ -34,6 +39,12 @@ public class FixedSizeIntegerMasking extends MaskingRuleDef {
   public FixedSizeIntegerMasking() {
   }
 
+  /**
+   * The function add the masking function definition to the be created to the funcSet.
+   *
+   * @param config  TemplateConfiguration object to be used to create the function definition.
+   * @param funcSet Set of function to be created to run the intended mask view.
+   */
   @Override
   public void addFunctionDefinition(TemplateConfiguration config, Set<String> funcSet) {
     try {
@@ -41,10 +52,22 @@ public class FixedSizeIntegerMasking extends MaskingRuleDef {
       funcSet.add(MaskingQueryUtil.maskIntegerFixedSize(config));
       log.info("Function added for Mask Type {}", this.getMaskType());
     } catch (IOException | TemplateException ex) {
-      log.error("Error occurred while adding MaskFunction for Mask Type {} ", this.getMaskType());
+      throw new RedmaskRuntimeException(String.format("Error occurred while adding MaskFunction"
+          + " for Mask Type %s ", this.getMaskType()), ex);
     }
   }
 
+  /**
+   * This function is used to generate the SQL subquery that applies the intended mask onto
+   * the column and add an alias as the original column name
+   *
+   * @param config    Template configuration in order to access the template used to create the
+   *                  subquery.
+   * @param tableName The name of the table.
+   * @return The SubQuery designed specifically as per the mask and the masking parameters
+   * provided by the user.
+   * @throws RedmaskConfigException
+   */
   @Override
   public String getSubQuery(TemplateConfiguration config, String tableName)
       throws RedmaskConfigException {
@@ -56,12 +79,29 @@ public class FixedSizeIntegerMasking extends MaskingRuleDef {
             MaskingConstants.MASK_INTEGER_FIXED_SIZE_FUNC, paramsList);
       }
     } catch (IOException | TemplateException ex) {
-      log.error("Error occurred while adding MaskFunction for Mask Type {} ", this.getMaskType());
+      throw new RedmaskRuntimeException(String.format("Error occurred while making SQL Sub query"
+              + "for column  %s  in table %s for Mask Type %s ", this.getColumnName(),
+          tableName, this.getMaskType()), ex);
     }
     return this.getColumnName();
 
   }
 
+  /**
+   * <p>
+   * This function validates whether the correct parameter have been supplied by
+   * the user in the configuration file. It also check whether each parameter has a valid value and
+   * then adds these parameter in their respective order into the parameter list.
+   * </p>
+   * <p>
+   * The Function will add the default value of the parameters value is not passed in the
+   * maskparams config.
+   * </p>
+   *
+   * @param parameters List of parameters required to create the intended mask.
+   * @return The list of validated parameter
+   * @throws RedmaskConfigException
+   */
   private boolean validateAndAddParameters(List<String> parameters)
       throws RedmaskConfigException {
     for (String key : this.getMaskParams().keySet()) {

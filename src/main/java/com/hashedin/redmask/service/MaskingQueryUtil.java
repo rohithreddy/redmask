@@ -47,6 +47,10 @@ import static com.hashedin.redmask.configurations.MaskingConstants.MASK_STRING_C
 import static com.hashedin.redmask.configurations.MaskingConstants.MASK_STRING_FILE;
 import static com.hashedin.redmask.configurations.MaskingConstants.MASK_STRING_FUNC;
 
+/**
+ * This class contain function that will add the masking function to the created for the inputted
+ * masking rules.
+ */
 public class MaskingQueryUtil {
 
   private static final String MASKING_FUNCTION_SCHEMA = "redmask";
