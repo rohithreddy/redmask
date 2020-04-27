@@ -2,13 +2,9 @@ package com.hashedin.redmask;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hashedin.redmask.configurations.MaskConfiguration;
-import com.hashedin.redmask.exception.ColumnNotFoundException;
-import com.hashedin.redmask.exception.InvalidParameterValueException;
-import com.hashedin.redmask.exception.TableNotFoundException;
-import com.hashedin.redmask.exception.UnknownParameterException;
 import com.hashedin.redmask.service.MaskingService;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -23,7 +19,7 @@ import java.util.concurrent.Callable;
     version = "redmask 1.0")
 public class RedMaskApp implements Callable<Integer> {
 
-  private static final Logger log = LogManager.getLogger(RedMaskApp.class);
+  private static final Logger log = LoggerFactory.getLogger(RedMaskApp.class);
 
   /*
    *  TODO :Implement static masking feature and may be we will need a 
@@ -53,6 +49,7 @@ public class RedMaskApp implements Callable<Integer> {
     } catch (Exception ex) {
       // log the exception and exit the application.
       log.error("Exception while reading masking config json file: " + ex);
+      log.error("Terminating the Redmask Application.");
       return 0;
     }
     try {
@@ -61,9 +58,9 @@ public class RedMaskApp implements Callable<Integer> {
       service.executeSqlQueryForMasking();
       log.info("Closing redmask application.");
       return 0;
-    } catch (UnknownParameterException | InvalidParameterValueException | TableNotFoundException
-        | ColumnNotFoundException ex) {
+    } catch (Exception ex) {
       log.error("Error occurred while executing redmask application:", ex);
+      log.error("Terminating the Redmask Application.");
     }
     return 0;
   }

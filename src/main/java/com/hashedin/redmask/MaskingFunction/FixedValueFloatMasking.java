@@ -3,13 +3,10 @@ package com.hashedin.redmask.MaskingFunction;
 import com.hashedin.redmask.configurations.MaskType;
 import com.hashedin.redmask.configurations.MaskingConstants;
 import com.hashedin.redmask.configurations.TemplateConfiguration;
-import com.hashedin.redmask.exception.InvalidParameterValueException;
-import com.hashedin.redmask.exception.UnknownParameterException;
+import com.hashedin.redmask.exception.RedmaskConfigException;
 import com.hashedin.redmask.service.MaskingQueryUtil;
 import com.hashedin.redmask.service.MaskingRuleDef;
 import freemarker.template.TemplateException;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -17,8 +14,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class FixedValueFloatMasking extends MaskingRuleDef {
-  private static final Logger log = LogManager.getLogger(BigIntRangeMasking.class);
+
+  private static final Logger log = LoggerFactory.getLogger(FixedValueFloatMasking.class);
 
   private static final String PARAM_VALUE = "value";
 
@@ -48,7 +49,7 @@ public class FixedValueFloatMasking extends MaskingRuleDef {
 
   @Override
   public String getSubQuery(TemplateConfiguration config, String tableName)
-      throws InvalidParameterValueException, UnknownParameterException {
+      throws RedmaskConfigException {
     List<String> paramsList = new ArrayList<>();
     paramsList.add(this.getColumnName());
     try {
@@ -63,10 +64,10 @@ public class FixedValueFloatMasking extends MaskingRuleDef {
   }
 
   private boolean validateAndAddParameters(List<String> parameters)
-      throws InvalidParameterValueException, UnknownParameterException {
+      throws RedmaskConfigException {
     for (String key : this.getMaskParams().keySet()) {
       if (!key.equals(PARAM_VALUE)) {
-        throw new UnknownParameterException("Unrecognised parameter" + key + " supplied to "
+        throw new RedmaskConfigException("Unrecognised parameter" + key + " supplied to "
             + this.getMaskType() + " for column " + this.getColumnName());
       }
     }

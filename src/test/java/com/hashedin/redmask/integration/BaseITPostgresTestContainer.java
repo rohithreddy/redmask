@@ -1,16 +1,16 @@
 package com.hashedin.redmask.integration;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.junit.AfterClass;
 import org.junit.ClassRule;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.PostgreSQLContainer;
 
 import java.sql.Connection;
 
 public class BaseITPostgresTestContainer {
 
-  private static final Logger log = LogManager.getLogger(BaseITPostgresTestContainer.class);
+  private static final Logger log = LoggerFactory.getLogger(BaseITPostgresTestContainer.class);
 
   protected static final String TEST_DATA_FILE = "src/main/resources/HelperSQL/InitializeDB.sql";
 
