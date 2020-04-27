@@ -2,12 +2,15 @@ package com.hashedin.redmask.service;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.hashedin.redmask.configurations.ColumnNotFoundException;
 import com.hashedin.redmask.configurations.ColumnRule;
+import com.hashedin.redmask.configurations.InvalidParameterValueException;
 import com.hashedin.redmask.configurations.MaskConfiguration;
 import com.hashedin.redmask.configurations.MaskingRule;
 import com.hashedin.redmask.configurations.MaskingRuleFactory;
-import com.hashedin.redmask.configurations.MissingParameterException;
+import com.hashedin.redmask.configurations.TableNotFoundException;
 import com.hashedin.redmask.configurations.TemplateConfiguration;
+import com.hashedin.redmask.configurations.UnknownParameterException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.util.Strings;
@@ -15,7 +18,9 @@ import org.apache.logging.log4j.util.Strings;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.sql.Connection;
+import java.sql.DatabaseMetaData;
 import java.sql.DriverManager;
+import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -33,14 +38,18 @@ public class QueryBuilderService {
   private static final String NEW_LINE = System.getProperty("line.separator");
   private static final String SELECT_QUERY = "SELECT * FROM ";
 
-  public void buildFunctionsAndQueryForView(MaskingRule rule, FileWriter writer,
-                                            MaskConfiguration config, String url) throws IOException, MissingParameterException {
+  public void buildFunctionsAndQueryForView(
+      MaskingRule rule,
+      FileWriter writer,
+      MaskConfiguration config,
+      String url)
+      throws IOException, InvalidParameterValueException, UnknownParameterException,
+      TableNotFoundException, ColumnNotFoundException {
 
     Set<String> functionDefinitionSet = new LinkedHashSet<>();
     List<String> querySubstring = new ArrayList<>();
     ResultSetMetaData rs = null;
     TemplateConfiguration templateConfig = config.getTemplateConfig();
-
     // get all columns of given table.
     log.info("Getting column metadata from existing table.");
     String query = SELECT_QUERY + rule.getTable();
@@ -48,25 +57,29 @@ public class QueryBuilderService {
     try (Connection CONN = DriverManager.getConnection(url,
         config.getSuperUser(), config.getSuperUserPassword());
          Statement STATEMENT = CONN.createStatement()) {
+      if (!isValidTable(CONN, rule.getTable())) {
+        throw new TableNotFoundException(rule.getTable());
+      }
       rs = STATEMENT.executeQuery(query).getMetaData();
-
-
       MaskingRuleFactory columnRuleFactory = new MaskingRuleFactory();
       log.info("Storing masking function names required to create the intended view.");
       Map<String, MaskingRuleDef> colMaskRuleMap = new HashMap<>();
       for (ColumnRule col : rule.getColumns()) {
         // Build MaskingRuleDef object.
-        MaskingRuleDef def = buildMaskingRuleDef(col);
-        colMaskRuleMap.put(col.getColumnName(), columnRuleFactory.getColumnMaskingRule(def));
+        if (!isValidTableColumn(CONN, rule.getTable(), col.getColumnName())) {
+          throw new ColumnNotFoundException(col.getColumnName(), rule.getTable());
+        } else {
+          MaskingRuleDef def = buildMaskingRuleDef(col);
+          colMaskRuleMap.put(col.getColumnName(), columnRuleFactory.getColumnMaskingRule(def));
+        }
       }
-
-      // TODO :Add validation, if column to be masked does not exists.
-
+      //TODO Validate maskType and column type compatibility.
       // Dynamically build sub query part for create view.
       for (int i = 1; i <= rs.getColumnCount(); i++) {
         String colName = rs.getColumnName(i);
         if (colMaskRuleMap.containsKey(colName)) {
-          querySubstring.add(colMaskRuleMap.get(colName).getSubQuery(templateConfig, rule.getTable()));
+          querySubstring.add(colMaskRuleMap.get(colName)
+              .getSubQuery(templateConfig, rule.getTable()));
           colMaskRuleMap.get(colName).addFunctionDefinition(templateConfig, functionDefinitionSet);
         } else {
           querySubstring.add(rs.getColumnName(i));
@@ -135,10 +148,38 @@ public class QueryBuilderService {
       }
 
       @Override
-      public String getSubQuery(TemplateConfiguration config, String tableName) throws MissingParameterException {
+      public String getSubQuery(TemplateConfiguration config, String tableName) {
         return Strings.EMPTY;
       }
 
     };
+  }
+
+  private boolean isValidTable(Connection connection, String tableName) {
+    try {
+      DatabaseMetaData metaData = connection.getMetaData();
+      ResultSet rs = metaData.getTables(null, null, tableName, null);
+      if (rs.next()) {
+        return true;
+      }
+      return false;
+    } catch (SQLException ex) {
+      log.error("Error getting metadata from SQL Database");
+    }
+    return false;
+  }
+
+  private boolean isValidTableColumn(Connection connection, String tableName, String columnName) {
+    try {
+      DatabaseMetaData metaData = connection.getMetaData();
+      ResultSet rs = metaData.getColumns(null, null, tableName, columnName);
+      if (rs.next()) {
+        return true;
+      }
+      return false;
+    } catch (SQLException ex) {
+      log.error("Error getting metadata from SQL Database");
+    }
+    return false;
   }
 }

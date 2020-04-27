@@ -1,8 +1,11 @@
 package com.hashedin.redmask.service;
 
+import com.hashedin.redmask.configurations.ColumnNotFoundException;
+import com.hashedin.redmask.configurations.InvalidParameterValueException;
 import com.hashedin.redmask.configurations.MaskConfiguration;
 import com.hashedin.redmask.configurations.MaskingRule;
-import com.hashedin.redmask.configurations.MissingParameterException;
+import com.hashedin.redmask.configurations.TableNotFoundException;
+import com.hashedin.redmask.configurations.UnknownParameterException;
 import org.apache.ibatis.jdbc.ScriptRunner;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -30,7 +33,7 @@ public class MaskingService {
   // This temp would contain queries to create masked data.
   private final File tempFilePath;
 
-  public MaskingService(MaskConfiguration config, boolean dryRunEnabled) throws MissingParameterException {
+  public MaskingService(MaskConfiguration config, boolean dryRunEnabled) {
     this.config = config;
     this.url = url + config.getHost() + ":" + config.getPort() + "/" + config.getDatabase();
     this.dryRunEnabled = dryRunEnabled;
@@ -46,7 +49,9 @@ public class MaskingService {
    * Create View using those masking function.
    * Provide access to user to read data from masked view.
    */
-  public void generateSqlQueryForMasking() {
+  public void generateSqlQueryForMasking()
+      throws InvalidParameterValueException, UnknownParameterException, TableNotFoundException,
+      ColumnNotFoundException {
 
     QueryBuilderService queryBuilder = new QueryBuilderService();
     try {
@@ -79,12 +84,15 @@ public class MaskingService {
 
       // Grant access of this masked view to user.
       log.info("Required permission have been granted to the specified user.");
-      writer.append("\n\n-- Grant access to current user on schema: " + MASKING_FUNCTION_SCHEMA + ".\n");
-      writer.append("GRANT USAGE ON SCHEMA " + MASKING_FUNCTION_SCHEMA + " TO " + config.getUser() + ";");
+      writer.append("\n\n-- Grant access to current user on schema: "
+          + MASKING_FUNCTION_SCHEMA + ".\n");
+      writer.append("GRANT USAGE ON SCHEMA " + MASKING_FUNCTION_SCHEMA
+          + " TO " + config.getUser() + ";");
       writer.append("\n\n-- Grant access to current user on schema: " + config.getUser() + ".\n");
       writer.append("GRANT ALL PRIVILEGES ON ALL TABLES IN "
           + "SCHEMA " + config.getUser() + " TO " + config.getUser() + ";");
-      writer.append("\nGRANT USAGE ON SCHEMA " + config.getUser() + " TO " + config.getUser() + ";");
+      writer.append("\nGRANT USAGE ON SCHEMA " + config.getUser()
+          + " TO " + config.getUser() + ";");
 
       writer.flush();
     } catch (IOException ex) {

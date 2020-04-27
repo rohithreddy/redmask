@@ -3,8 +3,8 @@ package com.hashedin.redmask.MaskingFunction;
 import com.hashedin.redmask.configurations.InvalidParameterValueException;
 import com.hashedin.redmask.configurations.MaskType;
 import com.hashedin.redmask.configurations.MaskingConstants;
-import com.hashedin.redmask.configurations.MissingParameterException;
 import com.hashedin.redmask.configurations.TemplateConfiguration;
+import com.hashedin.redmask.configurations.UnknownParameterException;
 import com.hashedin.redmask.service.MaskingQueryUtil;
 import com.hashedin.redmask.service.MaskingRuleDef;
 import freemarker.template.TemplateException;
@@ -20,6 +20,9 @@ import java.util.Set;
 public class IntegerRangeMasking extends MaskingRuleDef {
   private static final Logger log = LogManager.getLogger(BigIntRangeMasking.class);
 
+  private static final String PARAM_STEP = "step";
+
+  private static final String PARAM_STEP_DEFAULT = "10";
 
   public IntegerRangeMasking(
       String columnName,
@@ -42,14 +45,14 @@ public class IntegerRangeMasking extends MaskingRuleDef {
   }
 
   @Override
-  public String getSubQuery(TemplateConfiguration config, String tableName) throws MissingParameterException {
+  public String getSubQuery(TemplateConfiguration config, String tableName)
+      throws InvalidParameterValueException, UnknownParameterException {
     List<String> paramsList = new ArrayList<>();
     paramsList.add(this.getColumnName());
     try {
       if (validateAndAddParameters(paramsList)) {
-        return MaskingQueryUtil.processQueryTemplate(config, MaskingConstants.MASK_INTEGER_RANGE_FUNC, paramsList);
-      } else {
-        throw new MissingParameterException("Expected parameters: step ");
+        return MaskingQueryUtil.processQueryTemplate(config,
+            MaskingConstants.MASK_INTEGER_RANGE_FUNC, paramsList);
       }
     } catch (IOException | TemplateException ex) {
       log.error("Error occurred while adding MaskFunction for Mask Type {} ", this.getMaskType());
@@ -58,16 +61,25 @@ public class IntegerRangeMasking extends MaskingRuleDef {
 
   }
 
-  private boolean validateAndAddParameters(List<String> parameters) {
-    if (this.getMaskParams().containsKey("step")) {
-      int step = Integer.parseInt(this.getMaskParams().get("step"));
-      if (step > 0) {
-        parameters.add(String.valueOf(step));
-        return true;
-      } else {
-        throw new InvalidParameterValueException("\'Step\' value should be greater than 0");
+  private boolean validateAndAddParameters(List<String> parameters)
+      throws InvalidParameterValueException, UnknownParameterException {
+    for (String key : this.getMaskParams().keySet()) {
+      if (!key.equals(PARAM_STEP)) {
+        throw new UnknownParameterException("Unrecognised parameter" + key + " supplied to "
+            + this.getMaskType() + " for column " + this.getColumnName());
       }
     }
-    return false;
+    if (this.getMaskParams().isEmpty() || this.getMaskParams() == null) {
+      parameters.add(PARAM_STEP);
+      return true;
+    }
+    int step = Integer.parseInt(this.getMaskParams().getOrDefault(PARAM_STEP, PARAM_STEP_DEFAULT));
+    if (step > 0) {
+      parameters.add(String.valueOf(step));
+      return true;
+    } else {
+      throw new InvalidParameterValueException(
+          String.format("\'%s\' value should be greater than 0", PARAM_STEP));
+    }
   }
 }
