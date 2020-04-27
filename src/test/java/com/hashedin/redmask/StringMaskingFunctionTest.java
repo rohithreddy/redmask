@@ -1,11 +1,11 @@
 package com.hashedin.redmask;
 
 import com.hashedin.redmask.configurations.MaskingConstants;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.sql.PreparedStatement;
@@ -17,7 +17,7 @@ import static com.hashedin.redmask.configurations.MaskingConstants.MASK_STRING_F
 
 public class StringMaskingFunctionTest extends BasePostgresTestContainer {
 
-  private static final Logger log = LogManager.getLogger(StringMaskingFunctionTest.class);
+  private static final Logger log = LoggerFactory.getLogger(StringMaskingFunctionTest.class);
   private static final String CREATE_FUNCTION = "CREATE OR REPLACE FUNCTION %s.%s";
 
   @BeforeClass

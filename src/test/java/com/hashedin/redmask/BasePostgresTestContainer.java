@@ -1,11 +1,11 @@
 package com.hashedin.redmask;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.PostgreSQLContainer;
 
 import java.io.FileInputStream;
@@ -18,7 +18,8 @@ import java.sql.SQLException;
 
 public class BasePostgresTestContainer {
 
-  private static final Logger log = LogManager.getLogger(BasePostgresTestContainer.class);
+  private static final Logger log = LoggerFactory.getLogger(BasePostgresTestContainer.class);
+
   protected static final String SCHEMA = "redmask";
   protected static Connection connection;
   

@@ -8,8 +8,9 @@ import com.hashedin.redmask.exception.UnknownParameterException;
 import com.hashedin.redmask.service.MaskingQueryUtil;
 import com.hashedin.redmask.service.MaskingRuleDef;
 import freemarker.template.TemplateException;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -18,7 +19,8 @@ import java.util.Map;
 import java.util.Set;
 
 public class FixedSizeIntegerMasking extends MaskingRuleDef {
-  private static final Logger log = LogManager.getLogger(BigIntRangeMasking.class);
+
+  private static final Logger log = LoggerFactory.getLogger(FixedSizeIntegerMasking.class);
 
   private static final String PARAM_SIZE = "step";
   private static final String PARAM_SIZE_DEFAULT = "2";

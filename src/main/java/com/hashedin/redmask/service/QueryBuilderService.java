@@ -12,10 +12,6 @@ import com.hashedin.redmask.exception.InvalidParameterValueException;
 import com.hashedin.redmask.exception.TableNotFoundException;
 import com.hashedin.redmask.exception.UnknownParameterException;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.util.Strings;
-
 import java.io.FileWriter;
 import java.io.IOException;
 import java.sql.Connection;
@@ -32,9 +28,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class QueryBuilderService {
 
-  private static final Logger log = LogManager.getLogger(QueryBuilderService.class);
+  private static final Logger log = LoggerFactory.getLogger(QueryBuilderService.class);
 
   private static final String NEW_LINE = System.getProperty("line.separator");
   private static final String SELECT_QUERY = "SELECT * FROM ";
@@ -150,7 +149,7 @@ public class QueryBuilderService {
 
       @Override
       public String getSubQuery(TemplateConfiguration config, String tableName) {
-        return Strings.EMPTY;
+        return "";
       }
 
     };

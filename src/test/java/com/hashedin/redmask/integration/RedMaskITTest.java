@@ -7,13 +7,13 @@ import com.hashedin.redmask.exception.TableNotFoundException;
 import com.hashedin.redmask.exception.UnknownParameterException;
 import com.hashedin.redmask.service.MaskingService;
 import org.apache.ibatis.jdbc.ScriptRunner;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -35,7 +35,7 @@ import static com.hashedin.redmask.integration.RedMaskITUtils.getMaskRuleNumeric
 
 public class RedMaskITTest extends BaseITPostgresTestContainer {
 
-  private static final Logger log = LogManager.getLogger(RedMaskITTest.class);
+  private static final Logger log = LoggerFactory.getLogger(RedMaskITTest.class);
 
   protected static final String URL = postgres.getJdbcUrl();
   protected static final String HOST = postgres.getContainerIpAddress();

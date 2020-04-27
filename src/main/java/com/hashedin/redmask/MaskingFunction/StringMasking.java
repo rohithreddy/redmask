@@ -8,8 +8,6 @@ import com.hashedin.redmask.exception.UnknownParameterException;
 import com.hashedin.redmask.service.MaskingQueryUtil;
 import com.hashedin.redmask.service.MaskingRuleDef;
 import freemarker.template.TemplateException;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -18,9 +16,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class StringMasking extends MaskingRuleDef {
 
-  private static final Logger log = LogManager.getLogger(BigIntRangeMasking.class);
+  private static final Logger log = LoggerFactory.getLogger(StringMasking.class);
   
   private static final String PARAM_REPLACEMENT_PATTERN = "pattern";
   private static final String PARAM_PATTERN_DEFAULT = "*";

@@ -8,8 +8,8 @@ import com.hashedin.redmask.exception.TableNotFoundException;
 import com.hashedin.redmask.exception.UnknownParameterException;
 
 import org.apache.ibatis.jdbc.ScriptRunner;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -24,7 +24,8 @@ import java.sql.SQLException;
 
 public class MaskingService {
 
-  private static final Logger log = LogManager.getLogger(MaskingService.class);
+  private static final Logger log = LoggerFactory.getLogger(MaskingService.class);
+
   private static final String MASKING_FUNCTION_SCHEMA = "redmask";
 
   private final MaskConfiguration config;
