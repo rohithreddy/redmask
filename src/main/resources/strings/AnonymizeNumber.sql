@@ -1,15 +1,15 @@
-(ColName text , Pattern character  default 'x',Prefix integer default 0,Suffix integer default 0)
+(ColName text , pattern character default 'x', prefix integer default 0, Suffix integer default 0)
 RETURNS text AS $$
 DECLARE
     strlength integer;
 BEGIN
     strlength:=length(ColName);
-    IF Prefix>0 then
-        return substring(ColName FROM 1 FOR Prefix )
-          ||regexp_replace(substring(ColName FROM Prefix+1 for (strlength-Prefix-Suffix)),'[0-9]',Pattern,'g')
+    IF prefix>0 then
+        return substring(ColName FROM 1 FOR prefix )
+          ||regexp_replace(substring(ColName FROM prefix+1 for (strlength-prefix-Suffix)),'[0-9]',pattern,'g')
           ||substring(ColName FROM (strlength-Suffix+1) FOR Suffix );
      END IF;
-     return regexp_replace(substring(ColName FROM Prefix+1 for (strlength-Prefix-Suffix)),'[0-9]',Pattern,'g')
+     return regexp_replace(substring(ColName FROM prefix+1 for (strlength-prefix-Suffix)),'[0-9]',pattern,'g')
           ||substring(ColName FROM (strlength-Suffix+1) FOR Suffix );
 END;
 $$

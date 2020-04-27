@@ -1,4 +1,4 @@
-package com.hashedin.redmask.configurations;
+package com.hashedin.redmask.exception;
 
 public class ColumnNotFoundException extends RuntimeException {
   public ColumnNotFoundException(String columnName, String tableName) {

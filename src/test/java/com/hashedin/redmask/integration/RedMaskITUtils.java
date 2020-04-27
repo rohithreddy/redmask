@@ -74,7 +74,7 @@ public class RedMaskITUtils {
   }
 
   public static List<MaskingRule> getMaskRuleIntegerFixedSize() throws JsonProcessingException {
-    String json = "{ \"size\":4}";
+    String json = "{ \"step\":4}";
     ObjectMapper objectMapper = new ObjectMapper();
     JsonNode maskParams = objectMapper.readTree(json);
     ColumnRule columnRule = new ColumnRule("age",

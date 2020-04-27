@@ -70,6 +70,12 @@ public class MaskingQueryUtil {
     return MASK_EMAIL_COMMENT + createFuncString + readFunctionQueryFromSqlFile(MASK_EMAIL_FILE);
   }
 
+  public static final String maskPaymentCard(TemplateConfiguration config)
+      throws IOException, TemplateException {
+    String createFuncString = processTemplate(config, TEMPLATE_NAME, MASK_CARD_FUNC);
+    return MASK_CARD_COMMENT + createFuncString + readFunctionQueryFromSqlFile(MASK_CARD_FILE);
+  }
+
   public static final String maskIntegerFixedSize(TemplateConfiguration config)
       throws IOException, TemplateException {
     String createFuncString = processTemplate(config, TEMPLATE_NAME, MASK_INTEGER_FIXED_SIZE_FUNC);
@@ -126,13 +132,6 @@ public class MaskingQueryUtil {
     String createFuncString = processTemplate(config, TEMPLATE_NAME, MASK_NUMBERS_FUNC);
     return MASK_NUMBERS_COMMENT + createFuncString
         + readFunctionQueryFromSqlFile(MASK_NUMBERS_FILE);
-  }
-
-  public static final String maskCard(TemplateConfiguration config)
-      throws IOException, TemplateException {
-    String createFuncString = processTemplate(config, TEMPLATE_NAME, MASK_CARD_FUNC);
-    return MASK_CARD_COMMENT + createFuncString + readFunctionQueryFromSqlFile(MASK_CARD_FILE);
-
   }
 
   private static String readFunctionQueryFromSqlFile(String filePath) throws IOException {

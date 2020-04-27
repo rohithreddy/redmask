@@ -1,10 +1,10 @@
 package com.hashedin.redmask.integration;
 
-import com.hashedin.redmask.configurations.ColumnNotFoundException;
-import com.hashedin.redmask.configurations.InvalidParameterValueException;
 import com.hashedin.redmask.configurations.MaskConfiguration;
-import com.hashedin.redmask.configurations.TableNotFoundException;
-import com.hashedin.redmask.configurations.UnknownParameterException;
+import com.hashedin.redmask.exception.ColumnNotFoundException;
+import com.hashedin.redmask.exception.InvalidParameterValueException;
+import com.hashedin.redmask.exception.TableNotFoundException;
+import com.hashedin.redmask.exception.UnknownParameterException;
 import com.hashedin.redmask.service.MaskingService;
 import org.apache.ibatis.jdbc.ScriptRunner;
 import org.apache.logging.log4j.LogManager;
@@ -48,19 +48,22 @@ public class RedMaskITTest extends BaseITPostgresTestContainer {
   private Connection devConnection;
 
   /**
-   * TODO Verify for masked data in respective column for string and card type.
-   * TODO add negative test cases with exception
-   * TODO replace the below test with test on adding additional data, delete update of data on multiple tables and columns
+   * TODO :Verify for masked data in respective column for string and card type.
+   * TODO :add negative test cases with exception
+   * TODO :replace the below test with test on adding additional data, 
+   *       delete update of data on multiple tables and columns
    */
 
   /**
    * Creating table test_table and populating it
    *
    * @throws SQLException
+   * @throws IOException 
    */
   @BeforeClass
-  public static void setup() throws SQLException {
+  public static void setup() throws SQLException, IOException {
     try {
+      log.info("Setting up integration test configuration");
       // Create a developer user.
       connection = DriverManager.getConnection(URL, SUPER_USER, SUPER_USER_PASSWORD);
       Statement statement = connection.createStatement();
@@ -85,9 +88,6 @@ public class RedMaskITTest extends BaseITPostgresTestContainer {
           PORT,
           DATABASE,
           DEV_USER);
-
-    } catch (Exception e) {
-      log.error("error setting up integration test configuration", e);
     } finally {
       connection.close();
     }
@@ -95,193 +95,145 @@ public class RedMaskITTest extends BaseITPostgresTestContainer {
 
   @Before
   public void createConnections() throws SQLException {
-    try {
-      // Create a connection object using super user.
-      connection = DriverManager.getConnection(
-          URL,
-          SUPER_USER,
-          SUPER_USER_PASSWORD
-      );
+    log.info("Creating connection object");
+    // Create a connection object using super user.
+    connection = DriverManager.getConnection(
+        URL,
+        SUPER_USER,
+        SUPER_USER_PASSWORD
+    );
 
-      // Create a connection object using developer user.
-      devConnection = DriverManager.getConnection(
-          URL,
-          DEV_USER,
-          DEV_USER_PASSWORD
-      );
-    } catch (SQLException e) {
-      log.error("error creating connection object", e);
-    }
+    // Create a connection object using developer user.
+    devConnection = DriverManager.getConnection(
+        URL,
+        DEV_USER,
+        DEV_USER_PASSWORD
+    );
   }
 
   @After
-  public void deleteCreatedView() {
-    try {
-      // Drop existing masked view if any.
-      Statement stmt = connection.createStatement();
-      stmt.execute("DROP VIEW IF EXISTS " + DEV_USER + "." + TABLE_NAME);
-      stmt.close();
-      connection.close();
-      devConnection.close();
-    } catch (SQLException ex) {
-      log.error("Error while dropping existing view and closing connection", ex);
-    }
+  public void deleteCreatedView() throws SQLException {
+    log.info("Dropping existing view and closing connection");
+    // Drop existing masked view if any.
+    Statement stmt = connection.createStatement();
+    stmt.execute("DROP VIEW IF EXISTS " + DEV_USER + "." + TABLE_NAME);
+    stmt.close();
+    connection.close();
+    devConnection.close();
   }
 
   @Test
-  public void testIntegerWithinRangeMasking() {
-    try {
-      config.setRules(getMaskRuleIntegerWithinRange());
-      runRedMaskApp(config);
-      Statement statement = devConnection.createStatement();
-      ResultSet rs = statement.executeQuery("SELECT age FROM " + DEV_USER + "." + TABLE_NAME);
-      int rowCount = 0;
-      while (rs.next()) {
-        rowCount += 1;
-        Assert.assertTrue(rs.getInt("age") <= 10);
-        Assert.assertTrue(rs.getInt("age") > 0);
-      }
-      Assert.assertEquals(6, rowCount);
-      rs.close();
-      statement.close();
-    } catch (IOException e) {
-      log.error("File not found{}", e);
-    } catch (SQLException e) {
-      log.error("Sql query error {}", e);
+  public void testIntegerWithinRangeMasking() throws IOException, SQLException {
+    config.setRules(getMaskRuleIntegerWithinRange());
+    runRedMaskApp(config);
+    Statement statement = devConnection.createStatement();
+    ResultSet rs = statement.executeQuery("SELECT age FROM " + DEV_USER + "." + TABLE_NAME);
+    int rowCount = 0;
+    while (rs.next()) {
+      rowCount += 1;
+      Assert.assertTrue(rs.getInt("age") <= 10);
+      Assert.assertTrue(rs.getInt("age") > 0);
     }
+    Assert.assertEquals(6, rowCount);
+    rs.close();
+    statement.close();
   }
 
   @Test
-  public void testFixedSizeInteger() {
-    try {
-      config.setRules(getMaskRuleIntegerFixedSize());
-      runRedMaskApp(config);
-      Statement statement = devConnection.createStatement();
-      ResultSet rs = statement.executeQuery("SELECT age FROM " + DEV_USER + "." + TABLE_NAME);
-      int rowCount = 0;
-      while (rs.next()) {
-        rowCount += 1;
-        Assert.assertTrue(rs.getInt("age") < 10000);
-        Assert.assertTrue(rs.getInt("age") > 999);
-      }
-      Assert.assertEquals(6, rowCount);
-      rs.close();
-      statement.close();
-    } catch (IOException e) {
-      log.error("File not found{}", e);
-    } catch (SQLException e) {
-      log.error("Sql query error {}", e);
+  public void testFixedSizeInteger() throws IOException, SQLException {
+    config.setRules(getMaskRuleIntegerFixedSize());
+    runRedMaskApp(config);
+    Statement statement = devConnection.createStatement();
+    ResultSet rs = statement.executeQuery("SELECT age FROM " + DEV_USER + "." + TABLE_NAME);
+    int rowCount = 0;
+    while (rs.next()) {
+      rowCount += 1;
+      Assert.assertTrue(rs.getInt("age") < 10000);
+      Assert.assertTrue(rs.getInt("age") > 999);
     }
+    Assert.assertEquals(6, rowCount);
+    rs.close();
+    statement.close();
   }
 
   @Test
-  public void testFixedValueInteger() {
-    try {
-      config.setRules(getMaskRuleIntegerFixedValue());
-      runRedMaskApp(config);
-      Statement statement = devConnection.createStatement();
-      ResultSet rs = statement.executeQuery("SELECT age FROM " + DEV_USER + "." + TABLE_NAME);
-      int rowCount = 0;
-      while (rs.next()) {
-        rowCount += 1;
-        Assert.assertEquals(4, rs.getInt("age"));
-      }
-      Assert.assertEquals(6, rowCount);
-      rs.close();
-      statement.close();
-    } catch (IOException e) {
-      log.error("File not found{}", e);
-    } catch (SQLException e) {
-      log.error("Sql query error {}", e);
+  public void testFixedValueInteger() throws IOException, SQLException {
+    config.setRules(getMaskRuleIntegerFixedValue());
+    runRedMaskApp(config);
+    Statement statement = devConnection.createStatement();
+    ResultSet rs = statement.executeQuery("SELECT age FROM " + DEV_USER + "." + TABLE_NAME);
+    int rowCount = 0;
+    while (rs.next()) {
+      rowCount += 1;
+      Assert.assertEquals(4, rs.getInt("age"));
     }
+    Assert.assertEquals(6, rowCount);
+    rs.close();
+    statement.close();
   }
 
   @Test
-  public void testFixedValueFloat() {
-    try {
-      config.setRules(getMaskRuleFloatFixedValue());
-      runRedMaskApp(config);
-      Statement statement = devConnection.createStatement();
-      ResultSet rs = statement.executeQuery("SELECT interest FROM " + DEV_USER + "." + TABLE_NAME);
-      int rowCount = 0;
-      while (rs.next()) {
-        rowCount += 1;
-        Assert.assertEquals(3.5, rs.getFloat("interest"), 0.01);
-      }
-      Assert.assertEquals(6, rowCount);
-      rs.close();
-      statement.close();
-    } catch (IOException e) {
-      log.error("File not found{}", e);
-    } catch (SQLException e) {
-      log.error("Sql query error {}", e);
+  public void testFixedValueFloat() throws IOException, SQLException {
+    config.setRules(getMaskRuleFloatFixedValue());
+    runRedMaskApp(config);
+    Statement statement = devConnection.createStatement();
+    ResultSet rs = statement.executeQuery("SELECT interest FROM " + DEV_USER + "." + TABLE_NAME);
+    int rowCount = 0;
+    while (rs.next()) {
+      rowCount += 1;
+      Assert.assertEquals(3.5, rs.getFloat("interest"), 0.01);
     }
+    Assert.assertEquals(6, rowCount);
+    rs.close();
+    statement.close();
   }
 
   @Test
-  public void testIntegerRange() {
-    try {
-      config.setRules(getMaskRuleIntegerRange());
-      runRedMaskApp(config);
-      Statement statement = devConnection.createStatement();
-      ResultSet rs = statement.executeQuery("SELECT age FROM " + DEV_USER + "." + TABLE_NAME);
-      int rowCount = 0;
-      while (rs.next()) {
-        rowCount += 1;
-        Assert.assertEquals("[0,10)", rs.getString(1));
-      }
-      Assert.assertEquals(6, rowCount);
-      rs.close();
-      statement.close();
-    } catch (IOException e) {
-      log.error("File not found{}", e);
-    } catch (SQLException e) {
-      log.error("Sql query error {}", e);
+  public void testIntegerRange() throws IOException, SQLException {
+    config.setRules(getMaskRuleIntegerRange());
+    runRedMaskApp(config);
+    Statement statement = devConnection.createStatement();
+    ResultSet rs = statement.executeQuery("SELECT age FROM " + DEV_USER + "." + TABLE_NAME);
+    int rowCount = 0;
+    while (rs.next()) {
+      rowCount += 1;
+      Assert.assertEquals("[0,10)", rs.getString(1));
     }
+    Assert.assertEquals(6, rowCount);
+    rs.close();
+    statement.close();
   }
 
   @Test
-  public void testBigIntegerRange() {
-    try {
-      config.setRules(getMaskRuleBigIntRange());
-      runRedMaskApp(config);
-      Statement statement = devConnection.createStatement();
-      ResultSet rs = statement.executeQuery("SELECT age FROM " + DEV_USER + "." + TABLE_NAME);
-      int rowCount = 0;
-      while (rs.next()) {
-        rowCount += 1;
-        Assert.assertEquals("[0,1000)", rs.getString(1));
-      }
-      Assert.assertEquals(6, rowCount);
-      rs.close();
-      statement.close();
-    } catch (IOException e) {
-      log.error("File not found{}", e);
-    } catch (SQLException e) {
-      log.error("Sql query error {}", e);
+  public void testBigIntegerRange() throws IOException, SQLException {
+    config.setRules(getMaskRuleBigIntRange());
+    runRedMaskApp(config);
+    Statement statement = devConnection.createStatement();
+    ResultSet rs = statement.executeQuery("SELECT age FROM " + DEV_USER + "." + TABLE_NAME);
+    int rowCount = 0;
+    while (rs.next()) {
+      rowCount += 1;
+      Assert.assertEquals("[0,1000)", rs.getString(1));
     }
+    Assert.assertEquals(6, rowCount);
+    rs.close();
+    statement.close();
   }
 
   @Test
-  public void testNumericRange() {
-    try {
-      config.setRules(getMaskRuleNumericRange());
-      runRedMaskApp(config);
-      Statement statement = devConnection.createStatement();
-      ResultSet rs = statement.executeQuery("SELECT age FROM " + DEV_USER + "." + TABLE_NAME);
-      int rowCount = 0;
-      while (rs.next()) {
-        rowCount += 1;
-        Assert.assertEquals("[0,100)", rs.getString(1));
-      }
-      Assert.assertEquals(6, rowCount);
-      rs.close();
-      statement.close();
-    } catch (IOException e) {
-      log.error("File not found{}", e);
-    } catch (SQLException e) {
-      log.error("Sql query error {}", e);
+  public void testNumericRange() throws IOException, SQLException {
+    config.setRules(getMaskRuleNumericRange());
+    runRedMaskApp(config);
+    Statement statement = devConnection.createStatement();
+    ResultSet rs = statement.executeQuery("SELECT age FROM " + DEV_USER + "." + TABLE_NAME);
+    int rowCount = 0;
+    while (rs.next()) {
+      rowCount += 1;
+      Assert.assertEquals("[0,100)", rs.getString(1));
     }
+    Assert.assertEquals(6, rowCount);
+    rs.close();
+    statement.close();
   }
 
   private void runRedMaskApp(MaskConfiguration config) {

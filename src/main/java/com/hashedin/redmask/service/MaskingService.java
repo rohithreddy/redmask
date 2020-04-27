@@ -1,11 +1,12 @@
 package com.hashedin.redmask.service;
 
-import com.hashedin.redmask.configurations.ColumnNotFoundException;
-import com.hashedin.redmask.configurations.InvalidParameterValueException;
 import com.hashedin.redmask.configurations.MaskConfiguration;
 import com.hashedin.redmask.configurations.MaskingRule;
-import com.hashedin.redmask.configurations.TableNotFoundException;
-import com.hashedin.redmask.configurations.UnknownParameterException;
+import com.hashedin.redmask.exception.ColumnNotFoundException;
+import com.hashedin.redmask.exception.InvalidParameterValueException;
+import com.hashedin.redmask.exception.TableNotFoundException;
+import com.hashedin.redmask.exception.UnknownParameterException;
+
 import org.apache.ibatis.jdbc.ScriptRunner;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

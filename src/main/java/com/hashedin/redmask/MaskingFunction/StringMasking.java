@@ -1,10 +1,10 @@
 package com.hashedin.redmask.MaskingFunction;
 
-import com.hashedin.redmask.configurations.InvalidParameterValueException;
 import com.hashedin.redmask.configurations.MaskType;
 import com.hashedin.redmask.configurations.MaskingConstants;
 import com.hashedin.redmask.configurations.TemplateConfiguration;
-import com.hashedin.redmask.configurations.UnknownParameterException;
+import com.hashedin.redmask.exception.InvalidParameterValueException;
+import com.hashedin.redmask.exception.UnknownParameterException;
 import com.hashedin.redmask.service.MaskingQueryUtil;
 import com.hashedin.redmask.service.MaskingRuleDef;
 import freemarker.template.TemplateException;
@@ -19,8 +19,9 @@ import java.util.Map;
 import java.util.Set;
 
 public class StringMasking extends MaskingRuleDef {
-  private static final Logger log = LogManager.getLogger(BigIntRangeMasking.class);
 
+  private static final Logger log = LogManager.getLogger(BigIntRangeMasking.class);
+  
   private static final String PARAM_REPLACEMENT_PATTERN = "pattern";
   private static final String PARAM_PATTERN_DEFAULT = "*";
 

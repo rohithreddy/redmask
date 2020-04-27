@@ -11,7 +11,7 @@ BEGIN
     when 'domain' then
      return (Select regexp_replace(username_text,'.','x','g')||'@'||domain_text);
     when 'firstN' then
-     return redmask.anonymize(Colname,'x',arg1);
+     return redmask.anonymizeString(Colname,'x',arg1);
     when 'firstndomain' then
      return (Select substring(username_text from 1 for 1)||regexp_replace(substring (username_text from 2 for length(username_text)),'.','x','g')||'@'||domain_text);
     when 'nonspecialcharacter' then

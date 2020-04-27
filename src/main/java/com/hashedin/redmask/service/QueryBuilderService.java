@@ -2,15 +2,16 @@ package com.hashedin.redmask.service;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.hashedin.redmask.configurations.ColumnNotFoundException;
 import com.hashedin.redmask.configurations.ColumnRule;
-import com.hashedin.redmask.configurations.InvalidParameterValueException;
 import com.hashedin.redmask.configurations.MaskConfiguration;
 import com.hashedin.redmask.configurations.MaskingRule;
 import com.hashedin.redmask.configurations.MaskingRuleFactory;
-import com.hashedin.redmask.configurations.TableNotFoundException;
 import com.hashedin.redmask.configurations.TemplateConfiguration;
-import com.hashedin.redmask.configurations.UnknownParameterException;
+import com.hashedin.redmask.exception.ColumnNotFoundException;
+import com.hashedin.redmask.exception.InvalidParameterValueException;
+import com.hashedin.redmask.exception.TableNotFoundException;
+import com.hashedin.redmask.exception.UnknownParameterException;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.util.Strings;

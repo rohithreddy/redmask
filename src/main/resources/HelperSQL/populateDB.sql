@@ -1,7 +1,7 @@
 CREATE TABLE customer(
-  Name text,
-  Email text,
-  Age integer,
+  name text,
+  email text,
+  age integer,
   DOB date,
   interest float,
   card text

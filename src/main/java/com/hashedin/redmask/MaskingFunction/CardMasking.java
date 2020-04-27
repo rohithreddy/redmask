@@ -1,10 +1,10 @@
 package com.hashedin.redmask.MaskingFunction;
 
-import com.hashedin.redmask.configurations.InvalidParameterValueException;
 import com.hashedin.redmask.configurations.MaskType;
 import com.hashedin.redmask.configurations.MaskingConstants;
 import com.hashedin.redmask.configurations.TemplateConfiguration;
-import com.hashedin.redmask.configurations.UnknownParameterException;
+import com.hashedin.redmask.exception.InvalidParameterValueException;
+import com.hashedin.redmask.exception.UnknownParameterException;
 import com.hashedin.redmask.service.MaskingQueryUtil;
 import com.hashedin.redmask.service.MaskingRuleDef;
 import freemarker.template.TemplateException;
@@ -51,7 +51,7 @@ public class CardMasking extends MaskingRuleDef {
   public void addFunctionDefinition(TemplateConfiguration config, Set<String> funcSet) {
     try {
       funcSet.add(MaskingQueryUtil.maskNumbers(config));
-      funcSet.add(MaskingQueryUtil.maskCard(config));
+      funcSet.add(MaskingQueryUtil.maskPaymentCard(config));
       log.info("Function added for Mask Type {}", this.getMaskType());
     } catch (IOException | TemplateException ex) {
       log.error("Error occurred while adding MaskFunction for Mask Type {} ", this.getMaskType());

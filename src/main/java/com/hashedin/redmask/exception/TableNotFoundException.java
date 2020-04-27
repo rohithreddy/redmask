@@ -1,4 +1,4 @@
-package com.hashedin.redmask.configurations;
+package com.hashedin.redmask.exception;
 
 public class TableNotFoundException extends RuntimeException {
   public TableNotFoundException(String tableName) {

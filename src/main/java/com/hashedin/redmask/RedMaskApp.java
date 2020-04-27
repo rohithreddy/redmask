@@ -1,11 +1,11 @@
 package com.hashedin.redmask;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.hashedin.redmask.configurations.ColumnNotFoundException;
-import com.hashedin.redmask.configurations.InvalidParameterValueException;
 import com.hashedin.redmask.configurations.MaskConfiguration;
-import com.hashedin.redmask.configurations.TableNotFoundException;
-import com.hashedin.redmask.configurations.UnknownParameterException;
+import com.hashedin.redmask.exception.ColumnNotFoundException;
+import com.hashedin.redmask.exception.InvalidParameterValueException;
+import com.hashedin.redmask.exception.TableNotFoundException;
+import com.hashedin.redmask.exception.UnknownParameterException;
 import com.hashedin.redmask.service.MaskingService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -25,6 +25,10 @@ public class RedMaskApp implements Callable<Integer> {
 
   private static final Logger log = LogManager.getLogger(RedMaskApp.class);
 
+  /*
+   *  TODO :Implement static masking feature and may be we will need a 
+   *  different masking config structure for static masking.
+   */
   @Option(names = {"-f", "--configfilepath"}, required = true,
       description = "Complete file path of json containing masking configurations.")
   private String configFilePath;
@@ -40,14 +44,16 @@ public class RedMaskApp implements Callable<Integer> {
   }
 
   @Override
-  public Integer call() throws Exception {
+  public Integer call() {
 
     MaskConfiguration config = null;
 
     try {
       config = new ObjectMapper().readValue(new File(configFilePath), MaskConfiguration.class);
     } catch (Exception ex) {
-      log.error("Exception while reading config.json file: " + ex);
+      // log the exception and exit the application.
+      log.error("Exception while reading masking config json file: " + ex);
+      return 0;
     }
     try {
       MaskingService service = new MaskingService(config, dryRun);
@@ -57,7 +63,7 @@ public class RedMaskApp implements Callable<Integer> {
       return 0;
     } catch (UnknownParameterException | InvalidParameterValueException | TableNotFoundException
         | ColumnNotFoundException ex) {
-      log.error("Error occurred while executing", ex);
+      log.error("Error occurred while executing redmask application:", ex);
     }
     return 0;
   }

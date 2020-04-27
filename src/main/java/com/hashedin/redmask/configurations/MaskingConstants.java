@@ -11,9 +11,9 @@ public class MaskingConstants {
   public static final String DB_USER = "DB_USER";
   public static final String DB_USER_PASSWORD = "DB_USER_PASSWORD";
 
-  public static final String MASK_STRING_FUNC = "anonymize";
-  public static final String MASK_STRING_FILE = "src/main/resources/strings/AnonymizePartial.sql";
-  public static final String MASK_STRING_COMMENT =
+  public static final String MASK_STRING_FUNC = "anonymizeString";
+  public static final String MASK_STRING_FILE = "src/main/resources/strings/AnonymizeString.sql";
+  public static final String MASK_STRING_COMMENT = 
       "\n\n-- Postgres function to anonymize the string field.\n";
 
   public static final String MASK_EMAIL_FUNC = "emailmask";
