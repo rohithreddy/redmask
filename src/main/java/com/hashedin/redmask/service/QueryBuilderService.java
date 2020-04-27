@@ -67,7 +67,7 @@ public class QueryBuilderService {
           colMaskRuleMap.put(col.getColumnName(), columnRuleFactory.getColumnMaskingRule(def));
         }
       }
-      //TODO Validate maskType and column type compatibility.
+      // TODO :Validate maskType and column type compatibility.
       // Dynamically build sub query part for create view.
       for (int i = 1; i <= rs.getColumnCount(); i++) {
         String colName = rs.getColumnName(i);
@@ -91,7 +91,7 @@ public class QueryBuilderService {
     }
 
     // Create view
-    log.info("creating the query in order to create the intended view");
+    log.info("Creating the query in order to create the intended view.");
     String queryString = String.join(",", querySubstring);
     StringBuilder sb = new StringBuilder();
     sb.append(config.getUsername()).append(".").append(rule.getTable());
@@ -158,7 +158,7 @@ public class QueryBuilderService {
       }
       return false;
     } catch (SQLException ex) {
-      log.error("Error getting metadata from SQL Database");
+      log.error("Error getting metadata from SQL Database.");
     }
     return false;
   }
@@ -172,7 +172,7 @@ public class QueryBuilderService {
       }
       return false;
     } catch (SQLException ex) {
-      log.error("Error getting metadata from SQL Database");
+      log.error("Error getting metadata from SQL Database.");
     }
     return false;
   }

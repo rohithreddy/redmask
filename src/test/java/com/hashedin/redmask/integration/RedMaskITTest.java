@@ -232,7 +232,7 @@ public class RedMaskITTest extends BaseITPostgresTestContainer {
     statement.close();
   }
 
-  private void runRedMaskApp(MaskConfiguration config) {
+  private void runRedMaskApp(MaskConfiguration config) throws IOException {
     MaskingService service = new MaskingService(config, false);
     service.generateSqlQueryForMasking();
     service.executeSqlQueryForMasking();

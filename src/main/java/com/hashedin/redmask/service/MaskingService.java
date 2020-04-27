@@ -2,7 +2,7 @@ package com.hashedin.redmask.service;
 
 import com.hashedin.redmask.configurations.MaskConfiguration;
 import com.hashedin.redmask.configurations.MaskingRule;
-import com.hashedin.redmask.exception.RedmaskConfigException;
+import com.hashedin.redmask.exception.RedmaskRuntimeException;
 
 import org.apache.ibatis.jdbc.ScriptRunner;
 import org.slf4j.Logger;
@@ -48,8 +48,7 @@ public class MaskingService {
    * Create View using those masking function.
    * Provide access to user to read data from masked view.
    */
-  public void generateSqlQueryForMasking()
-      throws RedmaskConfigException {
+  public void generateSqlQueryForMasking() {
 
     QueryBuilderService queryBuilder = new QueryBuilderService();
     try {
@@ -57,7 +56,7 @@ public class MaskingService {
 
       /*
        * Drop and Create redmask Schema and user schema.
-       * TODO :find a better way without dropping schema.
+       * TODO :Find a better way without dropping schema.
        */
       log.info("Creating or replacing existing table view.");
       writer.append(queryBuilder.dropSchemaQuery(MASKING_FUNCTION_SCHEMA));
@@ -94,31 +93,38 @@ public class MaskingService {
 
       writer.flush();
     } catch (IOException ex) {
-      log.error("Error while writing to file {}", tempFilePath.getName(), ex);
+      throw new RedmaskRuntimeException(
+          String.format("Error while writing to file {}", tempFilePath.getName()), ex);
     }
   }
 
-  public void executeSqlQueryForMasking() {
+  public void executeSqlQueryForMasking() throws IOException {
     if (!dryRunEnabled) {
-      log.info("Executing script in order to create view in the database ");
+      log.info("Executing script in order to create view in the database.");
+      Reader reader = null;
       try (Connection CONN = DriverManager.getConnection(url,
           config.getSuperUser(), config.getSuperUserPassword())) {
         //Initialize the script runner
         ScriptRunner sr = new ScriptRunner(CONN);
 
         //Creating a reader object
-        Reader reader = new BufferedReader(new FileReader(tempFilePath));
+        reader = new BufferedReader(new FileReader(tempFilePath));
 
         //Running the script
         sr.setSendFullScript(true);
         sr.runScript(reader);
-        reader.close();
       } catch (SQLException ex) {
-        log.error("Database Connection Error while executing masking script.", ex);
-      } catch (FileNotFoundException e) {
-        log.error("File {} Not Found", tempFilePath.getName(), e);
-      } catch (IOException e) {
-        log.error("Unable to close reader object", e);
+        throw new RedmaskRuntimeException(
+            String.format("DB Connection error while executing masking sql "
+                + "query from file: {} using super username: {}",
+                tempFilePath, config.getSuperUser()), ex);
+      } catch (FileNotFoundException ex) {
+        throw new RedmaskRuntimeException(
+            String.format("Masking sql query file {} not found", tempFilePath.getName()), ex);
+      } finally {
+        if (reader != null) {
+          reader.close();
+        }
       }
     }
   }
@@ -129,8 +135,9 @@ public class MaskingService {
     try {
       sqlFile = File.createTempFile("redmask-masking", ".sql");
       log.info("Created a temp file at location: {}", sqlFile.getAbsolutePath());
-    } catch (IOException e) {
-      log.error("Error while creating temporary file \'redmask-masking.sql\'");
+    } catch (IOException ex) {
+      throw new RedmaskRuntimeException(
+          "Error while creating temporary file \'redmask-masking.sql\'", ex);
     }
     return sqlFile;
   }

@@ -6,8 +6,8 @@
         </encoder>
     </appender>
 
-   <logger name="com.hashedin.redmask" level="INFO" additivity="false">
-            <appender-ref ref="STDOUT" />
+    <logger name="com.hashedin.redmask" level="INFO" additivity="false">
+        <appender-ref ref="STDOUT" />
     </logger>
 
     <root level="error">
