@@ -12,18 +12,21 @@ public class BaseITPostgresTestContainer {
 
   private static final Logger log = LoggerFactory.getLogger(BaseITPostgresTestContainer.class);
 
-  protected static final String TEST_DATA_FILE = "src/test/java/com/hashedin/redmask/resources/HelperSQL/InitializeDB.sql";
+  protected static final String TEST_DATA_FILE = "src/test/resources/HelperSQL/InitializeDB.sql";
+  protected static final String INSERT_DATA_FILE = "src/test/resources/HelperSQL/InsertDB.sql"; // more data
+  protected static final String UPDATE_DATA_FILE = "src/test/resources/HelperSQL/UpdateDB.sql";
+  protected static final String DELETE_DATA_FILE = "src/test/resources/HelperSQL/DeleteDB.sql";
+  
+  protected static final String DEV_USER = "developer";
+  protected static final String DEV_USER_PASSWORD = "password";
+  protected static final String TABLE_NAME = "customer";
+  protected static final String TABLE_NAME_2 = "cashier";
 
   protected static final String SCHEMA = "redmask";
   protected static Connection connection;
 
   @ClassRule
   public static PostgreSQLContainer postgres = new PostgreSQLContainer();
-
-  protected static final String DEV_USER = "developer";
-  protected static final String DEV_USER_PASSWORD = "password";
-  protected static final String TABLE_NAME = "customer";
-  protected static final String TABLE_NAME_2 = "cashier";
 
   @AfterClass
   public static void tearDown() {

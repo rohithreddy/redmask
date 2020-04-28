@@ -14,7 +14,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
@@ -24,31 +23,23 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
-import static com.hashedin.redmask.integration.RedMaskITUtils.createMaskingRuleVersionFive;
-import static com.hashedin.redmask.integration.RedMaskITUtils.createMaskingRuleVersionFour;
 import static com.hashedin.redmask.integration.RedMaskITUtils.createMaskingRuleVersionOne;
 import static com.hashedin.redmask.integration.RedMaskITUtils.createMaskingRuleVersionSix;
-import static com.hashedin.redmask.integration.RedMaskITUtils.createMaskingRuleVersionThree;
-import static com.hashedin.redmask.integration.RedMaskITUtils.createMaskingRuleVersionTwo;
+import static com.hashedin.redmask.integration.RedMaskITUtils.*;
 
 public class RedMaskITTest extends BaseITPostgresTestContainer {
 
   private static final Logger log = LoggerFactory.getLogger(RedMaskITTest.class);
 
-  protected static final String URL = postgres.getJdbcUrl();
-  protected static final String HOST = postgres.getContainerIpAddress();
-  protected static final String PORT = String.valueOf(postgres.getMappedPort(5432));
-  protected static final String DATABASE = postgres.getDatabaseName();
-  protected static final String SUPER_USER = postgres.getUsername();
-  protected static final String SUPER_USER_PASSWORD = postgres.getPassword();
-
   private static final int ORIGINAL_TABLE_1_ROW_COUNT = 6;
   private static final int ORIGINAL_TABLE_2_ROW_COUNT = 3;
 
-  private static final String INSERT_DATA_FILE = "src/test/java/com/hashedin/redmask/resources/HelperSQL/InsertDB.sql";
-  private static final String UPDATE_DATA_FILE = "src/test/java/com/hashedin/redmask/resources/HelperSQL/UpdateDB.sql";
-  private static final String DELETE_DATA_FILE = "src/test/java/com/hashedin/redmask/resources/HelperSQL/DeleteDB.sql";
-
+  private static final String URL = postgres.getJdbcUrl();
+  private static final String HOST = postgres.getContainerIpAddress();
+  private static final String PORT = String.valueOf(postgres.getMappedPort(5432));
+  private static final String DATABASE = postgres.getDatabaseName();
+  private static final String SUPER_USER = postgres.getUsername();
+  private static final String SUPER_USER_PASSWORD = postgres.getPassword();
 
   private static MaskConfiguration config = null;
   private Connection devConnection;
@@ -69,7 +60,7 @@ public class RedMaskITTest extends BaseITPostgresTestContainer {
   @BeforeClass
   public static void setup() throws SQLException, IOException {
     try {
-      log.info("Setting up integration test configuration");
+      log.info("Setting up integration test configuration.");
       // Create a developer user.
       connection = DriverManager.getConnection(URL, SUPER_USER, SUPER_USER_PASSWORD);
       Statement statement = connection.createStatement();
@@ -92,20 +83,7 @@ public class RedMaskITTest extends BaseITPostgresTestContainer {
   }
 
   @Before
-  public void createTestTables() throws FileNotFoundException, SQLException {
-    // Populate test data in table.
-    Connection connection = DriverManager.getConnection(URL, SUPER_USER, SUPER_USER_PASSWORD);
-    ScriptRunner sr = new ScriptRunner(connection);
-    Reader reader = new BufferedReader(
-        new FileReader(TEST_DATA_FILE));
-    sr.setSendFullScript(true);
-    sr.runScript(reader);
-    log.info("Inserted test data into database.");
-    connection.close();
-  }
-
-  @Before
-  public void createConnections() throws SQLException {
+  public void createConnections() throws SQLException, IOException {
     log.info("Creating connection object");
     // Create a connection object using super user.
     connection = DriverManager.getConnection(
@@ -114,6 +92,15 @@ public class RedMaskITTest extends BaseITPostgresTestContainer {
         SUPER_USER_PASSWORD
     );
 
+    // Populate test data in table.
+    ScriptRunner sr = new ScriptRunner(connection);
+    Reader reader = new BufferedReader(
+        new FileReader(TEST_DATA_FILE));
+    sr.setSendFullScript(true);
+    sr.runScript(reader);
+    log.info("Inserted test data into database.");
+    reader.close();
+    
     // Create a connection object using developer user.
     devConnection = DriverManager.getConnection(
         URL,
@@ -122,22 +109,20 @@ public class RedMaskITTest extends BaseITPostgresTestContainer {
     );
   }
 
-
   @After
-  public void deleteTestTable() throws SQLException {
-    Statement stmt = connection.createStatement();
-    stmt.execute("DROP TABLE " + TABLE_NAME + "," + TABLE_NAME_2 + " CASCADE");
-    stmt.close();
-    log.info("Dropping {} table", TABLE_NAME);
-  }
-
-  @After
-  public void deleteCreatedView() throws SQLException {
-    log.info("Dropping existing view and closing connection");
-    // Drop existing masked view if any.
-    Statement stmt = connection.createStatement();
-    stmt.execute("DROP VIEW IF EXISTS " + DEV_USER + "." + TABLE_NAME);
-    stmt.close();
+  public void deleteTableAndMaskedView() throws SQLException {
+    try(Connection CONN =  connection = DriverManager.getConnection(
+        URL,
+        SUPER_USER,
+        SUPER_USER_PASSWORD
+        )) {
+      log.info("Dropping tables: {} {}", TABLE_NAME, TABLE_NAME_2);
+      Statement stmt = CONN.createStatement();
+      stmt.executeUpdate("DROP TABLE " + TABLE_NAME + "," + TABLE_NAME_2 + " CASCADE");
+      log.info("Dropping existing masked view and closing connection");
+      stmt.executeUpdate("DROP VIEW IF EXISTS " + DEV_USER + "." + TABLE_NAME + "," + DEV_USER + "." + TABLE_NAME_2);
+      stmt.close();
+    }
     connection.close();
     devConnection.close();
   }
@@ -147,17 +132,16 @@ public class RedMaskITTest extends BaseITPostgresTestContainer {
     config.setRules(createMaskingRuleVersionOne());
     runRedMaskApp(config);
     Statement statement = devConnection.createStatement();
-    ResultSet rs = statement.executeQuery("SELECT * FROM " + DEV_USER + "." + TABLE_NAME);
+    ResultSet rs = statement.executeQuery("SELECT * FROM " + TABLE_NAME);
     int rowCount = 0;
     while (rs.next()) {
-      rowCount += 1;
+      rowCount++;
       Assert.assertTrue(rs.getInt("age") <= 10);
       Assert.assertTrue(rs.getInt("age") > 0);
       Assert.assertEquals(3.5, rs.getFloat("interest"), 0.01);
       Assert.assertTrue(rs.getString("name").matches("^.\\**.$"));
       Assert.assertTrue(rs.getString("email").matches("^.x*@.*\\..*"));
       Assert.assertTrue(rs.getString("card").matches("^[0-9]{3}x-x{4}-x{3}[0-9]-[0-9]{4}$"));
-
     }
     Assert.assertEquals(ORIGINAL_TABLE_1_ROW_COUNT, rowCount);
     rs.close();
@@ -169,7 +153,7 @@ public class RedMaskITTest extends BaseITPostgresTestContainer {
     config.setRules(createMaskingRuleVersionOne());
     runRedMaskApp(config);
     Statement statement = devConnection.createStatement();
-    ResultSet rs = statement.executeQuery("SELECT * FROM " + DEV_USER + "." + TABLE_NAME);
+    ResultSet rs = statement.executeQuery("SELECT * FROM " + TABLE_NAME);
     int rowCount = 0;
     while (rs.next()) {
       rowCount += 1;
@@ -185,7 +169,7 @@ public class RedMaskITTest extends BaseITPostgresTestContainer {
     // Deletes User Alpha and User Delta from table customer
     deleteDataFromTable();
     int deletedRows = 2;
-    rs = statement.executeQuery("SELECT * FROM " + DEV_USER + "." + TABLE_NAME);
+    rs = statement.executeQuery("SELECT * FROM " + TABLE_NAME);
     rowCount = 0;
     while (rs.next()) {
       rowCount += 1;
@@ -207,7 +191,7 @@ public class RedMaskITTest extends BaseITPostgresTestContainer {
     config.setRules(createMaskingRuleVersionOne());
     runRedMaskApp(config);
     Statement statement = devConnection.createStatement();
-    ResultSet rs = statement.executeQuery("SELECT * FROM " + DEV_USER + "." + TABLE_NAME);
+    ResultSet rs = statement.executeQuery("SELECT * FROM " + TABLE_NAME);
     int rowCount = 0;
     while (rs.next()) {
       rowCount += 1;
@@ -223,7 +207,7 @@ public class RedMaskITTest extends BaseITPostgresTestContainer {
     //Updates age of User Alpha to 14
     String dataChangedUsername = "User Alpha";
     updateDataInTable();
-    rs = statement.executeQuery("SELECT * FROM " + DEV_USER + "." + TABLE_NAME);
+    rs = statement.executeQuery("SELECT * FROM " + TABLE_NAME);
     rowCount = 0;
     while (rs.next()) {
       rowCount += 1;
@@ -249,10 +233,10 @@ public class RedMaskITTest extends BaseITPostgresTestContainer {
     config.setRules(createMaskingRuleVersionOne());
     runRedMaskApp(config);
     Statement statement = devConnection.createStatement();
-    ResultSet rs = statement.executeQuery("SELECT * FROM " + DEV_USER + "." + TABLE_NAME);
+    ResultSet rs = statement.executeQuery("SELECT * FROM " + TABLE_NAME);
     int rowCount = 0;
     while (rs.next()) {
-      rowCount += 1;
+      rowCount++;
       Assert.assertTrue(rs.getInt("age") <= 10);
       Assert.assertTrue(rs.getInt("age") > 0);
       Assert.assertEquals(3.5, rs.getFloat("interest"), 0.01);
@@ -263,9 +247,9 @@ public class RedMaskITTest extends BaseITPostgresTestContainer {
     }
     Assert.assertEquals(6, rowCount);
     //Insert addition 6 records into the table
-    addDataToTable();
+    addMoreDataToTable();
     int insertedRows = 6;
-    rs = statement.executeQuery("SELECT * FROM " + DEV_USER + "." + TABLE_NAME);
+    rs = statement.executeQuery("SELECT * FROM " + TABLE_NAME);
     rowCount = 0;
     while (rs.next()) {
       rowCount += 1;
@@ -280,6 +264,34 @@ public class RedMaskITTest extends BaseITPostgresTestContainer {
     Assert.assertEquals(ORIGINAL_TABLE_1_ROW_COUNT + insertedRows, rowCount);
     rs.close();
     statement.close();
+  }
+
+  @Test
+  public void testMultipleTables() throws IOException, SQLException {
+    config.setRules(createMaskingRuleVersionSix());
+    runRedMaskApp(config);
+    Statement statement = devConnection.createStatement();
+    ResultSet rs = statement.executeQuery("SELECT * FROM " + TABLE_NAME);
+    int rowCount = 0;
+    while (rs.next()) {
+      rowCount += 1;
+      Assert.assertTrue(rs.getInt("age") <= 10);
+      Assert.assertTrue(rs.getInt("age") > 0);
+    }
+    Assert.assertEquals(ORIGINAL_TABLE_1_ROW_COUNT, rowCount);
+    rs.close();
+    statement.close();
+
+    Statement statement2 = devConnection.createStatement();
+    ResultSet rs2 = statement2.executeQuery("SELECT * FROM " + TABLE_NAME_2);
+    int rowCount2 = 0;
+    while (rs2.next()) {
+      rowCount2 += 1;
+      Assert.assertTrue(rs2.getString("name").matches("^.\\**.$"));
+    }
+    Assert.assertEquals(ORIGINAL_TABLE_2_ROW_COUNT, rowCount2);
+    rs2.close();
+    statement2.close();
   }
 
   @Test(expected = RedmaskConfigException.class)
@@ -314,79 +326,43 @@ public class RedMaskITTest extends BaseITPostgresTestContainer {
     runRedMaskApp(config);
   }
 
-  //TODO
-  @Test
-  public void testMultipleTables() throws IOException, SQLException {
-    config.setRules(createMaskingRuleVersionSix());
-    runRedMaskApp(config);
-    Statement statement = devConnection.createStatement();
-    ResultSet rs = statement.executeQuery("SELECT * FROM " + DEV_USER + "." + TABLE_NAME);
-    int rowCount = 0;
-    while (rs.next()) {
-      rowCount += 1;
-      Assert.assertTrue(rs.getInt("age") <= 10);
-      Assert.assertTrue(rs.getInt("age") > 0);
-    }
-    Assert.assertEquals(ORIGINAL_TABLE_1_ROW_COUNT, rowCount);
-    rs.close();
-    statement.close();
-
-    Statement statement2 = devConnection.createStatement();
-    ResultSet rs2 = statement2.executeQuery("SELECT * FROM " + DEV_USER + "." + TABLE_NAME_2);
-    int rowCount2 = 0;
-    while (rs2.next()) {
-      rowCount2 += 1;
-      Assert.assertTrue(rs2.getString("name").matches("^.\\**.$"));
-    }
-    Assert.assertEquals(ORIGINAL_TABLE_2_ROW_COUNT, rowCount2);
-    rs2.close();
-    statement2.close();
-
-
-  }
-
   private void runRedMaskApp(MaskConfiguration config) throws IOException {
       MaskingService service = new MaskingService(config, false);
       service.generateSqlQueryForMasking();
       service.executeSqlQueryForMasking();
   }
 
-  private void addDataToTable() throws FileNotFoundException, SQLException {
+  private void addMoreDataToTable() throws SQLException, IOException {
     // Add additional test data in table.
-    Connection connection = DriverManager.getConnection(URL, SUPER_USER, SUPER_USER_PASSWORD);
     ScriptRunner sr = new ScriptRunner(connection);
     Reader reader = new BufferedReader(
         new FileReader(INSERT_DATA_FILE));
     sr.setSendFullScript(true);
     sr.runScript(reader);
-    log.info("Added test data into database.");
-    connection.close();
-
+    log.info("Added additional test data.");
+    reader.close();
   }
 
-  private void deleteDataFromTable() throws FileNotFoundException, SQLException {
+  private void deleteDataFromTable() throws SQLException, IOException {
     // Delete test data from table.
-    Connection connection = DriverManager.getConnection(URL, SUPER_USER, SUPER_USER_PASSWORD);
     ScriptRunner sr = new ScriptRunner(connection);
     Reader reader = new BufferedReader(
         new FileReader(DELETE_DATA_FILE));
     sr.setSendFullScript(true);
     sr.runScript(reader);
     log.info("Deleted few records from database.");
-    connection.close();
+    reader.close();
 
   }
 
-  private void updateDataInTable() throws FileNotFoundException, SQLException {
+  private void updateDataInTable() throws SQLException, IOException {
     // Update data in table.
-    Connection connection = DriverManager.getConnection(URL, SUPER_USER, SUPER_USER_PASSWORD);
     ScriptRunner sr = new ScriptRunner(connection);
     Reader reader = new BufferedReader(
         new FileReader(UPDATE_DATA_FILE));
     sr.setSendFullScript(true);
     sr.runScript(reader);
+    reader.close();
     log.info("Updated test data into database.");
-    connection.close();
-
   }
 }
