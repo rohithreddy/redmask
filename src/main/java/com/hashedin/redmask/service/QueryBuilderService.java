@@ -38,6 +38,7 @@ public class QueryBuilderService {
 
   private static final String NEW_LINE = System.getProperty("line.separator");
   private static final String SELECT_QUERY = "SELECT * FROM ";
+  private static final String DEFAULT_INPUT_TABLE_SCHEMA = "public";
 
   public void buildFunctionsAndQueryForView(
       MaskingRule rule,
@@ -96,20 +97,27 @@ public class QueryBuilderService {
     writer.append("\n\n-- Create masked view.\n");
     writer.append(createViewQuery);
 
+    writer.append("\n\n-- Revoking access from original table");
+    writer.append("\nREVOKE ALL ON TABLE " + DEFAULT_INPUT_TABLE_SCHEMA + "."
+        + rule.getTable() + " FROM " + config.getUser() + ";");
+
   }
 
   /**
    * This function add all the dynamically design sub-queries based on the columns dn the mask type
    * and adds it into the querySubstring list.
-   * @param rule The masking rule for a given table.
+   *
+   * @param rule                  The masking rule for a given table.
    * @param functionDefinitionSet A set to store the unique function definition to be created to
    *                              execute the necessary masked view.
-   * @param querySubstring A list to store sub-queries built dynamically for making the view query.
-   * @param rs The ResultSet object contain the metadata for column of the table specified in the
-   *           masking rule.
-   * @param templateConfig Template Confguration in order to access the different templates to
-   *                       create user specific funciton definition and sub-queries
-   * @param colMaskRuleMap Map of the column to be masked and their masking function
+   * @param querySubstring        A list to store sub-queries built dynamically for making the
+   *                              view query.
+   * @param rs                    The ResultSet object contain the metadata for column of the table
+   *                              specified in the
+   *                              masking rule.
+   * @param templateConfig        Template Confguration in order to access the different templates
+   *                              to create user specific funciton definition and sub-queries
+   * @param colMaskRuleMap        Map of the column to be masked and their masking function
    * @throws SQLException
    */
   void getColumnMaskSubQueries(
@@ -134,12 +142,13 @@ public class QueryBuilderService {
 
   /**
    * Creates a map of the column name and the associated masking rule.
-   * @param rule The masking rule given for a table.
-   * @param connection Connection to the SQL database
+   *
+   * @param rule              The masking rule given for a table.
+   * @param connection        Connection to the SQL database
    * @param columnRuleFactory Factory class in order to convert the column rule to a specific
    *                          rule class
-   * @param colMaskRuleMap Map containing the column name as key and the specific rule class as
-   *                       value.
+   * @param colMaskRuleMap    Map containing the column name as key and the specific rule class as
+   *                          value.
    */
   void createColumnMaskRuleMap(
       MaskingRule rule,

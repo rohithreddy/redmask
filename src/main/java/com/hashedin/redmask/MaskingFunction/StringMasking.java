@@ -106,6 +106,7 @@ public class StringMasking extends MaskingRuleDef {
    * The Function will add the default value of the parameters value is not passed in the
    * maskparams config.
    * </p>
+   *
    * @param parameters List of parameters required to create the intended mask.
    * @return The list of validated parameter
    * @throws RedmaskConfigException
@@ -139,7 +140,7 @@ public class StringMasking extends MaskingRuleDef {
       throw new RedmaskConfigException(
           String.format("\'%s\' value should be greater than or equal to 0", PARAM_SHOW_LAST));
     }
-    parameters.add(pattern);
+    parameters.add("'" + pattern + "'");
     parameters.add(String.valueOf(prefix));
     parameters.add(String.valueOf(suffix));
     return true;
