@@ -3,7 +3,8 @@ package com.hashedin.redmask;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hashedin.redmask.configurations.MaskConfiguration;
 import com.hashedin.redmask.service.MaskingService;
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -11,9 +12,6 @@ import picocli.CommandLine.Option;
 import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.Callable;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 @Command(description = "Redmask Tool",
     name = "redmask",
