@@ -103,7 +103,7 @@ public class RedMaskITUtils {
   }
 
   public static ColumnRule getMaskRuleString(String columnName) throws JsonProcessingException {
-    String json = "{ \"pattern\":\"'*'\", \"show_first\":1, \"show_last\":1}";
+    String json = "{ \"pattern\":\"*\", \"show_first\":1, \"show_last\":1}";
     ObjectMapper objectMapper = new ObjectMapper();
     JsonNode maskParams = objectMapper.readTree(json);
     ColumnRule columnRule = new ColumnRule(columnName, MaskType.STRING_MASKING, maskParams);
@@ -246,7 +246,7 @@ public class RedMaskITUtils {
 
   public static ColumnRule getMaskRuleCardFirstLast(String columnName)
       throws JsonProcessingException {
-    String json = "{ \"separator\":\"'-'\", \"show_first\":3, \"show_last\":5}";
+    String json = "{ \"separator\":\"-\", \"show_first\":3, \"show_last\":5}";
     ObjectMapper objectMapper = new ObjectMapper();
     JsonNode maskParams = objectMapper.readTree(json);
     ColumnRule columnRule = new ColumnRule(columnName,

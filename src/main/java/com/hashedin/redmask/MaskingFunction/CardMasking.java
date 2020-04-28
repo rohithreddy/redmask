@@ -22,19 +22,19 @@ import java.util.Set;
 /**
  * This masking function is used to mask column containing credit/debit card data entered as string.
  * <p>
- *   This function have the following variations :-
- *   <p>
- *     CREDIT_CARD_SHOW_FIRST : This show the first few character equal to number passed in the
- *     show_first parameter.
- *   </p>
- *   <p>
- *     CREDIT_CARD_SHOW_LAST: This show the last few character equal to number passed in the
- *     show_last parameter.
- *   </p>
- *   <p>
- *     CREDIT_CARD_SHOW_FIRST_LAST: This show the first few character  and the last few characters
- *     equal to number passed in the show_first and show_last parameter respectively.
- *   </p>
+ * This function have the following variations :-
+ * <p>
+ * CREDIT_CARD_SHOW_FIRST : This show the first few character equal to number passed in the
+ * show_first parameter.
+ * </p>
+ * <p>
+ * CREDIT_CARD_SHOW_LAST: This show the last few character equal to number passed in the
+ * show_last parameter.
+ * </p>
+ * <p>
+ * CREDIT_CARD_SHOW_FIRST_LAST: This show the first few character  and the last few characters
+ * equal to number passed in the show_first and show_last parameter respectively.
+ * </p>
  * </p>
  */
 public class CardMasking extends MaskingRuleDef {
@@ -126,6 +126,7 @@ public class CardMasking extends MaskingRuleDef {
    * The Function will add the default value of the parameters value is not passed in the
    * maskparams config.
    * </p>
+   *
    * @param parameters List of parameters required to create the intended mask.
    * @return The list of validated parameter
    * @throws RedmaskConfigException
@@ -177,7 +178,7 @@ public class CardMasking extends MaskingRuleDef {
       default:
         break;
     }
-    parameters.add(separator);
+    parameters.add("'" + separator + "'");
     parameters.add(String.valueOf(val1));
     parameters.add(String.valueOf(val2));
 
