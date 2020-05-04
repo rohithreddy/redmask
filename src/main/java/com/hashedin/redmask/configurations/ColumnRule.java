@@ -9,9 +9,11 @@ public class ColumnRule {
   private String columnName; 
 
   //Value from MaskType enum.
+  @JsonProperty("mask_type")
   private MaskType maskType; 
 
   // A map(key, value) of additional parameters needed for this masking rule.
+  @JsonProperty("mask_params")
   private JsonNode maskParams;
 
   public ColumnRule() {}

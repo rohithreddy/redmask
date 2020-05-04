@@ -1,5 +1,7 @@
 # # Build directories
 /target/
+/bin/
+/gradle/
 
 # Compiled class file
 *.class
@@ -10,3 +12,5 @@
 .project
 
 .checkstyle
+/.gradle/
+/build/

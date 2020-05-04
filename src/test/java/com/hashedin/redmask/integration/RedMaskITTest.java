@@ -111,7 +111,7 @@ public class RedMaskITTest extends BaseITPostgresTestContainer {
 
   @After
   public void deleteTableAndMaskedView() throws SQLException {
-    try(Connection CONN =  connection = DriverManager.getConnection(
+    try(Connection CONN = DriverManager.getConnection(
         URL,
         SUPER_USER,
         SUPER_USER_PASSWORD
