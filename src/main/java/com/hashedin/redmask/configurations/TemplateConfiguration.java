@@ -6,28 +6,20 @@ import freemarker.template.TemplateExceptionHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
-import java.io.IOException;
-
 public class TemplateConfiguration {
 
   private static final Logger log = LoggerFactory.getLogger(TemplateConfiguration.class);
 
-  private static final String TEMPLATE_DIR = "src/main/resources/templates";
+  // Path is src/main/resources/templates
+  private static final String TEMPLATE_DIR = "/templates/";
+  private static final String UTF_8 = "UTF-8";
 
   private final Configuration config;
 
   public TemplateConfiguration() {
-
     Configuration cfg = new Configuration(Configuration.VERSION_2_3_29);
-
-    // Specify the source where the template files come from.
-    try {
-      cfg.setDirectoryForTemplateLoading(new File(TEMPLATE_DIR));
-    } catch (IOException e) {
-      log.error("Template Directory Not Found", e);
-    }
-    cfg.setDefaultEncoding("UTF-8");
+    cfg.setClassForTemplateLoading(this.getClass(), TEMPLATE_DIR);
+    cfg.setDefaultEncoding(UTF_8);
     cfg.setTemplateExceptionHandler(TemplateExceptionHandler.RETHROW_HANDLER);
     this.config = cfg;
   }

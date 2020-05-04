@@ -5,8 +5,8 @@ import freemarker.template.Template;
 import freemarker.template.TemplateException;
 import org.apache.commons.io.IOUtils;
 
-import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
@@ -139,11 +139,10 @@ public class MaskingQueryUtil {
   }
 
   private static String readFunctionQueryFromSqlFile(String filePath) throws IOException {
-    // Creating a reader object
-    FileInputStream sqlFunctionFile = new FileInputStream(filePath);
-    return IOUtils.toString(sqlFunctionFile, StandardCharsets.UTF_8);
+    ClassLoader classLoader = Thread.currentThread().getContextClassLoader(); 
+    InputStream inputStream = classLoader.getResourceAsStream(filePath);
+    return IOUtils.toString(inputStream, StandardCharsets.UTF_8);
   }
-
 
   //To generate schema specific function definition
   private static String processTemplate(TemplateConfiguration config,

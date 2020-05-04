@@ -30,7 +30,7 @@ public class RedMaskApp implements Callable<Integer> {
       description = "Complete file path of json containing masking configurations.")
   private String configFilePath;
 
-  @Option(names = {"-r", "--dryrun"},
+  @Option(names = {"-r", "--dry-run"},
       description = "When true, this will just generates sql file with required queries. "
           + "It will not make any changes to DB.")
   private boolean dryRun = true;
