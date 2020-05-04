@@ -7,11 +7,11 @@ It is an open source tool, released under Apache 2.0 license, and is free to use
 
 This tool supports two type of data masking - static and dynamic masking:
 
-#### Static Masking: 
+#### Static Masking:
 In static masking, a new table is created with the selected columns masked. This increases storage costs. This technique is suitable for data sets that do not change often.
 
-#### Dynamic Masking: 
-In dynamic masking, RedMask  creates a view that masks the desired columns. The view has the same name and columns as the underlying table, but is in a different schema. When a query is executed, the data warehouse picks either the table or the view depending on the search path/default schema. 
+#### Dynamic Masking:
+In dynamic masking, RedMask  creates a view that masks the desired columns. The view has the same name and columns as the underlying table, but is in a different schema. When a query is executed, the data warehouse picks either the table or the view depending on the search path/default schema.
 
 #### Architecture:
 
@@ -24,8 +24,8 @@ RedMask does not intercept your queries or the data. Instead, it relies on stand
 RedMask requires a database to store temporary data. [TODO] RedMask will use a sqlite database to store this data, but you can configure it to use another database. If you lose this database, RedMask can rebuild it by reading the data warehouse.
 
 Applications connecting to the data warehouse have to make 2 small changes:
-1.  Queries accessing tables with sensitive data must refer to tables without the schema name.  
-    Wrong: `select * from sales.customers`  
+1.  Queries accessing tables with sensitive data must refer to tables without the schema name.
+    Wrong: `select * from sales.customers` 
     Correct: `select * from customers`
     This restriction does not apply to tables that do not have sensitive data.
 2.  Optionally, you need to run an initial sql statement when you create a connection to the data warehouse. This initial sql statement sets the default schema / search path to resolve table names without a schema identifier.
@@ -84,6 +84,10 @@ DB_USER_PASSWORD = <dev_user_password>
 ```
 ./redmask -f=/<path_to_josn_file>/masking_config.jso -r=false
 ```
+where:
+- `-f`or `--configFilePath` is complete file path of json containing masking configurations.
+- `-r` or `--dryRun` when true, this will just generates sql file with required queries. It will not make any changes to DB. It indicates dry run mode.
+
 After running the command, the RedMask will create appropriate schemas/views/permissions in the underlying data warehouse.
 
 #### Todo:
