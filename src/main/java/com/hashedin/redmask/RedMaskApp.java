@@ -26,11 +26,11 @@ public class RedMaskApp implements Callable<Integer> {
    *  TODO :Implement static masking feature and may be we will need a 
    *  different masking config structure for static masking.
    */
-  @Option(names = {"-f", "--configfilepath"}, required = true,
+  @Option(names = {"-f", "--configFilePath"}, required = true,
       description = "Complete file path of json containing masking configurations.")
   private String configFilePath;
 
-  @Option(names = {"-r", "--dry-run"},
+  @Option(names = {"-r", "--dryRun"},
       description = "When true, this will just generates sql file with required queries. "
           + "It will not make any changes to DB.")
   private boolean dryRun = true;
