@@ -60,6 +60,6 @@ public class BasePostgresTestContainer {
   protected static String getFunctionQuery(String filePath) throws IOException {
     // Creating a reader object
     return IOUtils.toString(
-        new FileInputStream(BASE_FILE_PATH+filePath),StandardCharsets.UTF_8);
+        new FileInputStream(BASE_FILE_PATH + filePath),StandardCharsets.UTF_8);
   }
 }
