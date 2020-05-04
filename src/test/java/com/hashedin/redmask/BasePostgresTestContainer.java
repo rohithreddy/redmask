@@ -19,6 +19,7 @@ import java.sql.SQLException;
 public class BasePostgresTestContainer {
 
   private static final Logger log = LoggerFactory.getLogger(BasePostgresTestContainer.class);
+  private static final String BASE_FILE_PATH= "src/main/resources/";
 
   protected static final String SCHEMA = "redmask";
   protected static Connection connection;
@@ -59,6 +60,6 @@ public class BasePostgresTestContainer {
   protected static String getFunctionQuery(String filePath) throws IOException {
     // Creating a reader object
     return IOUtils.toString(
-        new FileInputStream(filePath),StandardCharsets.UTF_8);
+        new FileInputStream(BASE_FILE_PATH+filePath),StandardCharsets.UTF_8);
   }
 }
