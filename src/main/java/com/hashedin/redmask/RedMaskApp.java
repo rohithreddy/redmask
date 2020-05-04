@@ -13,7 +13,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.Callable;
 
-@Command(description = "Redmask Tool",
+@Command(description = "Redmask Tool - a CLI proxyless administration tool to mask "
+    + "sensitive information in a data warehouse",
     name = "redmask",
     mixinStandardHelpOptions = true,
     version = "redmask 1.0")
@@ -31,8 +32,8 @@ public class RedMaskApp implements Callable<Integer> {
 
   @Option(names = {"-r", "--dryrun"},
       description = "When true, this will just generates sql file with required queries. "
-          + "It will not make any chnages to DB.")
-  private boolean dryRun = false;
+          + "It will not make any changes to DB.")
+  private boolean dryRun = true;
 
   public static void main(String[] args) throws IOException {
     log.info("Starting redmask application.");
