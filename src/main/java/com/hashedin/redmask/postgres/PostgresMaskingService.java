@@ -1,8 +1,10 @@
-package com.hashedin.redmask.service;
+package com.hashedin.redmask.postgres;
 
-import com.hashedin.redmask.configurations.MaskConfiguration;
-import com.hashedin.redmask.configurations.MaskingRule;
+import com.hashedin.redmask.common.QueryBuilderService;
+import com.hashedin.redmask.config.MaskConfiguration;
+import com.hashedin.redmask.config.MaskingRule;
 import com.hashedin.redmask.exception.RedmaskRuntimeException;
+import com.hashedin.redmask.factory.DataMasking;
 
 import org.apache.ibatis.jdbc.ScriptRunner;
 import org.slf4j.Logger;
@@ -19,9 +21,9 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 
-public class MaskingService {
+public class PostgresMaskingService extends DataMasking {
 
-  private static final Logger log = LoggerFactory.getLogger(MaskingService.class);
+  private static final Logger log = LoggerFactory.getLogger(PostgresMaskingService.class);
 
   private static final String MASKING_FUNCTION_SCHEMA = "redmask";
 
@@ -32,7 +34,7 @@ public class MaskingService {
   // This temp would contain queries to create masked data.
   private final File tempFilePath;
 
-  public MaskingService(MaskConfiguration config, boolean dryRunEnabled) {
+  public PostgresMaskingService(MaskConfiguration config, boolean dryRunEnabled) {
     this.config = config;
     this.url = url + config.getHost() + ":" + config.getPort() + "/" + config.getDatabase();
     this.dryRunEnabled = dryRunEnabled;

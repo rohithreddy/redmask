@@ -1,9 +1,13 @@
 package com.hashedin.redmask.integration;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.hashedin.redmask.configurations.MaskConfiguration;
+import com.hashedin.redmask.config.MaskConfiguration;
 import com.hashedin.redmask.exception.RedmaskConfigException;
-import com.hashedin.redmask.service.MaskingService;
+import com.hashedin.redmask.factory.DataBaseType;
+import com.hashedin.redmask.factory.DataMaskFactory;
+import com.hashedin.redmask.factory.DataMasking;
+import com.hashedin.redmask.postgres.PostgresMaskingService;
+
 import org.apache.ibatis.jdbc.ScriptRunner;
 import org.junit.After;
 import org.junit.Assert;
@@ -76,6 +80,7 @@ public class RedMaskITTest extends BaseITPostgresTestContainer {
           HOST,
           PORT,
           DATABASE,
+          DataBaseType.POSTGRES,
           DEV_USER);
     } finally {
       connection.close();
@@ -327,9 +332,9 @@ public class RedMaskITTest extends BaseITPostgresTestContainer {
   }
 
   private void runRedMaskApp(MaskConfiguration config) throws IOException {
-      MaskingService service = new MaskingService(config, false);
-      service.generateSqlQueryForMasking();
-      service.executeSqlQueryForMasking();
+    DataMasking dataMasking = DataMaskFactory.buildDataMask(config, false);
+    dataMasking.generateSqlQueryForMasking();
+    dataMasking.executeSqlQueryForMasking();
   }
 
   private void addMoreDataToTable() throws SQLException, IOException {

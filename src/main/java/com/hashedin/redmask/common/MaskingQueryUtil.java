@@ -1,9 +1,44 @@
-package com.hashedin.redmask.service;
+package com.hashedin.redmask.common;
 
-import com.hashedin.redmask.configurations.TemplateConfiguration;
 import freemarker.template.Template;
 import freemarker.template.TemplateException;
 import org.apache.commons.io.IOUtils;
+
+import com.hashedin.redmask.config.TemplateConfiguration;
+
+import static com.hashedin.redmask.config.MaskingConstants.MASK_BIGINT_RANGE_COMMENT;
+import static com.hashedin.redmask.config.MaskingConstants.MASK_BIGINT_RANGE_FILE;
+import static com.hashedin.redmask.config.MaskingConstants.MASK_BIGINT_RANGE_FUNC;
+import static com.hashedin.redmask.config.MaskingConstants.MASK_CARD_COMMENT;
+import static com.hashedin.redmask.config.MaskingConstants.MASK_CARD_FILE;
+import static com.hashedin.redmask.config.MaskingConstants.MASK_CARD_FUNC;
+import static com.hashedin.redmask.config.MaskingConstants.MASK_EMAIL_COMMENT;
+import static com.hashedin.redmask.config.MaskingConstants.MASK_EMAIL_FILE;
+import static com.hashedin.redmask.config.MaskingConstants.MASK_EMAIL_FUNC;
+import static com.hashedin.redmask.config.MaskingConstants.MASK_FLOAT_FIXED_VALUE_COMMENT;
+import static com.hashedin.redmask.config.MaskingConstants.MASK_FLOAT_FIXED_VALUE_FILE;
+import static com.hashedin.redmask.config.MaskingConstants.MASK_FLOAT_FIXED_VALUE_FUNC;
+import static com.hashedin.redmask.config.MaskingConstants.MASK_INTEGER_FIXED_SIZE_COMMENT;
+import static com.hashedin.redmask.config.MaskingConstants.MASK_INTEGER_FIXED_SIZE_FILE;
+import static com.hashedin.redmask.config.MaskingConstants.MASK_INTEGER_FIXED_SIZE_FUNC;
+import static com.hashedin.redmask.config.MaskingConstants.MASK_INTEGER_FIXED_VALUE_COMMENT;
+import static com.hashedin.redmask.config.MaskingConstants.MASK_INTEGER_FIXED_VALUE_FILE;
+import static com.hashedin.redmask.config.MaskingConstants.MASK_INTEGER_FIXED_VALUE_FUNC;
+import static com.hashedin.redmask.config.MaskingConstants.MASK_INTEGER_RANGE_COMMENT;
+import static com.hashedin.redmask.config.MaskingConstants.MASK_INTEGER_RANGE_FILE;
+import static com.hashedin.redmask.config.MaskingConstants.MASK_INTEGER_RANGE_FUNC;
+import static com.hashedin.redmask.config.MaskingConstants.MASK_INTEGER_WITHIN_RANGE_COMMENT;
+import static com.hashedin.redmask.config.MaskingConstants.MASK_INTEGER_WITHIN_RANGE_FILE;
+import static com.hashedin.redmask.config.MaskingConstants.MASK_INTEGER_WITHIN_RANGE_FUNC;
+import static com.hashedin.redmask.config.MaskingConstants.MASK_NUMBERS_COMMENT;
+import static com.hashedin.redmask.config.MaskingConstants.MASK_NUMBERS_FILE;
+import static com.hashedin.redmask.config.MaskingConstants.MASK_NUMBERS_FUNC;
+import static com.hashedin.redmask.config.MaskingConstants.MASK_NUMERIC_RANGE_COMMENT;
+import static com.hashedin.redmask.config.MaskingConstants.MASK_NUMERIC_RANGE_FILE;
+import static com.hashedin.redmask.config.MaskingConstants.MASK_NUMERIC_RANGE_FUNC;
+import static com.hashedin.redmask.config.MaskingConstants.MASK_STRING_COMMENT;
+import static com.hashedin.redmask.config.MaskingConstants.MASK_STRING_FILE;
+import static com.hashedin.redmask.config.MaskingConstants.MASK_STRING_FUNC;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -12,40 +47,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import static com.hashedin.redmask.configurations.MaskingConstants.MASK_BIGINT_RANGE_COMMENT;
-import static com.hashedin.redmask.configurations.MaskingConstants.MASK_BIGINT_RANGE_FILE;
-import static com.hashedin.redmask.configurations.MaskingConstants.MASK_BIGINT_RANGE_FUNC;
-import static com.hashedin.redmask.configurations.MaskingConstants.MASK_CARD_COMMENT;
-import static com.hashedin.redmask.configurations.MaskingConstants.MASK_CARD_FILE;
-import static com.hashedin.redmask.configurations.MaskingConstants.MASK_CARD_FUNC;
-import static com.hashedin.redmask.configurations.MaskingConstants.MASK_EMAIL_COMMENT;
-import static com.hashedin.redmask.configurations.MaskingConstants.MASK_EMAIL_FILE;
-import static com.hashedin.redmask.configurations.MaskingConstants.MASK_EMAIL_FUNC;
-import static com.hashedin.redmask.configurations.MaskingConstants.MASK_FLOAT_FIXED_VALUE_COMMENT;
-import static com.hashedin.redmask.configurations.MaskingConstants.MASK_FLOAT_FIXED_VALUE_FILE;
-import static com.hashedin.redmask.configurations.MaskingConstants.MASK_FLOAT_FIXED_VALUE_FUNC;
-import static com.hashedin.redmask.configurations.MaskingConstants.MASK_INTEGER_FIXED_SIZE_COMMENT;
-import static com.hashedin.redmask.configurations.MaskingConstants.MASK_INTEGER_FIXED_SIZE_FILE;
-import static com.hashedin.redmask.configurations.MaskingConstants.MASK_INTEGER_FIXED_SIZE_FUNC;
-import static com.hashedin.redmask.configurations.MaskingConstants.MASK_INTEGER_FIXED_VALUE_COMMENT;
-import static com.hashedin.redmask.configurations.MaskingConstants.MASK_INTEGER_FIXED_VALUE_FILE;
-import static com.hashedin.redmask.configurations.MaskingConstants.MASK_INTEGER_FIXED_VALUE_FUNC;
-import static com.hashedin.redmask.configurations.MaskingConstants.MASK_INTEGER_RANGE_COMMENT;
-import static com.hashedin.redmask.configurations.MaskingConstants.MASK_INTEGER_RANGE_FILE;
-import static com.hashedin.redmask.configurations.MaskingConstants.MASK_INTEGER_RANGE_FUNC;
-import static com.hashedin.redmask.configurations.MaskingConstants.MASK_INTEGER_WITHIN_RANGE_COMMENT;
-import static com.hashedin.redmask.configurations.MaskingConstants.MASK_INTEGER_WITHIN_RANGE_FILE;
-import static com.hashedin.redmask.configurations.MaskingConstants.MASK_INTEGER_WITHIN_RANGE_FUNC;
-import static com.hashedin.redmask.configurations.MaskingConstants.MASK_NUMBERS_COMMENT;
-import static com.hashedin.redmask.configurations.MaskingConstants.MASK_NUMBERS_FILE;
-import static com.hashedin.redmask.configurations.MaskingConstants.MASK_NUMBERS_FUNC;
-import static com.hashedin.redmask.configurations.MaskingConstants.MASK_NUMERIC_RANGE_COMMENT;
-import static com.hashedin.redmask.configurations.MaskingConstants.MASK_NUMERIC_RANGE_FILE;
-import static com.hashedin.redmask.configurations.MaskingConstants.MASK_NUMERIC_RANGE_FUNC;
-import static com.hashedin.redmask.configurations.MaskingConstants.MASK_STRING_COMMENT;
-import static com.hashedin.redmask.configurations.MaskingConstants.MASK_STRING_FILE;
-import static com.hashedin.redmask.configurations.MaskingConstants.MASK_STRING_FUNC;
 
 /**
  * This class contain function that will add the masking function to the created for the inputted

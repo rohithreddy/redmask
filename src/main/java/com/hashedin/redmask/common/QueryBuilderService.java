@@ -1,12 +1,12 @@
-package com.hashedin.redmask.service;
+package com.hashedin.redmask.common;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.hashedin.redmask.configurations.ColumnRule;
-import com.hashedin.redmask.configurations.MaskConfiguration;
-import com.hashedin.redmask.configurations.MaskingRule;
-import com.hashedin.redmask.configurations.MaskingRuleFactory;
-import com.hashedin.redmask.configurations.TemplateConfiguration;
+import com.hashedin.redmask.config.ColumnRule;
+import com.hashedin.redmask.config.MaskConfiguration;
+import com.hashedin.redmask.config.MaskingRule;
+import com.hashedin.redmask.config.MaskingRuleFactory;
+import com.hashedin.redmask.config.TemplateConfiguration;
 import com.hashedin.redmask.exception.RedmaskConfigException;
 import com.hashedin.redmask.exception.RedmaskRuntimeException;
 import org.slf4j.Logger;
@@ -29,8 +29,8 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * This class is used build part of the query that would be combined to build the necessary masked
- * view.
+ * This class is used build part of the query that would be combined to
+ * build the necessary masked view.
  */
 public class QueryBuilderService {
 
@@ -51,19 +51,23 @@ public class QueryBuilderService {
     List<String> querySubstring = new ArrayList<>();
     ResultSetMetaData rs = null;
     TemplateConfiguration templateConfig = config.getTemplateConfig();
-    // get all columns of given table.
+
+    // Get all columns of given table.
     log.info("Getting column metadata from existing table.");
     String query = SELECT_QUERY + rule.getTable();
 
     try (Connection CONN = DriverManager.getConnection(url,
         config.getSuperUser(), config.getSuperUserPassword());
          Statement STATEMENT = CONN.createStatement()) {
+      
+      // Check if given table exists.
       if (!isValidTable(CONN, rule.getTable())) {
         throw new RedmaskConfigException(String.format("{} was not found.", rule.getTable()));
       }
       rs = STATEMENT.executeQuery(query).getMetaData();
       MaskingRuleFactory columnRuleFactory = new MaskingRuleFactory();
-      log.info("Storing masking function names required to create the intended view.");
+      
+      log.info("Storing masking function names required to create the intended masked view.");
       Map<String, MaskingRuleDef> colMaskRuleMap = new HashMap<>();
 
       // Create a map of column and their associated masking rule.
@@ -74,19 +78,21 @@ public class QueryBuilderService {
       getColumnMaskSubQueries(rule, functionDefinitionSet, querySubstring, rs, templateConfig,
           colMaskRuleMap);
 
-    } catch (SQLException exception) {
+    } catch (SQLException ex) {
       throw new RedmaskRuntimeException(
-          "SQL Exception occurred while fetching original table data", exception);
+          "SQL Exception occurred while fetching original table data", ex);
     }
 
-    log.info("Appending Masking function definition to the temporary redmask-masking.sql file.");
+    /**
+     * Inserting Masking function definition to the temporary redmask-masking.sql file.
+     * Appending each masking function to redmask-masking.sql file
+     */
     for (String functionDefinition : functionDefinitionSet) {
-      //Appending each masking function to redmask-masking.sql file
       writer.append(functionDefinition);
     }
 
-    // Create view
-    log.info("Creating the query in order to create the intended view.");
+    // Create view query.
+    log.info("Creating the query in order to create the intended masked view.");
     String queryString = String.join(",", querySubstring);
     StringBuilder sb = new StringBuilder();
     sb.append(config.getUsername()).append(".").append(rule.getTable());
@@ -120,7 +126,7 @@ public class QueryBuilderService {
    * @param colMaskRuleMap        Map of the column to be masked and their masking function
    * @throws SQLException
    */
-  void getColumnMaskSubQueries(
+  private void getColumnMaskSubQueries(
       MaskingRule rule,
       Set<String> functionDefinitionSet,
       List<String> querySubstring,
@@ -149,16 +155,16 @@ public class QueryBuilderService {
    *                          rule class
    * @param colMaskRuleMap    Map containing the column name as key and the specific rule class as
    *                          value.
+   * @throws SQLException 
    */
-  void createColumnMaskRuleMap(
+  private void createColumnMaskRuleMap(
       MaskingRule rule,
       Connection connection,
       MaskingRuleFactory columnRuleFactory,
-      Map<String, MaskingRuleDef> colMaskRuleMap) {
+      Map<String, MaskingRuleDef> colMaskRuleMap) throws SQLException {
     for (ColumnRule col : rule.getColumns()) {
       // Build MaskingRuleDef object.
       if (!isValidTableColumn(connection, rule.getTable(), col.getColumnName())) {
-
         throw new RedmaskConfigException(
             String.format("{} was not found in {} table.", col.getColumnName(), rule.getTable()));
       } else {
@@ -187,7 +193,7 @@ public class QueryBuilderService {
   }
 
   /**
-   * It generates the SQL query inorder to create a new schema.
+   * It generates the SQL query in order to create a new schema.
    *
    * @param schemaName The name of the schema to be created.
    * @return The SQL query to create the intended schema.
@@ -233,18 +239,13 @@ public class QueryBuilderService {
    * @param tableName  The name of the table to be checked.
    * @return True, if the Table is present in the database else false.
    */
-  private boolean isValidTable(Connection connection, String tableName) {
-    try {
-      DatabaseMetaData metaData = connection.getMetaData();
-      ResultSet rs = metaData.getTables(null, null, tableName, null);
-      if (rs.next()) {
-        return true;
-      }
-      return false;
-    } catch (SQLException ex) {
-      throw new RedmaskRuntimeException(
-          "Error getting metadata from SQL Database for table " + tableName + ".", ex);
+  private boolean isValidTable(Connection connection, String tableName) throws SQLException {
+    DatabaseMetaData metaData = connection.getMetaData();
+    ResultSet rs = metaData.getTables(null, null, tableName, null);
+    if (rs.next()) {
+      return true;
     }
+    return false;
   }
 
   /**
@@ -255,17 +256,13 @@ public class QueryBuilderService {
    * @param columnName The name of the column to be checked.
    * @return True, if the column is present in the table,else false.
    */
-  private boolean isValidTableColumn(Connection connection, String tableName, String columnName) {
-    try {
-      DatabaseMetaData metaData = connection.getMetaData();
-      ResultSet rs = metaData.getColumns(null, null, tableName, columnName);
-      if (rs.next()) {
-        return true;
-      }
-      return false;
-    } catch (SQLException ex) {
-      throw new RedmaskRuntimeException(
-          "Error getting metadata from SQL Database for table " + tableName + ".", ex);
+  private boolean isValidTableColumn(Connection connection, String tableName,
+      String columnName) throws SQLException {
+    DatabaseMetaData metaData = connection.getMetaData();
+    ResultSet rs = metaData.getColumns(null, null, tableName, columnName);
+    if (rs.next()) {
+      return true;
     }
+    return false;
   }
 }

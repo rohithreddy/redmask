@@ -1,43 +1,54 @@
-package com.hashedin.redmask.MaskingFunction;
+package com.hashedin.redmask.postgres.function;
 
-import com.hashedin.redmask.configurations.MaskType;
-import com.hashedin.redmask.configurations.MaskingConstants;
-import com.hashedin.redmask.configurations.TemplateConfiguration;
+import com.hashedin.redmask.common.MaskingQueryUtil;
+import com.hashedin.redmask.common.MaskingRuleDef;
+import com.hashedin.redmask.config.MaskType;
+import com.hashedin.redmask.config.MaskingConstants;
+import com.hashedin.redmask.config.TemplateConfiguration;
 import com.hashedin.redmask.exception.RedmaskConfigException;
 import com.hashedin.redmask.exception.RedmaskRuntimeException;
-import com.hashedin.redmask.service.MaskingQueryUtil;
-import com.hashedin.redmask.service.MaskingRuleDef;
-import freemarker.template.TemplateException;
 
+import freemarker.template.TemplateException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 /**
- * This masking function convert a column of type bigint into a range of bigint,
- * with the range equal to the step parameter.
+ * This masking function allows you to mask a string type column with a user defined pattern
+ * specified as the pattern parameter. The user can also leave the first and last few character of
+ * the string as unmasked by specifying the number of unmasked character in show_first and
+ * show_last parameter respectively.
  */
-public class BigIntRangeMasking extends MaskingRuleDef {
+public class StringMasking extends MaskingRuleDef {
 
-  private static final Logger log = LoggerFactory.getLogger(BigIntRangeMasking.class);
+  private static final Logger log = LoggerFactory.getLogger(StringMasking.class);
 
-  private static final String PARAM_STEP = "step";
+  private static final String PARAM_REPLACEMENT_PATTERN = "pattern";
+  private static final String PARAM_PATTERN_DEFAULT = "*";
 
-  private static final String PARAM_STEP_DEFAULT = "10";
+  private static final String PARAM_SHOW_FIRST = "show_first";
+  private static final String PARAM_SHOW_FIRST_DEFAULT = "0";
 
-  public BigIntRangeMasking(
+  private static final String PARAM_SHOW_LAST = "show_last";
+  private static final String PARAM_SHOW_LAST_DEFAULT = "0";
+
+  private static final List<String> EXPECTED_PARAMETERS_LIST = new ArrayList<String>(
+      Arrays.asList(PARAM_REPLACEMENT_PATTERN, PARAM_SHOW_FIRST, PARAM_SHOW_LAST));
+
+  public StringMasking(
       String columnName,
       MaskType maskType,
       Map<String, String> maskParams) {
     super(columnName, maskType, maskParams);
   }
 
-  public BigIntRangeMasking() {
+  public StringMasking() {
   }
 
   /**
@@ -49,7 +60,7 @@ public class BigIntRangeMasking extends MaskingRuleDef {
   @Override
   public void addFunctionDefinition(TemplateConfiguration config, Set<String> funcSet) {
     try {
-      funcSet.add(MaskingQueryUtil.maskBigIntRange(config));
+      funcSet.add(MaskingQueryUtil.maskString(config));
       log.info("Function added for Mask Type {}", this.getMaskType());
     } catch (IOException | TemplateException ex) {
       throw new RedmaskRuntimeException(String.format("Error occurred while adding MaskFunction"
@@ -71,14 +82,12 @@ public class BigIntRangeMasking extends MaskingRuleDef {
   @Override
   public String getSubQuery(TemplateConfiguration config, String tableName)
       throws RedmaskConfigException {
-
     List<String> paramsList = new ArrayList<>();
     paramsList.add(this.getColumnName());
-
     try {
       if (validateAndAddParameters(paramsList)) {
-        return MaskingQueryUtil.processQueryTemplate(config,
-            MaskingConstants.MASK_BIGINT_RANGE_FUNC, paramsList);
+        return MaskingQueryUtil.processQueryTemplate(
+            config, MaskingConstants.MASK_STRING_FUNC, paramsList);
       }
     } catch (IOException | TemplateException ex) {
       throw new RedmaskRuntimeException(String.format("Error occurred while making SQL Sub query"
@@ -103,26 +112,38 @@ public class BigIntRangeMasking extends MaskingRuleDef {
    * @return The list of validated parameter
    * @throws RedmaskConfigException
    */
-  protected boolean validateAndAddParameters(List<String> parameters)
+  private boolean validateAndAddParameters(List<String> parameters)
       throws RedmaskConfigException {
-
     for (String key : this.getMaskParams().keySet()) {
-      if (!key.equals(PARAM_STEP)) {
+      if (!EXPECTED_PARAMETERS_LIST.contains(key)) {
         throw new RedmaskConfigException("Unrecognised parameter" + key + " supplied to "
             + this.getMaskType() + " for column " + this.getColumnName());
       }
     }
+
     if (this.getMaskParams().isEmpty() || this.getMaskParams() == null) {
-      parameters.add(PARAM_STEP);
-      return true;
+      parameters.addAll(Arrays.asList(PARAM_PATTERN_DEFAULT,
+          PARAM_SHOW_FIRST_DEFAULT, PARAM_SHOW_LAST_DEFAULT));
     }
-    int step = Integer.parseInt(this.getMaskParams().getOrDefault(PARAM_STEP, PARAM_STEP_DEFAULT));
-    if (step > 0) {
-      parameters.add(String.valueOf(step));
-      return true;
-    } else {
+    String pattern = this.getMaskParams()
+        .getOrDefault(PARAM_REPLACEMENT_PATTERN, PARAM_PATTERN_DEFAULT);
+    int prefix = Integer.parseInt(this.getMaskParams()
+        .getOrDefault(PARAM_SHOW_FIRST, PARAM_SHOW_FIRST_DEFAULT));
+    int suffix = Integer.parseInt(this.getMaskParams()
+        .getOrDefault(PARAM_SHOW_LAST, PARAM_SHOW_LAST_DEFAULT));
+
+    if (prefix < 0) {
       throw new RedmaskConfigException(
-          String.format("\'%s\' value should be greater than 0", PARAM_STEP));
+          String.format("\'%s\' value should be greater than or equal to 0", PARAM_SHOW_FIRST));
+
     }
+    if (suffix < 0) {
+      throw new RedmaskConfigException(
+          String.format("\'%s\' value should be greater than or equal to 0", PARAM_SHOW_LAST));
+    }
+    parameters.add("'" + pattern + "'");
+    parameters.add(String.valueOf(prefix));
+    parameters.add(String.valueOf(suffix));
+    return true;
   }
 }

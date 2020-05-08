@@ -20,6 +20,7 @@ repositories {
     mavenLocal()
     maven {
         url = 'https://repo.maven.apache.org/maven2'
+        url = 'http://redshift-maven-repository.s3-website-us-east-1.amazonaws.com/release'
     }
 }
 
@@ -32,6 +33,7 @@ dependencies {
     compile 'org.mybatis:mybatis:3.5.4'
     compile 'org.freemarker:freemarker:2.3.29'
     compile 'commons-io:commons-io:2.6'
+    compile 'com.amazon.redshift:redshift-jdbc42:1.2.16.1027'
     testCompile 'junit:junit:4.12'
     testCompile 'org.testcontainers:postgresql:1.13.0'
     compileOnly 'org.graalvm.nativeimage:svm:19.3.1'

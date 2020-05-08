@@ -1,9 +1,9 @@
-package com.hashedin.redmask.configurations;
-
-import com.hashedin.redmask.service.MaskingRuleDef;
+package com.hashedin.redmask.config;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.hashedin.redmask.common.MaskingRuleDef;
 
 /**
  * This factory class is used to create an instance of a specific masking rule from the inputted

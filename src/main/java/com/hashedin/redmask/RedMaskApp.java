@@ -1,8 +1,9 @@
 package com.hashedin.redmask;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.hashedin.redmask.configurations.MaskConfiguration;
-import com.hashedin.redmask.service.MaskingService;
+import com.hashedin.redmask.config.MaskConfiguration;
+import com.hashedin.redmask.factory.DataMaskFactory;
+import com.hashedin.redmask.factory.DataMasking;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
@@ -54,9 +55,10 @@ public class RedMaskApp implements Callable<Integer> {
       return 0;
     }
     try {
-      MaskingService service = new MaskingService(config, dryRun);
-      service.generateSqlQueryForMasking();
-      service.executeSqlQueryForMasking();
+      //PostgresMaskingService service = new PostgresMaskingService(config, dryRun);
+      DataMasking dataMasking = DataMaskFactory.buildDataMask(config, dryRun);
+      dataMasking.generateSqlQueryForMasking();
+      dataMasking.executeSqlQueryForMasking();
       log.info("Closing redmask application.");
       return 0;
     } catch (Exception ex) {

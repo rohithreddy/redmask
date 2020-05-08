@@ -1,12 +1,13 @@
-package com.hashedin.redmask.MaskingFunction;
+package com.hashedin.redmask.postgres.function;
 
-import com.hashedin.redmask.configurations.MaskType;
-import com.hashedin.redmask.configurations.MaskingConstants;
-import com.hashedin.redmask.configurations.TemplateConfiguration;
+import com.hashedin.redmask.common.MaskingQueryUtil;
+import com.hashedin.redmask.common.MaskingRuleDef;
+import com.hashedin.redmask.config.MaskType;
+import com.hashedin.redmask.config.MaskingConstants;
+import com.hashedin.redmask.config.TemplateConfiguration;
 import com.hashedin.redmask.exception.RedmaskConfigException;
 import com.hashedin.redmask.exception.RedmaskRuntimeException;
-import com.hashedin.redmask.service.MaskingQueryUtil;
-import com.hashedin.redmask.service.MaskingRuleDef;
+
 import freemarker.template.TemplateException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,26 +19,25 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * This masking function mask a float type column by the fixed number passed as the
- * value parameter or the default value of 0.00.
+ * This masking function mask a integer type column by the fixed number passed as the
+ * value parameter or the default value 0.
  */
-public class FixedValueFloatMasking extends MaskingRuleDef {
+public class FixedValueIntegerMasking extends MaskingRuleDef {
 
-  private static final Logger log = LoggerFactory.getLogger(FixedValueFloatMasking.class);
+  private static final Logger log = LoggerFactory.getLogger(FixedValueIntegerMasking.class);
 
   private static final String PARAM_VALUE = "value";
 
-  private static final String PARAM_VALUE_DEFAULT = "0.00";
+  private static final String PARAM_VALUE_DEFAULT = "0";
 
-
-  public FixedValueFloatMasking(
+  public FixedValueIntegerMasking(
       String columnName,
       MaskType maskType,
       Map<String, String> maskParams) {
     super(columnName, maskType, maskParams);
   }
 
-  public FixedValueFloatMasking() {
+  public FixedValueIntegerMasking() {
   }
 
   /**
@@ -49,7 +49,7 @@ public class FixedValueFloatMasking extends MaskingRuleDef {
   @Override
   public void addFunctionDefinition(TemplateConfiguration config, Set<String> funcSet) {
     try {
-      funcSet.add(MaskingQueryUtil.maskFloatFixedValue(config));
+      funcSet.add(MaskingQueryUtil.maskIntegerFixedValue(config));
       log.info("Function added for Mask Type {}", this.getMaskType());
     } catch (IOException | TemplateException ex) {
       throw new RedmaskRuntimeException(String.format("Error occurred while adding MaskFunction"
@@ -74,9 +74,9 @@ public class FixedValueFloatMasking extends MaskingRuleDef {
     List<String> paramsList = new ArrayList<>();
     paramsList.add(this.getColumnName());
     try {
-      if (this.validateAndAddParameters(paramsList)) {
+      if (validateAndAddParameters(paramsList)) {
         return MaskingQueryUtil.processQueryTemplate(config,
-            MaskingConstants.MASK_FLOAT_FIXED_VALUE_FUNC, paramsList);
+            MaskingConstants.MASK_INTEGER_FIXED_VALUE_FUNC, paramsList);
       }
     } catch (IOException | TemplateException ex) {
       throw new RedmaskRuntimeException(String.format("Error occurred while making SQL Sub query"
@@ -113,7 +113,7 @@ public class FixedValueFloatMasking extends MaskingRuleDef {
       parameters.add(PARAM_VALUE);
       return true;
     }
-    float value = Float.parseFloat(this.getMaskParams()
+    int value = Integer.parseInt(this.getMaskParams()
         .getOrDefault(PARAM_VALUE, PARAM_VALUE_DEFAULT));
     parameters.add(String.valueOf(value));
     return true;

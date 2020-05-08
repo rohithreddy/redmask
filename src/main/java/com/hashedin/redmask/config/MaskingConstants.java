@@ -1,4 +1,4 @@
-package com.hashedin.redmask.configurations;
+package com.hashedin.redmask.config;
 
 public class MaskingConstants {
   

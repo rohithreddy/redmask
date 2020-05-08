@@ -1,10 +1,10 @@
-package com.hashedin.redmask.service;
-
-import com.hashedin.redmask.configurations.MaskType;
-import com.hashedin.redmask.configurations.TemplateConfiguration;
+package com.hashedin.redmask.common;
 
 import java.util.Map;
 import java.util.Set;
+
+import com.hashedin.redmask.config.MaskType;
+import com.hashedin.redmask.config.TemplateConfiguration;
 
 /**
  * This is a abstract class which contains parameters and function

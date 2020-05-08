@@ -1,12 +1,13 @@
-package com.hashedin.redmask.MaskingFunction;
+package com.hashedin.redmask.postgres.function;
 
-import com.hashedin.redmask.configurations.MaskType;
-import com.hashedin.redmask.configurations.MaskingConstants;
-import com.hashedin.redmask.configurations.TemplateConfiguration;
+import com.hashedin.redmask.common.MaskingQueryUtil;
+import com.hashedin.redmask.common.MaskingRuleDef;
+import com.hashedin.redmask.config.MaskType;
+import com.hashedin.redmask.config.MaskingConstants;
+import com.hashedin.redmask.config.TemplateConfiguration;
 import com.hashedin.redmask.exception.RedmaskConfigException;
 import com.hashedin.redmask.exception.RedmaskRuntimeException;
-import com.hashedin.redmask.service.MaskingQueryUtil;
-import com.hashedin.redmask.service.MaskingRuleDef;
+
 import freemarker.template.TemplateException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

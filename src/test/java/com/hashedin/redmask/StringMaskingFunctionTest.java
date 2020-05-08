@@ -1,19 +1,20 @@
 package com.hashedin.redmask;
 
-import com.hashedin.redmask.configurations.MaskingConstants;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.hashedin.redmask.config.MaskingConstants;
+
+import static com.hashedin.redmask.config.MaskingConstants.MASK_STRING_FUNC;
+
 import java.io.IOException;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-
-import static com.hashedin.redmask.configurations.MaskingConstants.MASK_STRING_FUNC;
 
 public class StringMaskingFunctionTest extends BasePostgresTestContainer {
 

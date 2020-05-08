@@ -1,12 +1,13 @@
-package com.hashedin.redmask.MaskingFunction;
+package com.hashedin.redmask.postgres.function;
 
-import com.hashedin.redmask.configurations.MaskType;
-import com.hashedin.redmask.configurations.MaskingConstants;
-import com.hashedin.redmask.configurations.TemplateConfiguration;
+import com.hashedin.redmask.common.MaskingQueryUtil;
+import com.hashedin.redmask.common.MaskingRuleDef;
+import com.hashedin.redmask.config.MaskType;
+import com.hashedin.redmask.config.MaskingConstants;
+import com.hashedin.redmask.config.TemplateConfiguration;
 import com.hashedin.redmask.exception.RedmaskConfigException;
 import com.hashedin.redmask.exception.RedmaskRuntimeException;
-import com.hashedin.redmask.service.MaskingQueryUtil;
-import com.hashedin.redmask.service.MaskingRuleDef;
+
 import freemarker.template.TemplateException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,25 +19,26 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * This masking function convert a column of type numeric into a range of numeric,
- * with the range equal to the step parameter.
+ * This masking function mask a float type column by the fixed number passed as the
+ * value parameter or the default value of 0.00.
  */
-public class NumericRangeMasking extends MaskingRuleDef {
+public class FixedValueFloatMasking extends MaskingRuleDef {
 
-  private static final Logger log = LoggerFactory.getLogger(NumericRangeMasking.class);
+  private static final Logger log = LoggerFactory.getLogger(FixedValueFloatMasking.class);
 
-  private static final String PARAM_STEP = "step";
+  private static final String PARAM_VALUE = "value";
 
-  private static final String PARAM_STEP_DEFAULT = "10";
+  private static final String PARAM_VALUE_DEFAULT = "0.00";
 
-  public NumericRangeMasking(
+
+  public FixedValueFloatMasking(
       String columnName,
       MaskType maskType,
       Map<String, String> maskParams) {
     super(columnName, maskType, maskParams);
   }
 
-  public NumericRangeMasking() {
+  public FixedValueFloatMasking() {
   }
 
   /**
@@ -48,8 +50,7 @@ public class NumericRangeMasking extends MaskingRuleDef {
   @Override
   public void addFunctionDefinition(TemplateConfiguration config, Set<String> funcSet) {
     try {
-      funcSet.add(MaskingQueryUtil.maskIntegerRange(config));
-      funcSet.add(MaskingQueryUtil.maskNumericRange(config));
+      funcSet.add(MaskingQueryUtil.maskFloatFixedValue(config));
       log.info("Function added for Mask Type {}", this.getMaskType());
     } catch (IOException | TemplateException ex) {
       throw new RedmaskRuntimeException(String.format("Error occurred while adding MaskFunction"
@@ -74,9 +75,9 @@ public class NumericRangeMasking extends MaskingRuleDef {
     List<String> paramsList = new ArrayList<>();
     paramsList.add(this.getColumnName());
     try {
-      if (validateAndAddParameters(paramsList)) {
+      if (this.validateAndAddParameters(paramsList)) {
         return MaskingQueryUtil.processQueryTemplate(config,
-            MaskingConstants.MASK_NUMERIC_RANGE_FUNC, paramsList);
+            MaskingConstants.MASK_FLOAT_FIXED_VALUE_FUNC, paramsList);
       }
     } catch (IOException | TemplateException ex) {
       throw new RedmaskRuntimeException(String.format("Error occurred while making SQL Sub query"
@@ -96,6 +97,7 @@ public class NumericRangeMasking extends MaskingRuleDef {
    * The Function will add the default value of the parameters value is not passed in the
    * maskparams config.
    * </p>
+   *
    * @param parameters List of parameters required to create the intended mask.
    * @return The list of validated parameter
    * @throws RedmaskConfigException
@@ -103,22 +105,18 @@ public class NumericRangeMasking extends MaskingRuleDef {
   private boolean validateAndAddParameters(List<String> parameters)
       throws RedmaskConfigException {
     for (String key : this.getMaskParams().keySet()) {
-      if (!key.equals(PARAM_STEP)) {
+      if (!key.equals(PARAM_VALUE)) {
         throw new RedmaskConfigException("Unrecognised parameter" + key + " supplied to "
             + this.getMaskType() + " for column " + this.getColumnName());
       }
     }
     if (this.getMaskParams().isEmpty() || this.getMaskParams() == null) {
-      parameters.add(PARAM_STEP);
+      parameters.add(PARAM_VALUE);
       return true;
     }
-    int step = Integer.parseInt(this.getMaskParams().getOrDefault(PARAM_STEP, PARAM_STEP_DEFAULT));
-    if (step > 0) {
-      parameters.add(String.valueOf(step));
-      return true;
-    } else {
-      throw new RedmaskConfigException(
-          String.format("\'%s\' value should be greater than 0", PARAM_STEP));
-    }
+    float value = Float.parseFloat(this.getMaskParams()
+        .getOrDefault(PARAM_VALUE, PARAM_VALUE_DEFAULT));
+    parameters.add(String.valueOf(value));
+    return true;
   }
 }
