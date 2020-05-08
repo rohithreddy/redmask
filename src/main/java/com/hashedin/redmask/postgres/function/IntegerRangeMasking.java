@@ -42,14 +42,15 @@ public class IntegerRangeMasking extends MaskingRuleDef {
 
   /**
    * The function add the masking function definition to the be created to the funcSet.
-   *
-   * @param config  TemplateConfiguration object to be used to create the function definition.
+   *  @param config  TemplateConfiguration object to be used to create the function definition.
    * @param funcSet Set of function to be created to run the intended mask view.
+   * @param dbType
    */
   @Override
-  public void addFunctionDefinition(TemplateConfiguration config, Set<String> funcSet) {
+  public void addFunctionDefinition(TemplateConfiguration config, Set<String> funcSet,
+                                    String dbType) {
     try {
-      funcSet.add(MaskingQueryUtil.maskIntegerRange(config));
+      funcSet.add(MaskingQueryUtil.maskIntegerRange(config, dbType));
       log.info("Function added for Mask Type {}", this.getMaskType());
     } catch (IOException | TemplateException ex) {
       throw new RedmaskRuntimeException(String.format("Error occurred while adding MaskFunction"

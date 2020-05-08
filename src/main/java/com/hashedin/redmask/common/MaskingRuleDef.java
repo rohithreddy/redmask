@@ -31,7 +31,7 @@ public abstract class MaskingRuleDef {
   public MaskingRuleDef() {
   }
 
-  public abstract void addFunctionDefinition(TemplateConfiguration config, Set<String> funcSet);
+  public abstract void addFunctionDefinition(TemplateConfiguration config, Set<String> funcSet, String dbType);
 
   public abstract String getSubQuery(TemplateConfiguration config, String tableName);
 
