@@ -1,6 +1,6 @@
 package com.hashedin.redmask.postgres;
 
-import com.hashedin.redmask.common.QueryBuilderService;
+import com.hashedin.redmask.common.QueryBuilder;
 import com.hashedin.redmask.config.MaskConfiguration;
 import com.hashedin.redmask.config.MaskingRule;
 import com.hashedin.redmask.exception.RedmaskRuntimeException;
@@ -52,7 +52,7 @@ public class PostgresMaskingService extends DataMasking {
    */
   public void generateSqlQueryForMasking() {
 
-    QueryBuilderService queryBuilder = new QueryBuilderService();
+    PostgresQueryBuilder postgresQueryBuilder = new PostgresQueryBuilder();
     try {
       FileWriter writer = new FileWriter(tempFilePath);
 
@@ -61,10 +61,10 @@ public class PostgresMaskingService extends DataMasking {
        * TODO :Find a better way without dropping schema.
        */
       log.info("Creating or replacing existing table view.");
-      writer.append(queryBuilder.dropSchemaQuery(MASKING_FUNCTION_SCHEMA));
-      writer.append(queryBuilder.dropSchemaQuery(config.getUser()));
-      writer.append(queryBuilder.createSchemaQuery(MASKING_FUNCTION_SCHEMA));
-      writer.append(queryBuilder.createSchemaQuery(config.getUser()));
+      writer.append(QueryBuilder.dropSchemaQuery(MASKING_FUNCTION_SCHEMA));
+      writer.append(QueryBuilder.dropSchemaQuery(config.getUser()));
+      writer.append(QueryBuilder.createSchemaQuery(MASKING_FUNCTION_SCHEMA));
+      writer.append(QueryBuilder.createSchemaQuery(config.getUser()));
 
       /**
        * For each masking rule, create postgres mask function.
@@ -77,8 +77,7 @@ public class PostgresMaskingService extends DataMasking {
       log.info("Adding function and custom queries to build view.");
       for (int i = 0; i < config.getRules().size(); i++) {
         MaskingRule rule = config.getRules().get(i);
-
-        queryBuilder.buildFunctionsAndQueryForView(rule, writer, config, url);
+        postgresQueryBuilder.buildFunctionsAndQueryForView(rule, writer, config, url);
       }
 
       // Grant access of this masked view to user.

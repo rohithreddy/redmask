@@ -24,7 +24,7 @@ public class RedshiftMaskingService extends DataMasking {
   public RedshiftMaskingService(MaskConfiguration config, boolean dryRunEnabled) {
     super();
     this.config = config;
-    this.url = url + "redshift-cluster-1.coxloxnpdxcw.us-east-1.redshift.amazonaws.com" 
+    this.url = url + config.getHost()
         + config.getPort() + "/" + config.getDatabase();
     this.dryRunEnabled = dryRunEnabled;
     this.tempFilePath = createMaskingSqlFile();

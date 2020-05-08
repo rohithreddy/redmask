@@ -161,8 +161,9 @@ public class MaskingQueryUtil {
     return createFunString;
   }
 
-
-  //TO generate sub queries with variable parameter length
+  /**
+   * TO generate sub queries with variable parameter length
+   */
   public static String processQueryTemplate(TemplateConfiguration config,
                                             String functionName,
                                             List<String> parameters)

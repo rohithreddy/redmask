@@ -1,14 +1,16 @@
-package com.hashedin.redmask.common;
+package com.hashedin.redmask.postgres;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.hashedin.redmask.common.MaskingRuleDef;
 import com.hashedin.redmask.config.ColumnRule;
 import com.hashedin.redmask.config.MaskConfiguration;
 import com.hashedin.redmask.config.MaskingRule;
-import com.hashedin.redmask.config.MaskingRuleFactory;
 import com.hashedin.redmask.config.TemplateConfiguration;
 import com.hashedin.redmask.exception.RedmaskConfigException;
 import com.hashedin.redmask.exception.RedmaskRuntimeException;
+import com.hashedin.redmask.factory.MaskingRuleFactory;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,11 +34,10 @@ import java.util.Set;
  * This class is used build part of the query that would be combined to
  * build the necessary masked view.
  */
-public class QueryBuilderService {
+public class PostgresQueryBuilder {
 
-  private static final Logger log = LoggerFactory.getLogger(QueryBuilderService.class);
+  private static final Logger log = LoggerFactory.getLogger(PostgresQueryBuilder.class);
 
-  private static final String NEW_LINE = System.getProperty("line.separator");
   private static final String SELECT_QUERY = "SELECT * FROM ";
   private static final String DEFAULT_INPUT_TABLE_SCHEMA = "public";
 
@@ -52,26 +53,24 @@ public class QueryBuilderService {
     ResultSetMetaData rs = null;
     TemplateConfiguration templateConfig = config.getTemplateConfig();
 
-    // Get all columns of given table.
-    log.info("Getting column metadata from existing table.");
-    String query = SELECT_QUERY + rule.getTable();
-
     try (Connection CONN = DriverManager.getConnection(url,
         config.getSuperUser(), config.getSuperUserPassword());
          Statement STATEMENT = CONN.createStatement()) {
-      
+
       // Check if given table exists.
       if (!isValidTable(CONN, rule.getTable())) {
-        throw new RedmaskConfigException(String.format("{} was not found.", rule.getTable()));
+        throw new RedmaskConfigException(String.format("Table {} was not found.", rule.getTable()));
       }
+
+      String query = SELECT_QUERY + rule.getTable();
       rs = STATEMENT.executeQuery(query).getMetaData();
-      MaskingRuleFactory columnRuleFactory = new MaskingRuleFactory();
+      MaskingRuleFactory maskRuleFactory = new MaskingRuleFactory();
       
       log.info("Storing masking function names required to create the intended masked view.");
       Map<String, MaskingRuleDef> colMaskRuleMap = new HashMap<>();
 
       // Create a map of column and their associated masking rule.
-      createColumnMaskRuleMap(rule, CONN, columnRuleFactory, colMaskRuleMap);
+      createColumnMaskRuleMap(rule, CONN, maskRuleFactory, colMaskRuleMap);
 
       // TODO :Validate maskType and column type compatibility.
       // Dynamically build sub query part for create view.
@@ -121,8 +120,8 @@ public class QueryBuilderService {
    * @param rs                    The ResultSet object contain the metadata for column of the table
    *                              specified in the
    *                              masking rule.
-   * @param templateConfig        Template Confguration in order to access the different templates
-   *                              to create user specific funciton definition and sub-queries
+   * @param templateConfig        Template Configuration in order to access the different templates
+   *                              to create user specific function definition and sub-queries
    * @param colMaskRuleMap        Map of the column to be masked and their masking function
    * @throws SQLException
    */
@@ -134,9 +133,10 @@ public class QueryBuilderService {
       TemplateConfiguration templateConfig,
       Map<String, MaskingRuleDef> colMaskRuleMap)
       throws SQLException {
+    // For each column in a given table.
     for (int i = 1; i <= rs.getColumnCount(); i++) {
       String colName = rs.getColumnName(i);
-      if (colMaskRuleMap.containsKey(colName)) {
+      if (colMaskRuleMap.containsKey(colName)) { // Check if masking has to be done for this column.
         querySubstring.add(colMaskRuleMap.get(colName)
             .getSubQuery(templateConfig, rule.getTable()));
         colMaskRuleMap.get(colName).addFunctionDefinition(templateConfig, functionDefinitionSet);
@@ -150,7 +150,7 @@ public class QueryBuilderService {
    * Creates a map of the column name and the associated masking rule.
    *
    * @param rule              The masking rule given for a table.
-   * @param connection        Connection to the SQL database
+   * @param connection        Connection object to the SQL database
    * @param columnRuleFactory Factory class in order to convert the column rule to a specific
    *                          rule class
    * @param colMaskRuleMap    Map containing the column name as key and the specific rule class as
@@ -162,58 +162,24 @@ public class QueryBuilderService {
       Connection connection,
       MaskingRuleFactory columnRuleFactory,
       Map<String, MaskingRuleDef> colMaskRuleMap) throws SQLException {
+
+    // For each column rule in a given table.
     for (ColumnRule col : rule.getColumns()) {
-      // Build MaskingRuleDef object.
       if (!isValidTableColumn(connection, rule.getTable(), col.getColumnName())) {
         throw new RedmaskConfigException(
-            String.format("{} was not found in {} table.", col.getColumnName(), rule.getTable()));
+            String.format("Column {} was not found in {} table.",
+                col.getColumnName(), rule.getTable()));
       } else {
+        // Build MaskingRuleDef object.
         MaskingRuleDef def = buildMaskingRuleDef(col);
         colMaskRuleMap.put(col.getColumnName(), columnRuleFactory.getColumnMaskingRule(def));
       }
     }
   }
 
-
-  /**
-   * It generates the SQL query to drops the schema if it already exists.
-   *
-   * @param schemaName The name of the schema to be dropped.
-   * @return SQL query to drop the intended schema.
-   */
-  public String dropSchemaQuery(String schemaName) {
-    StringBuilder sb = new StringBuilder();
-    sb.append(NEW_LINE)
-        .append("-- Drop " + schemaName + "Schema if it exists.")
-        .append(NEW_LINE);
-
-    sb.append("DROP SCHEMA IF EXISTS " + schemaName + " CASCADE;")
-        .append(NEW_LINE);
-    return sb.toString();
-  }
-
-  /**
-   * It generates the SQL query in order to create a new schema.
-   *
-   * @param schemaName The name of the schema to be created.
-   * @return The SQL query to create the intended schema.
-   */
-  public String createSchemaQuery(String schemaName) {
-    StringBuilder sb = new StringBuilder();
-    sb.append(NEW_LINE)
-        .append("-- Create " + schemaName + " schema.")
-        .append(NEW_LINE);
-
-    sb.append("CREATE SCHEMA IF NOT EXISTS " + schemaName + ";")
-        .append(NEW_LINE);
-    return sb.toString();
-  }
-
   private MaskingRuleDef buildMaskingRuleDef(ColumnRule colRule) {
-    Map<String, String> maskParams = new ObjectMapper().
-        convertValue(colRule.getMaskParams(),
-            new TypeReference<Map<String, String>>() {
-            });
+    Map<String, String> maskParams = new ObjectMapper().convertValue(
+        colRule.getMaskParams(), new TypeReference<Map<String, String>>() { });
 
     return new MaskingRuleDef(colRule.getColumnName(),
         colRule.getMaskType(), maskParams) {
@@ -243,8 +209,10 @@ public class QueryBuilderService {
     DatabaseMetaData metaData = connection.getMetaData();
     ResultSet rs = metaData.getTables(null, null, tableName, null);
     if (rs.next()) {
+      rs.close();
       return true;
     }
+    rs.close();
     return false;
   }
 
@@ -254,15 +222,17 @@ public class QueryBuilderService {
    * @param connection Connection Object to the intended Database.
    * @param tableName  The name of the table that should contain the column.
    * @param columnName The name of the column to be checked.
-   * @return True, if the column is present in the table,else false.
+   * @return True, if the column is present in the table else false.
    */
   private boolean isValidTableColumn(Connection connection, String tableName,
       String columnName) throws SQLException {
     DatabaseMetaData metaData = connection.getMetaData();
     ResultSet rs = metaData.getColumns(null, null, tableName, columnName);
     if (rs.next()) {
+      rs.close();
       return true;
     }
+    rs.close();
     return false;
   }
 }
