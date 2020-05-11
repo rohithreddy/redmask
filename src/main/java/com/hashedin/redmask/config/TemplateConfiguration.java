@@ -1,4 +1,4 @@
-package com.hashedin.redmask.configurations;
+package com.hashedin.redmask.config;
 
 import freemarker.template.Configuration;
 import freemarker.template.TemplateExceptionHandler;

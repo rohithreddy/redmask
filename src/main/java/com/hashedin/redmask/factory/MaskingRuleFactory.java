@@ -1,9 +1,10 @@
-package com.hashedin.redmask.configurations;
-
-import com.hashedin.redmask.service.MaskingRuleDef;
+package com.hashedin.redmask.factory;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.hashedin.redmask.common.MaskingRuleDef;
+import com.hashedin.redmask.exception.RedmaskConfigException;
 
 /**
  * This factory class is used to create an instance of a specific masking rule from the inputted
@@ -19,7 +20,7 @@ public class MaskingRuleFactory {
     try {
       specificRule = ruleDef.getMaskType().getClassType().newInstance();
     } catch (InstantiationException | IllegalAccessException e) {
-      log.error("Invalid MaskType or function class specified", e);
+      throw new RedmaskConfigException("Invalid MaskType or function class specified.", e);
     }
     specificRule.setColumnName(ruleDef.getColumnName());
     specificRule.setMaskType(ruleDef.getMaskType());

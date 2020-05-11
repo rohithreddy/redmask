@@ -1,10 +1,19 @@
 package com.hashedin.redmask;
 
-import com.hashedin.redmask.configurations.MaskingConstants;
 import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.hashedin.redmask.config.MaskingConstants;
+
+import static com.hashedin.redmask.config.MaskingConstants.MASK_BIGINT_RANGE_FUNC;
+import static com.hashedin.redmask.config.MaskingConstants.MASK_FLOAT_FIXED_VALUE_FUNC;
+import static com.hashedin.redmask.config.MaskingConstants.MASK_INTEGER_FIXED_SIZE_FUNC;
+import static com.hashedin.redmask.config.MaskingConstants.MASK_INTEGER_FIXED_VALUE_FUNC;
+import static com.hashedin.redmask.config.MaskingConstants.MASK_INTEGER_RANGE_FUNC;
+import static com.hashedin.redmask.config.MaskingConstants.MASK_INTEGER_WITHIN_RANGE_FUNC;
+import static com.hashedin.redmask.config.MaskingConstants.MASK_NUMERIC_RANGE_FUNC;
 
 import java.io.IOException;
 import java.sql.PreparedStatement;
@@ -12,13 +21,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
-import static com.hashedin.redmask.configurations.MaskingConstants.MASK_BIGINT_RANGE_FUNC;
-import static com.hashedin.redmask.configurations.MaskingConstants.MASK_FLOAT_FIXED_VALUE_FUNC;
-import static com.hashedin.redmask.configurations.MaskingConstants.MASK_INTEGER_FIXED_SIZE_FUNC;
-import static com.hashedin.redmask.configurations.MaskingConstants.MASK_INTEGER_FIXED_VALUE_FUNC;
-import static com.hashedin.redmask.configurations.MaskingConstants.MASK_INTEGER_RANGE_FUNC;
-import static com.hashedin.redmask.configurations.MaskingConstants.MASK_INTEGER_WITHIN_RANGE_FUNC;
-import static com.hashedin.redmask.configurations.MaskingConstants.MASK_NUMERIC_RANGE_FUNC;
 
 public class IntegerFloatMaskingFunctionTest extends BasePostgresTestContainer {
 
@@ -28,15 +30,17 @@ public class IntegerFloatMaskingFunctionTest extends BasePostgresTestContainer {
 
   @Test
   public void testFixedSizeIntegerMask() throws SQLException, IOException {
-    String createFunctionQuery = String.format(CREATE_FUNCTION, SCHEMA, MaskingConstants.MASK_INTEGER_WITHIN_RANGE_FUNC)
+    String createFunctionQuery = String.format(CREATE_FUNCTION, SCHEMA,
+        MaskingConstants.MASK_INTEGER_WITHIN_RANGE_FUNC)
         + getFunctionQuery(MaskingConstants.MASK_INTEGER_WITHIN_RANGE_FILE)
         + String.format(CREATE_FUNCTION, SCHEMA, MASK_INTEGER_FIXED_SIZE_FUNC)
         + getFunctionQuery(MaskingConstants.MASK_INTEGER_FIXED_SIZE_FILE);
-    PreparedStatement statement = connection.prepareStatement(createFunctionQuery);
+    PreparedStatement statement = getConnection().prepareStatement(createFunctionQuery);
     statement.execute();
     statement.close();
-    Statement stmt = connection.createStatement();
-    String selectquery = "Select " + SCHEMA + "." + MASK_INTEGER_FIXED_SIZE_FUNC + "(1,5) as masked";
+    Statement stmt = getConnection().createStatement();
+    String selectquery = "Select " + SCHEMA + "." + 
+        MASK_INTEGER_FIXED_SIZE_FUNC + "(1,5) as masked";
     ResultSet rs = stmt.executeQuery(selectquery);
     rs.next();
     Assert.assertTrue((rs.getInt(1) > 9999));
@@ -54,11 +58,11 @@ public class IntegerFloatMaskingFunctionTest extends BasePostgresTestContainer {
   public void testFixedValueIntegerMask() throws SQLException, IOException {
     String createFunctionQuery = String.format(CREATE_FUNCTION, SCHEMA, MaskingConstants.MASK_INTEGER_FIXED_VALUE_FUNC)
         + getFunctionQuery(MaskingConstants.MASK_INTEGER_FIXED_VALUE_FILE);
-    PreparedStatement statement = connection.prepareStatement(createFunctionQuery);
+    PreparedStatement statement = getConnection().prepareStatement(createFunctionQuery);
     statement.execute();
     statement.close();
     int integerColumnValue = 1;
-    Statement stmt = connection.createStatement();
+    Statement stmt = getConnection().createStatement();
     String selectquery = "Select " + SCHEMA + "." + MASK_INTEGER_FIXED_VALUE_FUNC + "(" + integerColumnValue + ",5) as masked";
     ResultSet rs = stmt.executeQuery(selectquery);
     rs.next();
@@ -69,11 +73,11 @@ public class IntegerFloatMaskingFunctionTest extends BasePostgresTestContainer {
   public void testFixedValueFloatMask() throws SQLException, IOException {
     String createFunctionQuery = String.format(CREATE_FUNCTION, SCHEMA, MaskingConstants.MASK_FLOAT_FIXED_VALUE_FUNC)
         + getFunctionQuery(MaskingConstants.MASK_FLOAT_FIXED_VALUE_FILE);
-    PreparedStatement statement = connection.prepareStatement(createFunctionQuery);
+    PreparedStatement statement = getConnection().prepareStatement(createFunctionQuery);
     statement.execute();
     statement.close();
     int integerColumnValue = 1;
-    Statement stmt = connection.createStatement();
+    Statement stmt = getConnection().createStatement();
     String selectquery = "Select " + SCHEMA + "." + MASK_FLOAT_FIXED_VALUE_FUNC + "(" + integerColumnValue + ",4.567) as masked";
     ResultSet rs = stmt.executeQuery(selectquery);
     rs.next();
@@ -84,13 +88,13 @@ public class IntegerFloatMaskingFunctionTest extends BasePostgresTestContainer {
   public void testIntegerWithinRangeMask() throws SQLException, IOException {
     String createFunctionQuery = String.format(CREATE_FUNCTION, SCHEMA, MaskingConstants.MASK_INTEGER_WITHIN_RANGE_FUNC)
         + getFunctionQuery(MaskingConstants.MASK_INTEGER_WITHIN_RANGE_FILE);
-    PreparedStatement statement = connection.prepareStatement(createFunctionQuery);
+    PreparedStatement statement = getConnection().prepareStatement(createFunctionQuery);
     statement.execute();
     statement.close();
     int integerColumnValue = 1;
     int start = 90;
     int end = 100;
-    Statement stmt = connection.createStatement();
+    Statement stmt = getConnection().createStatement();
     String selectquery = String.format("Select " + SCHEMA + "." + MASK_INTEGER_WITHIN_RANGE_FUNC + "(%d,%d,%d) as masked",
         integerColumnValue, start, end);
     ResultSet rs = stmt.executeQuery(selectquery);
@@ -103,13 +107,13 @@ public class IntegerFloatMaskingFunctionTest extends BasePostgresTestContainer {
   public void testIntegerRangeMask() throws SQLException, IOException {
     String createFunctionQuery = String.format(CREATE_FUNCTION, SCHEMA, MaskingConstants.MASK_INTEGER_RANGE_FUNC)
         + getFunctionQuery(MaskingConstants.MASK_INTEGER_RANGE_FILE);
-    PreparedStatement statement = connection.prepareStatement(createFunctionQuery);
+    PreparedStatement statement = getConnection().prepareStatement(createFunctionQuery);
     statement.execute();
     statement.close();
 
     int integerColumnValue = 1;
     int step = 20;
-    Statement stmt = connection.createStatement();
+    Statement stmt = getConnection().createStatement();
     String selectquery = String.format("Select " + SCHEMA + "." + MASK_INTEGER_RANGE_FUNC + "(%d) as masked", integerColumnValue);
     ResultSet rs = stmt.executeQuery(selectquery);
     rs.next();
@@ -131,12 +135,12 @@ public class IntegerFloatMaskingFunctionTest extends BasePostgresTestContainer {
   public void testBigIntegerRangeMask() throws SQLException, IOException {
     String createFunctionQuery = String.format(CREATE_FUNCTION, SCHEMA, MaskingConstants.MASK_BIGINT_RANGE_FUNC)
         + getFunctionQuery(MaskingConstants.MASK_BIGINT_RANGE_FILE);
-    PreparedStatement statement = connection.prepareStatement(createFunctionQuery);
+    PreparedStatement statement = getConnection().prepareStatement(createFunctionQuery);
     statement.execute();
     statement.close();
     int integerColumnValue = 1;
     int step = 20;
-    Statement stmt = connection.createStatement();
+    Statement stmt = getConnection().createStatement();
     String selectquery = String.format("Select " + SCHEMA + "." + MASK_BIGINT_RANGE_FUNC + "(%d) as masked", integerColumnValue);
     ResultSet rs = stmt.executeQuery(selectquery);
     rs.next();
@@ -160,12 +164,12 @@ public class IntegerFloatMaskingFunctionTest extends BasePostgresTestContainer {
         + getFunctionQuery(MaskingConstants.MASK_INTEGER_RANGE_FILE)
         + String.format(CREATE_FUNCTION, SCHEMA, MaskingConstants.MASK_NUMERIC_RANGE_FUNC)
         + getFunctionQuery(MaskingConstants.MASK_NUMERIC_RANGE_FILE);
-    PreparedStatement statement = connection.prepareStatement(createFunctionQuery);
+    PreparedStatement statement = getConnection().prepareStatement(createFunctionQuery);
     statement.execute();
     statement.close();
     int integerColumnValue = 1;
     int step = 20;
-    Statement stmt = connection.createStatement();
+    Statement stmt = getConnection().createStatement();
     String selectquery = String.format("Select " + SCHEMA + "." + MASK_NUMERIC_RANGE_FUNC + "(%d) as masked", integerColumnValue);
     ResultSet rs = stmt.executeQuery(selectquery);
     rs.next();

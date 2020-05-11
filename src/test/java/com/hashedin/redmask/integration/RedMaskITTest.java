@@ -1,9 +1,11 @@
 package com.hashedin.redmask.integration;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.hashedin.redmask.configurations.MaskConfiguration;
+import com.hashedin.redmask.config.MaskConfiguration;
 import com.hashedin.redmask.exception.RedmaskConfigException;
-import com.hashedin.redmask.service.MaskingService;
+import com.hashedin.redmask.factory.DataBaseType;
+import com.hashedin.redmask.factory.DataMaskFactory;
+import com.hashedin.redmask.factory.DataMasking;
 import org.apache.ibatis.jdbc.ScriptRunner;
 import org.junit.After;
 import org.junit.Assert;
@@ -23,9 +25,12 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
+import static com.hashedin.redmask.integration.RedMaskITUtils.createMaskingRuleVersionFive;
+import static com.hashedin.redmask.integration.RedMaskITUtils.createMaskingRuleVersionFour;
 import static com.hashedin.redmask.integration.RedMaskITUtils.createMaskingRuleVersionOne;
 import static com.hashedin.redmask.integration.RedMaskITUtils.createMaskingRuleVersionSix;
-import static com.hashedin.redmask.integration.RedMaskITUtils.*;
+import static com.hashedin.redmask.integration.RedMaskITUtils.createMaskingRuleVersionThree;
+import static com.hashedin.redmask.integration.RedMaskITUtils.createMaskingRuleVersionTwo;
 
 public class RedMaskITTest extends BaseITPostgresTestContainer {
 
@@ -76,6 +81,7 @@ public class RedMaskITTest extends BaseITPostgresTestContainer {
           HOST,
           PORT,
           DATABASE,
+          DataBaseType.POSTGRES,
           DEV_USER);
     } finally {
       connection.close();
@@ -128,7 +134,7 @@ public class RedMaskITTest extends BaseITPostgresTestContainer {
   }
 
   @Test
-  public void testMultipleMaskSingleTable() throws IOException, SQLException {
+  public void testMultipleMaskSingleTable() throws IOException, SQLException, ClassNotFoundException {
     config.setRules(createMaskingRuleVersionOne());
     runRedMaskApp(config);
     Statement statement = devConnection.createStatement();
@@ -149,7 +155,7 @@ public class RedMaskITTest extends BaseITPostgresTestContainer {
   }
 
   @Test
-  public void testMultipleMaskSingleTableDeleteData() throws IOException, SQLException {
+  public void testMultipleMaskSingleTableDeleteData() throws IOException, SQLException, ClassNotFoundException {
     config.setRules(createMaskingRuleVersionOne());
     runRedMaskApp(config);
     Statement statement = devConnection.createStatement();
@@ -187,7 +193,7 @@ public class RedMaskITTest extends BaseITPostgresTestContainer {
   }
 
   @Test
-  public void testMultipleMaskSingleTableUpdateData() throws IOException, SQLException {
+  public void testMultipleMaskSingleTableUpdateData() throws IOException, SQLException, ClassNotFoundException {
     config.setRules(createMaskingRuleVersionOne());
     runRedMaskApp(config);
     Statement statement = devConnection.createStatement();
@@ -229,7 +235,7 @@ public class RedMaskITTest extends BaseITPostgresTestContainer {
   }
 
   @Test
-  public void testMultipleMaskSingleTableInsertData() throws IOException, SQLException {
+  public void testMultipleMaskSingleTableInsertData() throws IOException, SQLException, ClassNotFoundException {
     config.setRules(createMaskingRuleVersionOne());
     runRedMaskApp(config);
     Statement statement = devConnection.createStatement();
@@ -267,7 +273,7 @@ public class RedMaskITTest extends BaseITPostgresTestContainer {
   }
 
   @Test
-  public void testMultipleTables() throws IOException, SQLException {
+  public void testMultipleTables() throws IOException, SQLException, ClassNotFoundException {
     config.setRules(createMaskingRuleVersionSix());
     runRedMaskApp(config);
     Statement statement = devConnection.createStatement();
@@ -301,13 +307,19 @@ public class RedMaskITTest extends BaseITPostgresTestContainer {
       runRedMaskApp(config);
     } catch (IOException e) {
       e.printStackTrace();
+    } catch (ClassNotFoundException e) {
+      e.printStackTrace();
     }
   }
 
   @Test(expected = RedmaskConfigException.class)
   public void testInvalidColumnName() throws IOException {
     config.setRules(createMaskingRuleVersionThree());
-    runRedMaskApp(config);
+    try {
+      runRedMaskApp(config);
+    } catch (ClassNotFoundException e) {
+      e.printStackTrace();
+    }
   }
 
   @Test(expected = RedmaskConfigException.class)
@@ -317,19 +329,25 @@ public class RedMaskITTest extends BaseITPostgresTestContainer {
       runRedMaskApp(config);
     } catch (IOException e) {
       e.printStackTrace();
+    } catch (ClassNotFoundException e) {
+      e.printStackTrace();
     }
   }
 
   @Test(expected = RedmaskConfigException.class)
   public void testUnknownParameterSpecified() throws IOException {
     config.setRules(createMaskingRuleVersionFive());
-    runRedMaskApp(config);
+    try {
+      runRedMaskApp(config);
+    } catch (ClassNotFoundException e) {
+      e.printStackTrace();
+    }
   }
 
-  private void runRedMaskApp(MaskConfiguration config) throws IOException {
-      MaskingService service = new MaskingService(config, false);
-      service.generateSqlQueryForMasking();
-      service.executeSqlQueryForMasking();
+  private void runRedMaskApp(MaskConfiguration config) throws IOException, ClassNotFoundException {
+    DataMasking dataMasking = DataMaskFactory.buildDataMask(config, false);
+    dataMasking.generateSqlQueryForMasking();
+    dataMasking.executeSqlQueryForMasking();
   }
 
   private void addMoreDataToTable() throws SQLException, IOException {

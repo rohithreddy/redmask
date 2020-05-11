@@ -5,6 +5,7 @@
 plugins {
     id 'java'
     id 'maven-publish'
+    id 'checkstyle'
 
     // A Gradle plugin for printing beautiful logs on the console while running tests
     id "com.adarshr.test-logger" version "2.0.0"
@@ -20,6 +21,10 @@ repositories {
     mavenLocal()
     maven {
         url = 'https://repo.maven.apache.org/maven2'
+        
+    }
+    maven {
+    	url = 'http://redshift-maven-repository.s3-website-us-east-1.amazonaws.com/release'
     }
 }
 
@@ -32,6 +37,7 @@ dependencies {
     compile 'org.mybatis:mybatis:3.5.4'
     compile 'org.freemarker:freemarker:2.3.29'
     compile 'commons-io:commons-io:2.6'
+    compile 'com.amazon.redshift:redshift-jdbc42:1.2.16.1027'
     testCompile 'junit:junit:4.12'
     testCompile 'org.testcontainers:postgresql:1.13.0'
     compileOnly 'org.graalvm.nativeimage:svm:19.3.1'
@@ -41,6 +47,12 @@ group = 'com.hashedin'
 version = '0.0.1-SNAPSHOT'
 description = 'redmask'
 sourceCompatibility = '1.8'
+
+checkstyle {
+    configFile file("config/checkstyle/checkstyle.xml")
+    // TODO:  Remove this and fix checkstyle issues in test package.
+    checkstyleTest.enabled = false
+}
 
 publishing {
     publications {

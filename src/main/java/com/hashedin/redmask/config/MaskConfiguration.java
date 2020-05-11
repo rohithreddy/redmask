@@ -1,14 +1,15 @@
-package com.hashedin.redmask.configurations;
+package com.hashedin.redmask.config;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.hashedin.redmask.factory.DataBaseType;
+
+import static com.hashedin.redmask.config.MaskingConstants.DB_SUPER_USER;
+import static com.hashedin.redmask.config.MaskingConstants.DB_SUPER_USER_PASSWORD;
+import static com.hashedin.redmask.config.MaskingConstants.DB_USER;
+import static com.hashedin.redmask.config.MaskingConstants.DB_USER_PASSWORD;
 
 import java.io.IOException;
 import java.util.List;
-
-import static com.hashedin.redmask.configurations.MaskingConstants.DB_SUPER_USER;
-import static com.hashedin.redmask.configurations.MaskingConstants.DB_SUPER_USER_PASSWORD;
-import static com.hashedin.redmask.configurations.MaskingConstants.DB_USER;
-import static com.hashedin.redmask.configurations.MaskingConstants.DB_USER_PASSWORD;
 
 public class MaskConfiguration {
 
@@ -16,6 +17,7 @@ public class MaskConfiguration {
   private String port;
   private String database;
   private String user;
+  private DataBaseType dbType;
   private List<MaskingRule> rules;
 
   // Get these credentials from environment variable.
@@ -46,6 +48,7 @@ public class MaskConfiguration {
       String host,
       String port,
       String database,
+      DataBaseType dbType,
       String user) throws IOException {
 
     this.superUser = superUser;
@@ -56,6 +59,7 @@ public class MaskConfiguration {
     this.host = host;
     this.port = port;
     this.database = database;
+    this.dbType = dbType;
     this.user = user;
   }
 
@@ -94,6 +98,10 @@ public class MaskConfiguration {
 
   public String getUserPassword() {
     return userPassword;
+  }
+
+  public DataBaseType getDbType() {
+    return dbType;
   }
 
   public String getUser() {

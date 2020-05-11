@@ -3,9 +3,9 @@ package com.hashedin.redmask.integration;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.hashedin.redmask.configurations.ColumnRule;
-import com.hashedin.redmask.configurations.MaskType;
-import com.hashedin.redmask.configurations.MaskingRule;
+import com.hashedin.redmask.config.ColumnRule;
+import com.hashedin.redmask.config.MaskType;
+import com.hashedin.redmask.config.MaskingRule;
 
 import java.io.IOException;
 import java.util.ArrayList;

@@ -1,19 +1,20 @@
 package com.hashedin.redmask;
 
-import com.hashedin.redmask.configurations.MaskingConstants;
 import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.hashedin.redmask.config.MaskingConstants;
+
+import static com.hashedin.redmask.config.MaskingConstants.MASK_CARD_FUNC;
+import static com.hashedin.redmask.config.MaskingConstants.MASK_EMAIL_FUNC;
 
 import java.io.IOException;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-
-import static com.hashedin.redmask.configurations.MaskingConstants.MASK_CARD_FUNC;
-import static com.hashedin.redmask.configurations.MaskingConstants.MASK_EMAIL_FUNC;
 
 public class SpecialMaskingFunctionTest extends BasePostgresTestContainer {
 
@@ -26,10 +27,10 @@ public class SpecialMaskingFunctionTest extends BasePostgresTestContainer {
         + getFunctionQuery(MaskingConstants.MASK_NUMBERS_FILE)
         + String.format(CREATE_FUNCTION, SCHEMA, MASK_CARD_FUNC)
         + getFunctionQuery(MaskingConstants.MASK_CARD_FILE);
-    PreparedStatement statement = connection.prepareStatement(createFunctionQuery);
+    PreparedStatement statement = getConnection().prepareStatement(createFunctionQuery);
     statement.execute();
     statement.close();
-    Statement stmt = connection.createStatement();
+    Statement stmt = getConnection().createStatement();
 
     String selectquery = "Select " + SCHEMA + "."+MASK_CARD_FUNC+"('1234567812345678') as masked";
     ResultSet rs = stmt.executeQuery(selectquery);
@@ -37,18 +38,18 @@ public class SpecialMaskingFunctionTest extends BasePostgresTestContainer {
     Assert.assertEquals("xxxxxxxxxxxx5678", rs.getString(1));
 
 
-    selectquery = "Select " + SCHEMA + "."+MASK_CARD_FUNC+"('1234567812345678','first') as masked";
+    selectquery = "Select " + SCHEMA + "."+MASK_CARD_FUNC+"('1234567812345678', 'first') as masked";
     rs = stmt.executeQuery(selectquery);
     rs.next();
     Assert.assertEquals("1234xxxxxxxxxxxx", rs.getString(1));
 
 
-    selectquery = "Select " + SCHEMA + "."+MASK_CARD_FUNC+"('1234567812345678','firstnlast','',4,4) as masked";
+    selectquery = "Select " + SCHEMA + "."+MASK_CARD_FUNC+"('1234567812345678', 'firstnlast', '', 4, 4) as masked";
     rs = stmt.executeQuery(selectquery);
     rs.next();
     Assert.assertEquals("1234xxxxxxxx5678", rs.getString(1));
 
-    selectquery = "Select " + SCHEMA + "."+MASK_CARD_FUNC+"('1234-5678-1234-5678','last','-',5) as masked";
+    selectquery = "Select " + SCHEMA + "."+MASK_CARD_FUNC+"('1234-5678-1234-5678', 'last', '-', 5) as masked";
     rs = stmt.executeQuery(selectquery);
     rs.next();
     Assert.assertEquals("xxxx-xxxx-xxx4-5678", rs.getString(1));
@@ -71,10 +72,10 @@ public class SpecialMaskingFunctionTest extends BasePostgresTestContainer {
         + getFunctionQuery(MaskingConstants.MASK_STRING_FILE)
         + String.format(CREATE_FUNCTION, SCHEMA, MASK_EMAIL_FUNC)
         + getFunctionQuery(MaskingConstants.MASK_EMAIL_FILE);
-    PreparedStatement statement = connection.prepareStatement(createFunctionQuery);
+    PreparedStatement statement = getConnection().prepareStatement(createFunctionQuery);
     statement.execute();
     statement.close();
-    Statement stmt = connection.createStatement();
+    Statement stmt = getConnection().createStatement();
 
     String selectquery = "Select " + SCHEMA + "." + MASK_EMAIL_FUNC + "('sample_user@email.com') as masked";
     ResultSet rs = stmt.executeQuery(selectquery);

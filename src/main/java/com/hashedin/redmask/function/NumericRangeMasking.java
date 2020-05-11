@@ -1,14 +1,14 @@
-package com.hashedin.redmask.MaskingFunction;
+package com.hashedin.redmask.function;
 
-import com.hashedin.redmask.configurations.MaskType;
-import com.hashedin.redmask.configurations.MaskingConstants;
-import com.hashedin.redmask.configurations.TemplateConfiguration;
+import com.hashedin.redmask.common.MaskingQueryUtil;
+import com.hashedin.redmask.common.MaskingRuleDef;
+import com.hashedin.redmask.config.MaskType;
+import com.hashedin.redmask.config.MaskingConstants;
+import com.hashedin.redmask.config.TemplateConfiguration;
 import com.hashedin.redmask.exception.RedmaskConfigException;
 import com.hashedin.redmask.exception.RedmaskRuntimeException;
-import com.hashedin.redmask.service.MaskingQueryUtil;
-import com.hashedin.redmask.service.MaskingRuleDef;
-import freemarker.template.TemplateException;
 
+import freemarker.template.TemplateException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,37 +19,39 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * This masking function convert a column of type bigint into a range of bigint,
+ * This masking function convert a column of type numeric into a range of numeric,
  * with the range equal to the step parameter.
  */
-public class BigIntRangeMasking extends MaskingRuleDef {
+public class NumericRangeMasking extends MaskingRuleDef {
 
-  private static final Logger log = LoggerFactory.getLogger(BigIntRangeMasking.class);
+  private static final Logger log = LoggerFactory.getLogger(NumericRangeMasking.class);
 
   private static final String PARAM_STEP = "step";
 
   private static final String PARAM_STEP_DEFAULT = "10";
 
-  public BigIntRangeMasking(
+  public NumericRangeMasking(
       String columnName,
       MaskType maskType,
       Map<String, String> maskParams) {
     super(columnName, maskType, maskParams);
   }
 
-  public BigIntRangeMasking() {
+  public NumericRangeMasking() {
   }
 
   /**
    * The function add the masking function definition to the be created to the funcSet.
-   *
-   * @param config  TemplateConfiguration object to be used to create the function definition.
+   *  @param config  TemplateConfiguration object to be used to create the function definition.
    * @param funcSet Set of function to be created to run the intended mask view.
+   * @param dbType
    */
   @Override
-  public void addFunctionDefinition(TemplateConfiguration config, Set<String> funcSet) {
+  public void addFunctionDefinition(TemplateConfiguration config, Set<String> funcSet,
+                                    String dbType) {
     try {
-      funcSet.add(MaskingQueryUtil.maskBigIntRange(config));
+      funcSet.add(MaskingQueryUtil.maskIntegerRange(config, dbType));
+      funcSet.add(MaskingQueryUtil.maskNumericRange(config, dbType));
       log.info("Function added for Mask Type {}", this.getMaskType());
     } catch (IOException | TemplateException ex) {
       throw new RedmaskRuntimeException(String.format("Error occurred while adding MaskFunction"
@@ -71,14 +73,12 @@ public class BigIntRangeMasking extends MaskingRuleDef {
   @Override
   public String getSubQuery(TemplateConfiguration config, String tableName)
       throws RedmaskConfigException {
-
     List<String> paramsList = new ArrayList<>();
     paramsList.add(this.getColumnName());
-
     try {
       if (validateAndAddParameters(paramsList)) {
         return MaskingQueryUtil.processQueryTemplate(config,
-            MaskingConstants.MASK_BIGINT_RANGE_FUNC, paramsList);
+            MaskingConstants.MASK_NUMERIC_RANGE_FUNC, paramsList);
       }
     } catch (IOException | TemplateException ex) {
       throw new RedmaskRuntimeException(String.format("Error occurred while making SQL Sub query"
@@ -98,14 +98,12 @@ public class BigIntRangeMasking extends MaskingRuleDef {
    * The Function will add the default value of the parameters value is not passed in the
    * maskparams config.
    * </p>
-   *
    * @param parameters List of parameters required to create the intended mask.
    * @return The list of validated parameter
    * @throws RedmaskConfigException
    */
-  protected boolean validateAndAddParameters(List<String> parameters)
+  private boolean validateAndAddParameters(List<String> parameters)
       throws RedmaskConfigException {
-
     for (String key : this.getMaskParams().keySet()) {
       if (!key.equals(PARAM_STEP)) {
         throw new RedmaskConfigException("Unrecognised parameter" + key + " supplied to "

@@ -1,60 +1,56 @@
-package com.hashedin.redmask.MaskingFunction;
+package com.hashedin.redmask.function;
 
-import com.hashedin.redmask.configurations.MaskType;
-import com.hashedin.redmask.configurations.MaskingConstants;
-import com.hashedin.redmask.configurations.TemplateConfiguration;
+import com.hashedin.redmask.common.MaskingQueryUtil;
+import com.hashedin.redmask.common.MaskingRuleDef;
+import com.hashedin.redmask.config.MaskType;
+import com.hashedin.redmask.config.MaskingConstants;
+import com.hashedin.redmask.config.TemplateConfiguration;
 import com.hashedin.redmask.exception.RedmaskConfigException;
 import com.hashedin.redmask.exception.RedmaskRuntimeException;
-import com.hashedin.redmask.service.MaskingQueryUtil;
-import com.hashedin.redmask.service.MaskingRuleDef;
+
 import freemarker.template.TemplateException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 /**
- * This masking function masks an integer type column by a random number between the min
- * and max parameters.
+ * This masking function convert a column of type integer into a range of integer,
+ * with the range equal to the step parameter.
  */
-public class InRangeIntegerMasking extends MaskingRuleDef {
+public class IntegerRangeMasking extends MaskingRuleDef {
 
-  private static final Logger log = LoggerFactory.getLogger(InRangeIntegerMasking.class);
+  private static final Logger log = LoggerFactory.getLogger(IntegerRangeMasking.class);
 
-  private static final String PARAM_MINIMUM = "min";
-  private static final String PARAM_MINIMUM__DEFAULT = "0";
+  private static final String PARAM_STEP = "step";
 
-  private static final String PARAM_MAXIMUM = "max";
-  private static final String PARAM_MAXIMUM__DEFAULT = "10";
+  private static final String PARAM_STEP_DEFAULT = "10";
 
-  private static final List<String> EXPECTED_PARAMETERS_LIST = new ArrayList<String>(
-      Arrays.asList(PARAM_MAXIMUM, PARAM_MINIMUM));
-
-  public InRangeIntegerMasking(
+  public IntegerRangeMasking(
       String columnName,
       MaskType maskType,
       Map<String, String> maskParams) {
     super(columnName, maskType, maskParams);
   }
 
-  public InRangeIntegerMasking() {
+  public IntegerRangeMasking() {
   }
 
   /**
    * The function add the masking function definition to the be created to the funcSet.
-   *
-   * @param config  TemplateConfiguration object to be used to create the function definition.
+   *  @param config  TemplateConfiguration object to be used to create the function definition.
    * @param funcSet Set of function to be created to run the intended mask view.
+   * @param dbType
    */
   @Override
-  public void addFunctionDefinition(TemplateConfiguration config, Set<String> funcSet) {
+  public void addFunctionDefinition(TemplateConfiguration config, Set<String> funcSet,
+                                    String dbType) {
     try {
-      funcSet.add(MaskingQueryUtil.maskIntegerInRange(config));
+      funcSet.add(MaskingQueryUtil.maskIntegerRange(config, dbType));
       log.info("Function added for Mask Type {}", this.getMaskType());
     } catch (IOException | TemplateException ex) {
       throw new RedmaskRuntimeException(String.format("Error occurred while adding MaskFunction"
@@ -81,7 +77,7 @@ public class InRangeIntegerMasking extends MaskingRuleDef {
     try {
       if (validateAndAddParameters(paramsList)) {
         return MaskingQueryUtil.processQueryTemplate(config,
-            MaskingConstants.MASK_INTEGER_WITHIN_RANGE_FUNC, paramsList);
+            MaskingConstants.MASK_INTEGER_RANGE_FUNC, paramsList);
       }
     } catch (IOException | TemplateException ex) {
       throw new RedmaskRuntimeException(String.format("Error occurred while making SQL Sub query"
@@ -89,6 +85,7 @@ public class InRangeIntegerMasking extends MaskingRuleDef {
           tableName, this.getMaskType()), ex);
     }
     return this.getColumnName();
+
   }
 
   /**
@@ -109,27 +106,22 @@ public class InRangeIntegerMasking extends MaskingRuleDef {
   private boolean validateAndAddParameters(List<String> parameters)
       throws RedmaskConfigException {
     for (String key : this.getMaskParams().keySet()) {
-      if (!EXPECTED_PARAMETERS_LIST.contains(key)) {
+      if (!key.equals(PARAM_STEP)) {
         throw new RedmaskConfigException("Unrecognised parameter" + key + " supplied to "
             + this.getMaskType() + " for column " + this.getColumnName());
       }
     }
-
     if (this.getMaskParams().isEmpty() || this.getMaskParams() == null) {
-      parameters.addAll(Arrays.asList(PARAM_MINIMUM__DEFAULT, PARAM_MAXIMUM__DEFAULT));
+      parameters.add(PARAM_STEP);
+      return true;
     }
-
-    int min = Integer.parseInt(this.getMaskParams()
-        .getOrDefault(PARAM_MINIMUM, PARAM_MINIMUM__DEFAULT));
-    int max = Integer.parseInt(this.getMaskParams()
-        .getOrDefault(PARAM_MAXIMUM, PARAM_MAXIMUM__DEFAULT));
-    if (max > min) {
-      parameters.add(String.valueOf(min));
-      parameters.add(String.valueOf(max));
+    int step = Integer.parseInt(this.getMaskParams().getOrDefault(PARAM_STEP, PARAM_STEP_DEFAULT));
+    if (step > 0) {
+      parameters.add(String.valueOf(step));
       return true;
     } else {
       throw new RedmaskConfigException(
-          String.format("\'%s\' should be greater than \'%s\'", PARAM_MAXIMUM, PARAM_MINIMUM));
+          String.format("\'%s\' value should be greater than 0", PARAM_STEP));
     }
   }
 }
