@@ -3,6 +3,6 @@ returns text stable AS $$
 import re
 strlength = len(colname)
 if (strlength-prefix-suffix) >= 0:
-	return colname[:prefix]+re.sub(r".",pattern,colname[prefix:(strlength-suffix)])+colname[strlength-suffix:]
+	return colname[:prefix]+re.sub(r"[0-9]",pattern,colname[prefix:(strlength-suffix)])+colname[strlength-suffix:]
 return colname;
 $$ language plpythonu;
