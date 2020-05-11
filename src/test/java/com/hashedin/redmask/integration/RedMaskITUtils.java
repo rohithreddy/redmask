@@ -16,7 +16,7 @@ import static com.hashedin.redmask.integration.BaseITPostgresTestContainer.TABLE
 
 public class RedMaskITUtils {
 
-  private static final String TABLE_NAME = "customer"; 
+  private static final String TABLE_NAME = "customer";
 
   public static List<MaskingRule> createMaskingRuleVersionOne() throws IOException {
     MaskingRule rule = new MaskingRule();
@@ -33,9 +33,9 @@ public class RedMaskITUtils {
     return maskingRuleList;
   }
 
-  public static List<MaskingRule> createMaskingRuleVersionTwo(){
+  public static List<MaskingRule> createMaskingRuleVersionTwo() {
     MaskingRule rule = new MaskingRule();
-    rule.setTable("Invalid"+TABLE_NAME);
+    rule.setTable("Invalid" + TABLE_NAME);
     List<ColumnRule> columns = new ArrayList<ColumnRule>();
     rule.setColumns(columns);
     List<MaskingRule> maskingRuleList = new LinkedList<>();
@@ -54,6 +54,7 @@ public class RedMaskITUtils {
     return maskingRuleList;
 
   }
+
   public static List<MaskingRule> createMaskingRuleVersionFour() throws JsonProcessingException {
     MaskingRule rule = new MaskingRule();
     rule.setTable(TABLE_NAME);
@@ -69,6 +70,7 @@ public class RedMaskITUtils {
     maskingRuleList.add(rule);
     return maskingRuleList;
   }
+
   public static List<MaskingRule> createMaskingRuleVersionFive() throws JsonProcessingException {
     MaskingRule rule = new MaskingRule();
     rule.setTable(TABLE_NAME);

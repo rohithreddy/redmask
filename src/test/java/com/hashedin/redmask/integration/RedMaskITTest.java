@@ -106,7 +106,7 @@ public class RedMaskITTest extends BaseITPostgresTestContainer {
     sr.runScript(reader);
     log.info("Inserted test data into database.");
     reader.close();
-    
+
     // Create a connection object using developer user.
     devConnection = DriverManager.getConnection(
         URL,
@@ -117,16 +117,17 @@ public class RedMaskITTest extends BaseITPostgresTestContainer {
 
   @After
   public void deleteTableAndMaskedView() throws SQLException {
-    try(Connection CONN = DriverManager.getConnection(
+    try (Connection CONN = DriverManager.getConnection(
         URL,
         SUPER_USER,
         SUPER_USER_PASSWORD
-        )) {
+    )) {
       log.info("Dropping tables: {} {}", TABLE_NAME, TABLE_NAME_2);
       Statement stmt = CONN.createStatement();
       stmt.executeUpdate("DROP TABLE " + TABLE_NAME + "," + TABLE_NAME_2 + " CASCADE");
       log.info("Dropping existing masked view and closing connection");
-      stmt.executeUpdate("DROP VIEW IF EXISTS " + DEV_USER + "." + TABLE_NAME + "," + DEV_USER + "." + TABLE_NAME_2);
+      stmt.executeUpdate("DROP VIEW IF EXISTS " + DEV_USER + "." + TABLE_NAME
+          + "," + DEV_USER + "." + TABLE_NAME_2);
       stmt.close();
     }
     connection.close();
@@ -134,7 +135,8 @@ public class RedMaskITTest extends BaseITPostgresTestContainer {
   }
 
   @Test
-  public void testMultipleMaskSingleTable() throws IOException, SQLException, ClassNotFoundException {
+  public void testMultipleMaskSingleTable() throws IOException, SQLException,
+      ClassNotFoundException {
     config.setRules(createMaskingRuleVersionOne());
     runRedMaskApp(config);
     Statement statement = devConnection.createStatement();
@@ -155,7 +157,8 @@ public class RedMaskITTest extends BaseITPostgresTestContainer {
   }
 
   @Test
-  public void testMultipleMaskSingleTableDeleteData() throws IOException, SQLException, ClassNotFoundException {
+  public void testMultipleMaskSingleTableDeleteData() throws IOException, SQLException,
+      ClassNotFoundException {
     config.setRules(createMaskingRuleVersionOne());
     runRedMaskApp(config);
     Statement statement = devConnection.createStatement();
@@ -193,7 +196,8 @@ public class RedMaskITTest extends BaseITPostgresTestContainer {
   }
 
   @Test
-  public void testMultipleMaskSingleTableUpdateData() throws IOException, SQLException, ClassNotFoundException {
+  public void testMultipleMaskSingleTableUpdateData() throws IOException, SQLException,
+      ClassNotFoundException {
     config.setRules(createMaskingRuleVersionOne());
     runRedMaskApp(config);
     Statement statement = devConnection.createStatement();
@@ -235,7 +239,8 @@ public class RedMaskITTest extends BaseITPostgresTestContainer {
   }
 
   @Test
-  public void testMultipleMaskSingleTableInsertData() throws IOException, SQLException, ClassNotFoundException {
+  public void testMultipleMaskSingleTableInsertData() throws IOException, SQLException,
+      ClassNotFoundException {
     config.setRules(createMaskingRuleVersionOne());
     runRedMaskApp(config);
     Statement statement = devConnection.createStatement();

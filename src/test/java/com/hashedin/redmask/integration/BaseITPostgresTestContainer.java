@@ -13,7 +13,8 @@ public class BaseITPostgresTestContainer {
   private static final Logger log = LoggerFactory.getLogger(BaseITPostgresTestContainer.class);
 
   protected static final String TEST_DATA_FILE = "src/test/resources/HelperSQL/InitializeDB.sql";
-  protected static final String INSERT_DATA_FILE = "src/test/resources/HelperSQL/InsertDB.sql"; // more data
+  // File to add more data in the tables.
+  protected static final String INSERT_DATA_FILE = "src/test/resources/HelperSQL/InsertDB.sql";
   protected static final String UPDATE_DATA_FILE = "src/test/resources/HelperSQL/UpdateDB.sql";
   protected static final String DELETE_DATA_FILE = "src/test/resources/HelperSQL/DeleteDB.sql";
   
