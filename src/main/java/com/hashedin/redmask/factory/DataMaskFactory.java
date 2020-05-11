@@ -3,6 +3,7 @@ package com.hashedin.redmask.factory;
 import com.hashedin.redmask.config.MaskConfiguration;
 import com.hashedin.redmask.postgres.PostgresMaskingService;
 import com.hashedin.redmask.redshift.RedshiftMaskingService;
+import com.hashedin.redmask.snowflake.SnowflakeMaskingService;
 
 public class DataMaskFactory {
 
@@ -21,6 +22,7 @@ public class DataMaskFactory {
         break;
       case SNOWFLAKE:
         // Create DataMasking instance for Snowflake.
+        dataMasking = new SnowflakeMaskingService(config, dryRunMode);
         break;
       default:
         // throw unsupported data base type.
