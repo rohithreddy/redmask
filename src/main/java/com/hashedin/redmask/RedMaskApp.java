@@ -55,7 +55,6 @@ public class RedMaskApp implements Callable<Integer> {
       return 0;
     }
     try {
-      //PostgresMaskingService service = new PostgresMaskingService(config, dryRun);
       DataMasking dataMasking = DataMaskFactory.buildDataMask(config, dryRun);
       dataMasking.generateSqlQueryForMasking();
       dataMasking.executeSqlQueryForMasking();

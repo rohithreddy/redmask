@@ -27,14 +27,14 @@ public class StringMaskingFunctionTest extends BasePostgresTestContainer {
         MaskingConstants.MASK_STRING_FUNC)
         + getFunctionQuery(MaskingConstants.MASK_STRING_FILE);
 
-    PreparedStatement statement = connection.prepareStatement(createFunctionQuery);
+    PreparedStatement statement = getConnection().prepareStatement(createFunctionQuery);
     statement.execute();
     statement.close();
   }
 
   @Test
   public void testStringMaskWithDefaultParameters() throws SQLException {
-    Statement stmt = connection.createStatement();
+    Statement stmt = getConnection().createStatement();
     // When only string is given
     String selectquery = "Select " + SCHEMA + "." + MASK_STRING_FUNC + "('abcdefghij') as masked";
     ResultSet rs = stmt.executeQuery(selectquery);
@@ -44,7 +44,7 @@ public class StringMaskingFunctionTest extends BasePostgresTestContainer {
 
   @Test
   public void testStringMaskWithSpecifiedSeparator() throws SQLException {
-    Statement stmt = connection.createStatement();
+    Statement stmt = getConnection().createStatement();
     // When string and masking pattern is given
     String selectquery = "Select " + SCHEMA + "." + MASK_STRING_FUNC + "('abcdefghij','*') as masked";
     ResultSet rs = stmt.executeQuery(selectquery);
@@ -55,7 +55,7 @@ public class StringMaskingFunctionTest extends BasePostgresTestContainer {
 
   @Test
   public void testStringMaskWithSeparatorandPrefixLength() throws SQLException {
-    Statement stmt = connection.createStatement();
+    Statement stmt = getConnection().createStatement();
     // When string, masking pattern, prefix length is given
     String selectquery = "Select " + SCHEMA + "." + MASK_STRING_FUNC + "('abcdefghij','#',3) as masked";
     ResultSet rs = stmt.executeQuery(selectquery);
@@ -65,7 +65,7 @@ public class StringMaskingFunctionTest extends BasePostgresTestContainer {
 
   @Test
   public void testStringMaskWithSeparatorPrefixSuffixLength() throws SQLException {
-    Statement stmt = connection.createStatement();
+    Statement stmt = getConnection().createStatement();
     // When string, masking pattern, prefix  and suffix length is given
     String selectquery = "Select " + SCHEMA + "." + MASK_STRING_FUNC + "('abcdefghij','x',3,2) as masked";
     ResultSet rs = stmt.executeQuery(selectquery);

@@ -1,16 +1,16 @@
 package com.hashedin.redmask.config;
 
 import com.hashedin.redmask.common.MaskingRuleDef;
-import com.hashedin.redmask.postgres.function.BigIntRangeMasking;
-import com.hashedin.redmask.postgres.function.CardMasking;
-import com.hashedin.redmask.postgres.function.EmailMasking;
-import com.hashedin.redmask.postgres.function.FixedSizeIntegerMasking;
-import com.hashedin.redmask.postgres.function.FixedValueFloatMasking;
-import com.hashedin.redmask.postgres.function.FixedValueIntegerMasking;
-import com.hashedin.redmask.postgres.function.InRangeIntegerMasking;
-import com.hashedin.redmask.postgres.function.IntegerRangeMasking;
-import com.hashedin.redmask.postgres.function.NumericRangeMasking;
-import com.hashedin.redmask.postgres.function.StringMasking;
+import com.hashedin.redmask.function.BigIntRangeMasking;
+import com.hashedin.redmask.function.CardMasking;
+import com.hashedin.redmask.function.EmailMasking;
+import com.hashedin.redmask.function.FixedSizeIntegerMasking;
+import com.hashedin.redmask.function.FixedValueFloatMasking;
+import com.hashedin.redmask.function.FixedValueIntegerMasking;
+import com.hashedin.redmask.function.InRangeIntegerMasking;
+import com.hashedin.redmask.function.IntegerRangeMasking;
+import com.hashedin.redmask.function.NumericRangeMasking;
+import com.hashedin.redmask.function.StringMasking;
 
 public enum MaskType {
 

@@ -1,4 +1,4 @@
-package com.hashedin.redmask.postgres.function;
+package com.hashedin.redmask.function;
 
 import com.hashedin.redmask.common.MaskingQueryUtil;
 import com.hashedin.redmask.common.MaskingRuleDef;
@@ -9,7 +9,6 @@ import com.hashedin.redmask.exception.RedmaskConfigException;
 import com.hashedin.redmask.exception.RedmaskRuntimeException;
 
 import freemarker.template.TemplateException;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,24 +19,25 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * This masking function generates a random number having a fixed number of digits as passed as the
- * size parameter. This function can be applied on any integer type column.
+ * This masking function convert a column of type integer into a range of integer,
+ * with the range equal to the step parameter.
  */
-public class FixedSizeIntegerMasking extends MaskingRuleDef {
+public class IntegerRangeMasking extends MaskingRuleDef {
 
-  private static final Logger log = LoggerFactory.getLogger(FixedSizeIntegerMasking.class);
+  private static final Logger log = LoggerFactory.getLogger(IntegerRangeMasking.class);
 
-  private static final String PARAM_SIZE = "size";
-  private static final String PARAM_SIZE_DEFAULT = "2";
+  private static final String PARAM_STEP = "step";
 
-  public FixedSizeIntegerMasking(
+  private static final String PARAM_STEP_DEFAULT = "10";
+
+  public IntegerRangeMasking(
       String columnName,
       MaskType maskType,
       Map<String, String> maskParams) {
     super(columnName, maskType, maskParams);
   }
 
-  public FixedSizeIntegerMasking() {
+  public IntegerRangeMasking() {
   }
 
   /**
@@ -50,8 +50,7 @@ public class FixedSizeIntegerMasking extends MaskingRuleDef {
   public void addFunctionDefinition(TemplateConfiguration config, Set<String> funcSet,
                                     String dbType) {
     try {
-      funcSet.add(MaskingQueryUtil.maskIntegerInRange(config, dbType));
-      funcSet.add(MaskingQueryUtil.maskIntegerFixedSize(config, dbType));
+      funcSet.add(MaskingQueryUtil.maskIntegerRange(config, dbType));
       log.info("Function added for Mask Type {}", this.getMaskType());
     } catch (IOException | TemplateException ex) {
       throw new RedmaskRuntimeException(String.format("Error occurred while adding MaskFunction"
@@ -78,7 +77,7 @@ public class FixedSizeIntegerMasking extends MaskingRuleDef {
     try {
       if (validateAndAddParameters(paramsList)) {
         return MaskingQueryUtil.processQueryTemplate(config,
-            MaskingConstants.MASK_INTEGER_FIXED_SIZE_FUNC, paramsList);
+            MaskingConstants.MASK_INTEGER_RANGE_FUNC, paramsList);
       }
     } catch (IOException | TemplateException ex) {
       throw new RedmaskRuntimeException(String.format("Error occurred while making SQL Sub query"
@@ -107,22 +106,22 @@ public class FixedSizeIntegerMasking extends MaskingRuleDef {
   private boolean validateAndAddParameters(List<String> parameters)
       throws RedmaskConfigException {
     for (String key : this.getMaskParams().keySet()) {
-      if (!key.equals(PARAM_SIZE)) {
+      if (!key.equals(PARAM_STEP)) {
         throw new RedmaskConfigException("Unrecognised parameter" + key + " supplied to "
             + this.getMaskType() + " for column " + this.getColumnName());
       }
     }
     if (this.getMaskParams().isEmpty() || this.getMaskParams() == null) {
-      parameters.add(PARAM_SIZE);
+      parameters.add(PARAM_STEP);
       return true;
     }
-    int size = Integer.parseInt(this.getMaskParams().getOrDefault(PARAM_SIZE, PARAM_SIZE_DEFAULT));
-    if (size > 0) {
-      parameters.add(String.valueOf(size));
+    int step = Integer.parseInt(this.getMaskParams().getOrDefault(PARAM_STEP, PARAM_STEP_DEFAULT));
+    if (step > 0) {
+      parameters.add(String.valueOf(step));
       return true;
     } else {
       throw new RedmaskConfigException(
-          String.format("\'%s\' value should be greater than 0", PARAM_SIZE));
+          String.format("\'%s\' value should be greater than 0", PARAM_STEP));
     }
   }
 }

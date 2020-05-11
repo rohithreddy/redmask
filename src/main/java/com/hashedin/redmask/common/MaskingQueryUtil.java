@@ -47,14 +47,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-
-
 /**
  * This class contain function that will add the masking function to the created for the inputted
  * masking rules.
  */
 public class MaskingQueryUtil {
 
+  private static final String NEW_LINE = System.getProperty("line.separator");
   private static final String MASKING_FUNCTION_SCHEMA = "redmask";
   private static final String TEMPLATE_NAME = "create_function.txt";
   private static final String SCHEMA = "schema";
@@ -62,6 +61,40 @@ public class MaskingQueryUtil {
 
   private MaskingQueryUtil() {
     // No Use.
+  }
+
+  /**
+   * It generates the SQL query to drops the schema if it already exists.
+   *
+   * @param schemaName The name of the schema to be dropped.
+   * @return SQL query to drop the intended schema.
+   */
+  public static String dropSchemaQuery(String schemaName) {
+    StringBuilder sb = new StringBuilder();
+    sb.append(NEW_LINE)
+      .append("-- Drop " + schemaName + "Schema if it exists.")
+      .append(NEW_LINE);
+
+    sb.append("DROP SCHEMA IF EXISTS " + schemaName + " CASCADE;")
+      .append(NEW_LINE);
+    return sb.toString();
+  }
+  
+  /**
+   * It generates the SQL query in order to create a new schema.
+   *
+   * @param schemaName The name of the schema to be created.
+   * @return The SQL query to create the intended schema.
+   */
+  public static String createSchemaQuery(String schemaName) {
+    StringBuilder sb = new StringBuilder();
+    sb.append(NEW_LINE)
+        .append("-- Create " + schemaName + " schema.")
+        .append(NEW_LINE);
+
+    sb.append("CREATE SCHEMA IF NOT EXISTS " + schemaName + ";")
+        .append(NEW_LINE);
+    return sb.toString();
   }
 
   public static final String maskString(TemplateConfiguration config, String dbType)

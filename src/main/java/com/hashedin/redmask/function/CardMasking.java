@@ -1,4 +1,4 @@
-package com.hashedin.redmask.postgres.function;
+package com.hashedin.redmask.function;
 
 import com.hashedin.redmask.common.MaskingQueryUtil;
 import com.hashedin.redmask.common.MaskingRuleDef;
@@ -9,35 +9,63 @@ import com.hashedin.redmask.exception.RedmaskConfigException;
 import com.hashedin.redmask.exception.RedmaskRuntimeException;
 
 import freemarker.template.TemplateException;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 /**
- * This masking function mask a integer type column by the fixed number passed as the
- * value parameter or the default value 0.
+ * This masking function is used to mask column containing credit/debit card data entered as string.
+ * <p>
+ * This function have the following variations :-
+ * <p>
+ * CREDIT_CARD_SHOW_FIRST : This show the first few character equal to number passed in the
+ * show_first parameter.
+ * </p>
+ * <p>
+ * CREDIT_CARD_SHOW_LAST: This show the last few character equal to number passed in the
+ * show_last parameter.
+ * </p>
+ * <p>
+ * CREDIT_CARD_SHOW_FIRST_LAST: This show the first few character  and the last few characters
+ * equal to number passed in the show_first and show_last parameter respectively.
+ * </p>
+ * </p>
  */
-public class FixedValueIntegerMasking extends MaskingRuleDef {
+public class CardMasking extends MaskingRuleDef {
 
-  private static final Logger log = LoggerFactory.getLogger(FixedValueIntegerMasking.class);
+  private static final Logger log = LoggerFactory.getLogger(CardMasking.class);
 
-  private static final String PARAM_VALUE = "value";
+  private static final String MASK_TYPE_SHOW_FIRST = "'first'";
+  private static final String MASK_TYPE_SHOW_LAST = "'last'";
+  private static final String MASK_TYPE_SHOW_FIRST_LAST = "'firstnlast'";
 
-  private static final String PARAM_VALUE_DEFAULT = "0";
+  private static final String PARAM_SEPARATOR = "separator";
+  private static final String PARAM_SEPARATOR_DEFAULT = "";
 
-  public FixedValueIntegerMasking(
+  private static final String PARAM_SHOW_FIRST = "show_first";
+  private static final String PARAM_SHOW_FIRST_DEFAULT = "0";
+
+  private static final String PARAM_SHOW_LAST = "show_last";
+  private static final String PARAM_SHOW_LAST_DEFAULT = "0";
+
+  private static final List<String> EXPECTED_PARAMETERS_LIST = new ArrayList<String>(
+      Arrays.asList(PARAM_SEPARATOR, PARAM_SHOW_FIRST, PARAM_SHOW_LAST));
+
+  public CardMasking(
       String columnName,
       MaskType maskType,
       Map<String, String> maskParams) {
     super(columnName, maskType, maskParams);
   }
 
-  public FixedValueIntegerMasking() {
+  public CardMasking() {
   }
 
   /**
@@ -50,13 +78,15 @@ public class FixedValueIntegerMasking extends MaskingRuleDef {
   public void addFunctionDefinition(TemplateConfiguration config, Set<String> funcSet,
                                     String dbType) {
     try {
-      funcSet.add(MaskingQueryUtil.maskIntegerFixedValue(config, dbType));
+      funcSet.add(MaskingQueryUtil.maskNumbers(config, dbType));
+      funcSet.add(MaskingQueryUtil.maskPaymentCard(config, dbType));
       log.info("Function added for Mask Type {}", this.getMaskType());
     } catch (IOException | TemplateException ex) {
       throw new RedmaskRuntimeException(String.format("Error occurred while adding MaskFunction"
           + " for Mask Type %s ", this.getMaskType()), ex);
     }
   }
+
 
   /**
    * This function is used to generate the SQL subquery that applies the intended mask onto
@@ -77,7 +107,7 @@ public class FixedValueIntegerMasking extends MaskingRuleDef {
     try {
       if (validateAndAddParameters(paramsList)) {
         return MaskingQueryUtil.processQueryTemplate(config,
-            MaskingConstants.MASK_INTEGER_FIXED_VALUE_FUNC, paramsList);
+            MaskingConstants.MASK_CARD_FUNC, paramsList);
       }
     } catch (IOException | TemplateException ex) {
       throw new RedmaskRuntimeException(String.format("Error occurred while making SQL Sub query"
@@ -85,6 +115,7 @@ public class FixedValueIntegerMasking extends MaskingRuleDef {
           tableName, this.getMaskType()), ex);
     }
     return this.getColumnName();
+
   }
 
   /**
@@ -104,19 +135,55 @@ public class FixedValueIntegerMasking extends MaskingRuleDef {
    */
   private boolean validateAndAddParameters(List<String> parameters)
       throws RedmaskConfigException {
+
     for (String key : this.getMaskParams().keySet()) {
-      if (!key.equals(PARAM_VALUE)) {
+      if (!EXPECTED_PARAMETERS_LIST.contains(key)) {
         throw new RedmaskConfigException("Unrecognised parameter" + key + " supplied to "
             + this.getMaskType() + " for column " + this.getColumnName());
       }
     }
+
     if (this.getMaskParams().isEmpty() || this.getMaskParams() == null) {
-      parameters.add(PARAM_VALUE);
-      return true;
+      parameters.addAll(Arrays.asList(PARAM_SEPARATOR_DEFAULT, PARAM_SHOW_FIRST_DEFAULT,
+          PARAM_SHOW_LAST_DEFAULT));
     }
-    int value = Integer.parseInt(this.getMaskParams()
-        .getOrDefault(PARAM_VALUE, PARAM_VALUE_DEFAULT));
-    parameters.add(String.valueOf(value));
+
+    String separator = this.getMaskParams()
+        .getOrDefault(PARAM_SEPARATOR, PARAM_SEPARATOR_DEFAULT);
+    int val1 = Integer.parseInt(this.getMaskParams()
+        .getOrDefault(PARAM_SHOW_FIRST, PARAM_SHOW_FIRST_DEFAULT));
+    int val2 = Integer.parseInt(this.getMaskParams()
+        .getOrDefault(PARAM_SHOW_LAST, PARAM_SHOW_LAST_DEFAULT));
+
+    if (val1 < 0) {
+      throw new RedmaskConfigException(
+          String.format("\'%s\' value should be greater than or equal to 0", PARAM_SHOW_FIRST));
+    }
+
+    if (val2 < 0) {
+      throw new RedmaskConfigException(
+          String.format("\'%s\' value should be greater than or equal to 0", PARAM_SHOW_LAST));
+    }
+
+    switch (this.getMaskType()) {
+      case CREDIT_CARD_SHOW_FIRST:
+        parameters.add(MASK_TYPE_SHOW_FIRST);
+        break;
+
+      case CREDIT_CARD_SHOW_LAST:
+        parameters.add(MASK_TYPE_SHOW_LAST);
+        break;
+
+      case CREDIT_CARD_SHOW_FIRST_LAST:
+        parameters.add(MASK_TYPE_SHOW_FIRST_LAST);
+        break;
+      default:
+        break;
+    }
+    parameters.add("'" + separator + "'");
+    parameters.add(String.valueOf(val1));
+    parameters.add(String.valueOf(val2));
+
     return true;
   }
 }

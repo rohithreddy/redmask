@@ -1,4 +1,4 @@
-package com.hashedin.redmask.postgres.function;
+package com.hashedin.redmask.function;
 
 import com.hashedin.redmask.common.MaskingQueryUtil;
 import com.hashedin.redmask.common.MaskingRuleDef;
@@ -20,46 +20,24 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * This masking function is used to mask column containing email data entered as string.
- * <p>
- *   This function have the following variations :-
- *   <p>
- *     EMAIL_SHOW_DOMAIN : This shows only the domain part of the email address.
- *   </p>
- *   <p>
- *     EMAIL_SHOW_FIRST_CHARACTER_DOMAIN : This shows the first character and the domain part of the
- *     email address.
- *   </p>
- *   <p>
- *     EMAIL_SHOW_FIRST_CHARACTERS : This shows the first few character equal to number passed in
- *     the show_first parameter.
- *   </p>
- *   <p>
- *     EMAIL_MASK_ALPHANUMERIC : This mask all the alphanumeric character in the email address.
- *   </p>
- * </p>
+ * This masking function generates a random number having a fixed number of digits as passed as the
+ * size parameter. This function can be applied on any integer type column.
  */
-public class EmailMasking extends MaskingRuleDef {
+public class FixedSizeIntegerMasking extends MaskingRuleDef {
 
-  private static final Logger log = LoggerFactory.getLogger(EmailMasking.class);
+  private static final Logger log = LoggerFactory.getLogger(FixedSizeIntegerMasking.class);
 
-  private static final String MASK_TYPE_SHOW_DOMAIN = "'domain'";
-  private static final String MASK_TYPE_SHOW_FIRST_DOMAIN = "'firstndomain'";
-  private static final String MASK_TYPE_SHOW_FIRST_CHAR = "'firstN'";
-  private static final String MASK_TYPE_SHOW_SPECIAL_CHAR = "'nonspecialcharacter'";
+  private static final String PARAM_SIZE = "size";
+  private static final String PARAM_SIZE_DEFAULT = "2";
 
-  private static final String PARAM_SHOW_FIRST_CHARACTERS = "show_first";
-  private static final String PARAM_SHOW_FIRST_CHARACTERS_DEFAULT = "0";
-
-
-  public EmailMasking(
+  public FixedSizeIntegerMasking(
       String columnName,
       MaskType maskType,
       Map<String, String> maskParams) {
     super(columnName, maskType, maskParams);
   }
 
-  public EmailMasking() {
+  public FixedSizeIntegerMasking() {
   }
 
   /**
@@ -72,8 +50,8 @@ public class EmailMasking extends MaskingRuleDef {
   public void addFunctionDefinition(TemplateConfiguration config, Set<String> funcSet,
                                     String dbType) {
     try {
-      funcSet.add(MaskingQueryUtil.maskString(config, dbType));
-      funcSet.add(MaskingQueryUtil.maskEmail(config, dbType));
+      funcSet.add(MaskingQueryUtil.maskIntegerInRange(config, dbType));
+      funcSet.add(MaskingQueryUtil.maskIntegerFixedSize(config, dbType));
       log.info("Function added for Mask Type {}", this.getMaskType());
     } catch (IOException | TemplateException ex) {
       throw new RedmaskRuntimeException(String.format("Error occurred while adding MaskFunction"
@@ -100,15 +78,15 @@ public class EmailMasking extends MaskingRuleDef {
     try {
       if (validateAndAddParameters(paramsList)) {
         return MaskingQueryUtil.processQueryTemplate(config,
-            MaskingConstants.MASK_EMAIL_FUNC, paramsList);
+            MaskingConstants.MASK_INTEGER_FIXED_SIZE_FUNC, paramsList);
       }
     } catch (IOException | TemplateException ex) {
-
       throw new RedmaskRuntimeException(String.format("Error occurred while making SQL Sub query"
               + "for column  %s  in table %s for Mask Type %s ", this.getColumnName(),
           tableName, this.getMaskType()), ex);
     }
     return this.getColumnName();
+
   }
 
   /**
@@ -121,6 +99,7 @@ public class EmailMasking extends MaskingRuleDef {
    * The Function will add the default value of the parameters value is not passed in the
    * maskparams config.
    * </p>
+   *
    * @param parameters List of parameters required to create the intended mask.
    * @return The list of validated parameter
    * @throws RedmaskConfigException
@@ -128,42 +107,22 @@ public class EmailMasking extends MaskingRuleDef {
   private boolean validateAndAddParameters(List<String> parameters)
       throws RedmaskConfigException {
     for (String key : this.getMaskParams().keySet()) {
-      if (!key.equals(PARAM_SHOW_FIRST_CHARACTERS)) {
+      if (!key.equals(PARAM_SIZE)) {
         throw new RedmaskConfigException("Unrecognised parameter" + key + " supplied to "
             + this.getMaskType() + " for column " + this.getColumnName());
       }
     }
-    switch (this.getMaskType()) {
-      case EMAIL_SHOW_DOMAIN:
-        parameters.add(MASK_TYPE_SHOW_DOMAIN);
-        break;
-
-      case EMAIL_SHOW_FIRST_CHARACTER_DOMAIN:
-        parameters.add(MASK_TYPE_SHOW_FIRST_DOMAIN);
-        break;
-
-      case EMAIL_SHOW_FIRST_CHARACTERS:
-        parameters.add(MASK_TYPE_SHOW_FIRST_CHAR);
-
-        if (this.getMaskParams().isEmpty() || this.getMaskParams() == null) {
-          parameters.add(PARAM_SHOW_FIRST_CHARACTERS_DEFAULT);
-        }
-        int showCharacters = Integer.parseInt(this.getMaskParams()
-            .getOrDefault(PARAM_SHOW_FIRST_CHARACTERS, PARAM_SHOW_FIRST_CHARACTERS_DEFAULT));
-        if (showCharacters > 0) {
-          parameters.add(String.valueOf(showCharacters));
-        } else {
-          throw new RedmaskConfigException(
-              String.format("\'%s\' value should be greater than 0",
-                  PARAM_SHOW_FIRST_CHARACTERS));
-        }
-        break;
-      case EMAIL_MASK_ALPHANUMERIC:
-        parameters.add(MASK_TYPE_SHOW_SPECIAL_CHAR);
-        break;
-      default:
-        return false;
+    if (this.getMaskParams().isEmpty() || this.getMaskParams() == null) {
+      parameters.add(PARAM_SIZE);
+      return true;
     }
-    return true;
+    int size = Integer.parseInt(this.getMaskParams().getOrDefault(PARAM_SIZE, PARAM_SIZE_DEFAULT));
+    if (size > 0) {
+      parameters.add(String.valueOf(size));
+      return true;
+    } else {
+      throw new RedmaskConfigException(
+          String.format("\'%s\' value should be greater than 0", PARAM_SIZE));
+    }
   }
 }

@@ -27,10 +27,10 @@ public class SpecialMaskingFunctionTest extends BasePostgresTestContainer {
         + getFunctionQuery(MaskingConstants.MASK_NUMBERS_FILE)
         + String.format(CREATE_FUNCTION, SCHEMA, MASK_CARD_FUNC)
         + getFunctionQuery(MaskingConstants.MASK_CARD_FILE);
-    PreparedStatement statement = connection.prepareStatement(createFunctionQuery);
+    PreparedStatement statement = getConnection().prepareStatement(createFunctionQuery);
     statement.execute();
     statement.close();
-    Statement stmt = connection.createStatement();
+    Statement stmt = getConnection().createStatement();
 
     String selectquery = "Select " + SCHEMA + "."+MASK_CARD_FUNC+"('1234567812345678') as masked";
     ResultSet rs = stmt.executeQuery(selectquery);
@@ -38,18 +38,18 @@ public class SpecialMaskingFunctionTest extends BasePostgresTestContainer {
     Assert.assertEquals("xxxxxxxxxxxx5678", rs.getString(1));
 
 
-    selectquery = "Select " + SCHEMA + "."+MASK_CARD_FUNC+"('1234567812345678','first') as masked";
+    selectquery = "Select " + SCHEMA + "."+MASK_CARD_FUNC+"('1234567812345678', 'first') as masked";
     rs = stmt.executeQuery(selectquery);
     rs.next();
     Assert.assertEquals("1234xxxxxxxxxxxx", rs.getString(1));
 
 
-    selectquery = "Select " + SCHEMA + "."+MASK_CARD_FUNC+"('1234567812345678','firstnlast','',4,4) as masked";
+    selectquery = "Select " + SCHEMA + "."+MASK_CARD_FUNC+"('1234567812345678', 'firstnlast', '', 4, 4) as masked";
     rs = stmt.executeQuery(selectquery);
     rs.next();
     Assert.assertEquals("1234xxxxxxxx5678", rs.getString(1));
 
-    selectquery = "Select " + SCHEMA + "."+MASK_CARD_FUNC+"('1234-5678-1234-5678','last','-',5) as masked";
+    selectquery = "Select " + SCHEMA + "."+MASK_CARD_FUNC+"('1234-5678-1234-5678', 'last', '-', 5) as masked";
     rs = stmt.executeQuery(selectquery);
     rs.next();
     Assert.assertEquals("xxxx-xxxx-xxx4-5678", rs.getString(1));
@@ -72,10 +72,10 @@ public class SpecialMaskingFunctionTest extends BasePostgresTestContainer {
         + getFunctionQuery(MaskingConstants.MASK_STRING_FILE)
         + String.format(CREATE_FUNCTION, SCHEMA, MASK_EMAIL_FUNC)
         + getFunctionQuery(MaskingConstants.MASK_EMAIL_FILE);
-    PreparedStatement statement = connection.prepareStatement(createFunctionQuery);
+    PreparedStatement statement = getConnection().prepareStatement(createFunctionQuery);
     statement.execute();
     statement.close();
-    Statement stmt = connection.createStatement();
+    Statement stmt = getConnection().createStatement();
 
     String selectquery = "Select " + SCHEMA + "." + MASK_EMAIL_FUNC + "('sample_user@email.com') as masked";
     ResultSet rs = stmt.executeQuery(selectquery);

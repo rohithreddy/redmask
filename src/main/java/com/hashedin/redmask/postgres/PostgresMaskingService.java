@@ -1,8 +1,10 @@
 package com.hashedin.redmask.postgres;
 
-import com.hashedin.redmask.common.QueryBuilder;
+import com.hashedin.redmask.common.MaskingQueryUtil;
+import com.hashedin.redmask.common.QueryBuilderUtil;
 import com.hashedin.redmask.config.MaskConfiguration;
 import com.hashedin.redmask.config.MaskingRule;
+import com.hashedin.redmask.exception.RedmaskConfigException;
 import com.hashedin.redmask.exception.RedmaskRuntimeException;
 import com.hashedin.redmask.factory.DataMasking;
 
@@ -38,7 +40,7 @@ public class PostgresMaskingService extends DataMasking {
     this.config = config;
     this.url = url + config.getHost() + ":" + config.getPort() + "/" + config.getDatabase();
     this.dryRunEnabled = dryRunEnabled;
-    this.tempFilePath = createMaskingSqlFile();
+    this.tempFilePath = QueryBuilderUtil.createMaskingSqlFile();
   }
 
   /**
@@ -50,9 +52,8 @@ public class PostgresMaskingService extends DataMasking {
    * Create View using those masking function.
    * Provide access to user to read data from masked view.
    */
-  public void generateSqlQueryForMasking() {
+  public void generateSqlQueryForMasking() throws RedmaskConfigException {
 
-    PostgresQueryBuilder postgresQueryBuilder = new PostgresQueryBuilder();
     try {
       FileWriter writer = new FileWriter(tempFilePath);
 
@@ -61,10 +62,10 @@ public class PostgresMaskingService extends DataMasking {
        * TODO :Find a better way without dropping schema.
        */
       log.info("Creating or replacing existing table view.");
-      writer.append(QueryBuilder.dropSchemaQuery(MASKING_FUNCTION_SCHEMA));
-      writer.append(QueryBuilder.dropSchemaQuery(config.getUser()));
-      writer.append(QueryBuilder.createSchemaQuery(MASKING_FUNCTION_SCHEMA));
-      writer.append(QueryBuilder.createSchemaQuery(config.getUser()));
+      writer.append(MaskingQueryUtil.dropSchemaQuery(MASKING_FUNCTION_SCHEMA));
+      writer.append(MaskingQueryUtil.dropSchemaQuery(config.getUser()));
+      writer.append(MaskingQueryUtil.createSchemaQuery(MASKING_FUNCTION_SCHEMA));
+      writer.append(MaskingQueryUtil.createSchemaQuery(config.getUser()));
 
       /**
        * For each masking rule, create postgres mask function.
@@ -77,7 +78,7 @@ public class PostgresMaskingService extends DataMasking {
       log.info("Adding function and custom queries to build view.");
       for (int i = 0; i < config.getRules().size(); i++) {
         MaskingRule rule = config.getRules().get(i);
-        postgresQueryBuilder.buildFunctionsAndQueryForView(rule, writer, config, url);
+        QueryBuilderUtil.buildFunctionsAndQueryForView(rule, writer, config, url);
       }
 
       // Grant access of this masked view to user.
@@ -128,19 +129,6 @@ public class PostgresMaskingService extends DataMasking {
         }
       }
     }
-  }
-
-  private File createMaskingSqlFile() {
-    // create a temp .sql file
-    File sqlFile = null;
-    try {
-      sqlFile = File.createTempFile("redmask-masking", ".sql");
-      log.info("Created a temp file at location: {}", sqlFile.getAbsolutePath());
-    } catch (IOException ex) {
-      throw new RedmaskRuntimeException(
-          "Error while creating temporary file \'redmask-masking.sql\'", ex);
-    }
-    return sqlFile;
   }
 
 }

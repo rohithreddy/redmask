@@ -19,13 +19,15 @@ import java.sql.SQLException;
 public class BasePostgresTestContainer {
 
   private static final Logger log = LoggerFactory.getLogger(BasePostgresTestContainer.class);
-  private static final String BASE_FILE_PATH= "src/main/resources/postgres";
+  private static final String BASE_FILE_PATH = "src/main/resources/postgres";
 
   protected static final String SCHEMA = "redmask";
-  protected static Connection connection;
-  
+  private static Connection connection;
+
   @ClassRule
   public static PostgreSQLContainer postgres = new PostgreSQLContainer();
+
+  protected BasePostgresTestContainer() {}
 
   @BeforeClass
   public static void setup() {
@@ -37,9 +39,9 @@ public class BasePostgresTestContainer {
           );
       // Create redmask schema.
       log.info("Started Postgres docker Test Container and created connection to the test DB.");
-      try(PreparedStatement statement = connection.prepareStatement(
-          "CREATE SCHEMA IF NOT EXISTS " + SCHEMA)){
-        statement.execute();
+      try (PreparedStatement STATEMENT = connection.prepareStatement(
+          "CREATE SCHEMA IF NOT EXISTS " + SCHEMA)) {
+        STATEMENT.execute();
       }
     } catch (SQLException ex) {
       log.error("Exception while making connction to  postgres test container {}", ex);
@@ -47,7 +49,7 @@ public class BasePostgresTestContainer {
   }
 
   @AfterClass
-  public static void tearDown(){
+  public static void tearDown() {
     try {
       connection.close();
       postgres.close();
@@ -56,10 +58,15 @@ public class BasePostgresTestContainer {
       log.error("Exception while closing connction to  postgres test container {}", ex);
     }
   }
-  
+
+  public static Connection getConnection() {
+    return connection;
+  }
+
   protected static String getFunctionQuery(String filePath) throws IOException {
     // Creating a reader object
     return IOUtils.toString(
-        new FileInputStream(BASE_FILE_PATH + filePath),StandardCharsets.UTF_8);
+        new FileInputStream(BASE_FILE_PATH + filePath), StandardCharsets.UTF_8);
   }
+
 }

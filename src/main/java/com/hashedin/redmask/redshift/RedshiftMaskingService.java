@@ -1,22 +1,19 @@
 package com.hashedin.redmask.redshift;
 
-import com.hashedin.redmask.common.QueryBuilder;
+import com.hashedin.redmask.common.MaskingQueryUtil;
+import com.hashedin.redmask.common.QueryBuilderUtil;
 import com.hashedin.redmask.config.MaskConfiguration;
 import com.hashedin.redmask.config.MaskingRule;
 import com.hashedin.redmask.exception.RedmaskRuntimeException;
 import com.hashedin.redmask.factory.DataMasking;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.ArrayList;
-import java.util.List;
+
 
 public class RedshiftMaskingService extends DataMasking {
 
@@ -27,10 +24,6 @@ public class RedshiftMaskingService extends DataMasking {
   private final MaskConfiguration config;
   private String url = "jdbc:redshift://";
   private final boolean dryRunEnabled;
-  // TODO remove the tempQueriesList when logic for running script is added
-  // This temp list will contain all the individual queries.
-  private List<String> tempQueriesList;
-
 
   // This temp would store queries to create masked data for when dryrun is true.
   private final File tempFilePath;
@@ -41,25 +34,18 @@ public class RedshiftMaskingService extends DataMasking {
     this.url = url + config.getHost() + ":"
         + config.getPort() + "/" + config.getDatabase();
     this.dryRunEnabled = dryRunEnabled;
-    this.tempQueriesList = new ArrayList<String>();
-    this.tempFilePath = createMaskingSqlFile();
+    this.tempFilePath = QueryBuilderUtil.createMaskingSqlFile();
   }
 
   @Override
   public void generateSqlQueryForMasking() {
-    RedshiftQueryBuilder redshiftQueryBuilder = new RedshiftQueryBuilder();
     try {
       FileWriter writer = new FileWriter(tempFilePath);
       log.info("Creating or replacing existing table view.");
-      writer.append(QueryBuilder.dropSchemaQuery(MASKING_FUNCTION_SCHEMA));
-      writer.append(QueryBuilder.dropSchemaQuery(config.getUser()));
-      writer.append(QueryBuilder.createSchemaQuery(MASKING_FUNCTION_SCHEMA));
-      writer.append(QueryBuilder.createSchemaQuery(config.getUser()));
-      //TODO remove these when possible
-      tempQueriesList.add(QueryBuilder.dropSchemaQuery(MASKING_FUNCTION_SCHEMA));
-      tempQueriesList.add(QueryBuilder.dropSchemaQuery(config.getUser()));
-      tempQueriesList.add(QueryBuilder.createSchemaQuery(MASKING_FUNCTION_SCHEMA));
-      tempQueriesList.add(QueryBuilder.createSchemaQuery(config.getUser()));
+      writer.append(MaskingQueryUtil.dropSchemaQuery(MASKING_FUNCTION_SCHEMA));
+      writer.append(MaskingQueryUtil.dropSchemaQuery(config.getUser()));
+      writer.append(MaskingQueryUtil.createSchemaQuery(MASKING_FUNCTION_SCHEMA));
+      writer.append(MaskingQueryUtil.createSchemaQuery(config.getUser()));
 
       /**
        * For each masking rule, create postgres mask function.
@@ -73,12 +59,11 @@ public class RedshiftMaskingService extends DataMasking {
       for (int i = 0; i < config.getRules().size(); i++) {
         MaskingRule rule = config.getRules().get(i);
         // TODO remove tempQueriesList when possible
-        redshiftQueryBuilder.buildFunctionsAndQueryForView(rule, writer, config, url,
-            tempQueriesList);
+        QueryBuilderUtil.buildFunctionsAndQueryForView(rule, writer, config, url);
       }
       // TODO add required permission to grant access to different users
       writer.flush();
-    } catch (IOException | ClassNotFoundException ex) {
+    } catch (IOException ex) {
       throw new RedmaskRuntimeException(
           String.format("Error while writing to file {}", tempFilePath.getName()), ex);
     }
@@ -86,38 +71,10 @@ public class RedshiftMaskingService extends DataMasking {
 
   @Override
   public void executeSqlQueryForMasking() throws IOException, ClassNotFoundException {
+    //TODO implement execute query for redshift from temp query file.
     if (!dryRunEnabled) {
       log.info("Executing script in order to create view in the database.");
-      //Dynamically load driver at runtime.
-      Class.forName("com.amazon.redshift.jdbc.Driver");
-      try (Connection CONN = DriverManager.getConnection(url,
-          config.getSuperUser(), config.getSuperUserPassword());
-           Statement STMT = CONN.createStatement()) {
-        int i =  0;
-        for (String query : tempQueriesList) {
-          log.info(i + ":" + query);
-          STMT.execute(query);
-        }
-      } catch (SQLException ex) {
-        throw new RedmaskRuntimeException(
-            String.format("DB Connection error while executing masking sql "
-                    + "query from file: {} using super username: {}",
-                tempFilePath, config.getSuperUser()), ex);
-      }
     }
-  }
-
-  private File createMaskingSqlFile() {
-    // create a temp .sql file
-    File sqlFile = null;
-    try {
-      sqlFile = File.createTempFile("redmask-masking", ".sql");
-      log.info("Created a temp file at location: {}", sqlFile.getAbsolutePath());
-    } catch (IOException ex) {
-      throw new RedmaskRuntimeException(
-          "Error while creating temporary file \'redmask-masking.sql\'", ex);
-    }
-    return sqlFile;
   }
 
 }

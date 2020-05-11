@@ -1,4 +1,4 @@
-package com.hashedin.redmask.postgres.function;
+package com.hashedin.redmask.function;
 
 import com.hashedin.redmask.common.MaskingQueryUtil;
 import com.hashedin.redmask.common.MaskingRuleDef;
@@ -20,35 +20,30 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * This masking function allows you to mask a string type column with a user defined pattern
- * specified as the pattern parameter. The user can also leave the first and last few character of
- * the string as unmasked by specifying the number of unmasked character in show_first and
- * show_last parameter respectively.
+ * This masking function masks an integer type column by a random number between the min
+ * and max parameters.
  */
-public class StringMasking extends MaskingRuleDef {
+public class InRangeIntegerMasking extends MaskingRuleDef {
 
-  private static final Logger log = LoggerFactory.getLogger(StringMasking.class);
+  private static final Logger log = LoggerFactory.getLogger(InRangeIntegerMasking.class);
 
-  private static final String PARAM_REPLACEMENT_PATTERN = "pattern";
-  private static final String PARAM_PATTERN_DEFAULT = "*";
+  private static final String PARAM_MINIMUM = "min";
+  private static final String PARAM_MINIMUM__DEFAULT = "0";
 
-  private static final String PARAM_SHOW_FIRST = "show_first";
-  private static final String PARAM_SHOW_FIRST_DEFAULT = "0";
-
-  private static final String PARAM_SHOW_LAST = "show_last";
-  private static final String PARAM_SHOW_LAST_DEFAULT = "0";
+  private static final String PARAM_MAXIMUM = "max";
+  private static final String PARAM_MAXIMUM__DEFAULT = "10";
 
   private static final List<String> EXPECTED_PARAMETERS_LIST = new ArrayList<String>(
-      Arrays.asList(PARAM_REPLACEMENT_PATTERN, PARAM_SHOW_FIRST, PARAM_SHOW_LAST));
+      Arrays.asList(PARAM_MAXIMUM, PARAM_MINIMUM));
 
-  public StringMasking(
+  public InRangeIntegerMasking(
       String columnName,
       MaskType maskType,
       Map<String, String> maskParams) {
     super(columnName, maskType, maskParams);
   }
 
-  public StringMasking() {
+  public InRangeIntegerMasking() {
   }
 
   /**
@@ -61,7 +56,7 @@ public class StringMasking extends MaskingRuleDef {
   public void addFunctionDefinition(TemplateConfiguration config, Set<String> funcSet,
                                     String dbType) {
     try {
-      funcSet.add(MaskingQueryUtil.maskString(config, dbType));
+      funcSet.add(MaskingQueryUtil.maskIntegerInRange(config, dbType));
       log.info("Function added for Mask Type {}", this.getMaskType());
     } catch (IOException | TemplateException ex) {
       throw new RedmaskRuntimeException(String.format("Error occurred while adding MaskFunction"
@@ -87,8 +82,8 @@ public class StringMasking extends MaskingRuleDef {
     paramsList.add(this.getColumnName());
     try {
       if (validateAndAddParameters(paramsList)) {
-        return MaskingQueryUtil.processQueryTemplate(
-            config, MaskingConstants.MASK_STRING_FUNC, paramsList);
+        return MaskingQueryUtil.processQueryTemplate(config,
+            MaskingConstants.MASK_INTEGER_WITHIN_RANGE_FUNC, paramsList);
       }
     } catch (IOException | TemplateException ex) {
       throw new RedmaskRuntimeException(String.format("Error occurred while making SQL Sub query"
@@ -123,28 +118,20 @@ public class StringMasking extends MaskingRuleDef {
     }
 
     if (this.getMaskParams().isEmpty() || this.getMaskParams() == null) {
-      parameters.addAll(Arrays.asList(PARAM_PATTERN_DEFAULT,
-          PARAM_SHOW_FIRST_DEFAULT, PARAM_SHOW_LAST_DEFAULT));
+      parameters.addAll(Arrays.asList(PARAM_MINIMUM__DEFAULT, PARAM_MAXIMUM__DEFAULT));
     }
-    String pattern = this.getMaskParams()
-        .getOrDefault(PARAM_REPLACEMENT_PATTERN, PARAM_PATTERN_DEFAULT);
-    int prefix = Integer.parseInt(this.getMaskParams()
-        .getOrDefault(PARAM_SHOW_FIRST, PARAM_SHOW_FIRST_DEFAULT));
-    int suffix = Integer.parseInt(this.getMaskParams()
-        .getOrDefault(PARAM_SHOW_LAST, PARAM_SHOW_LAST_DEFAULT));
 
-    if (prefix < 0) {
+    int min = Integer.parseInt(this.getMaskParams()
+        .getOrDefault(PARAM_MINIMUM, PARAM_MINIMUM__DEFAULT));
+    int max = Integer.parseInt(this.getMaskParams()
+        .getOrDefault(PARAM_MAXIMUM, PARAM_MAXIMUM__DEFAULT));
+    if (max > min) {
+      parameters.add(String.valueOf(min));
+      parameters.add(String.valueOf(max));
+      return true;
+    } else {
       throw new RedmaskConfigException(
-          String.format("\'%s\' value should be greater than or equal to 0", PARAM_SHOW_FIRST));
-
+          String.format("\'%s\' should be greater than \'%s\'", PARAM_MAXIMUM, PARAM_MINIMUM));
     }
-    if (suffix < 0) {
-      throw new RedmaskConfigException(
-          String.format("\'%s\' value should be greater than or equal to 0", PARAM_SHOW_LAST));
-    }
-    parameters.add("'" + pattern + "'");
-    parameters.add(String.valueOf(prefix));
-    parameters.add(String.valueOf(suffix));
-    return true;
   }
 }

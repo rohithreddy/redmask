@@ -20,7 +20,7 @@ public class DataMaskFactory {
         dataMasking = new RedshiftMaskingService(config, dryRunMode);
         break;
       case SNOWFLAKE:
-        dataMasking = new PostgresMaskingService(config, dryRunMode);
+        // Create DataMasking instance for Snowflake.
         break;
       default:
         // throw unsupported data base type.
