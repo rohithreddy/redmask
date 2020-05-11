@@ -19,7 +19,7 @@ import java.sql.SQLException;
 public class BasePostgresTestContainer {
 
   private static final Logger log = LoggerFactory.getLogger(BasePostgresTestContainer.class);
-  private static final String BASE_FILE_PATH= "src/main/resources/";
+  private static final String BASE_FILE_PATH= "src/main/resources/postgres";
 
   protected static final String SCHEMA = "redmask";
   protected static Connection connection;

@@ -2,6 +2,7 @@ package com.hashedin.redmask.factory;
 
 import com.hashedin.redmask.config.MaskConfiguration;
 import com.hashedin.redmask.postgres.PostgresMaskingService;
+import com.hashedin.redmask.redshift.RedshiftMaskingService;
 
 public class DataMaskFactory {
 
@@ -16,7 +17,7 @@ public class DataMaskFactory {
         dataMasking = new PostgresMaskingService(config, dryRunMode);
         break;
       case REDSHIFT:
-        dataMasking = new PostgresMaskingService(config, dryRunMode);
+        dataMasking = new RedshiftMaskingService(config, dryRunMode);
         break;
       case SNOWFLAKE:
         dataMasking = new PostgresMaskingService(config, dryRunMode);

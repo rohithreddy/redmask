@@ -20,6 +20,8 @@ repositories {
     mavenLocal()
     maven {
         url = 'https://repo.maven.apache.org/maven2'
+    }
+    maven {
         url = 'http://redshift-maven-repository.s3-website-us-east-1.amazonaws.com/release'
     }
 }

@@ -8,6 +8,6 @@ public abstract class DataMasking {
   
   public abstract void generateSqlQueryForMasking();
   
-  public abstract void executeSqlQueryForMasking() throws IOException;
+  public abstract void executeSqlQueryForMasking() throws IOException, ClassNotFoundException;
   
 }

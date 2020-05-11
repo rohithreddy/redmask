@@ -34,7 +34,7 @@ public class RedMaskApp implements Callable<Integer> {
   @Option(names = {"-r", "--dryRun"},
       description = "When true, this will just generates sql file with required queries. "
           + "It will not make any changes to DB.")
-  private boolean dryRun = true;
+  private boolean dryRun = false;
 
   public static void main(String[] args) throws IOException {
     log.info("Starting redmask application.");

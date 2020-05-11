@@ -1,4 +1,4 @@
-package com.hashedin.redmask.postgres;
+package com.hashedin.redmask.redshift;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -10,7 +10,6 @@ import com.hashedin.redmask.config.TemplateConfiguration;
 import com.hashedin.redmask.exception.RedmaskConfigException;
 import com.hashedin.redmask.exception.RedmaskRuntimeException;
 import com.hashedin.redmask.factory.MaskingRuleFactory;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,13 +29,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * This class is used build part of the query that would be combined to
- * build the necessary masked view.
- */
-public class PostgresQueryBuilder {
+public class RedshiftQueryBuilder {
 
-  private static final Logger log = LoggerFactory.getLogger(PostgresQueryBuilder.class);
+  private static final Logger log = LoggerFactory.getLogger(com.hashedin.redmask.postgres.PostgresQueryBuilder.class);
 
   private static final String SELECT_QUERY = "SELECT * FROM ";
   private static final String DEFAULT_INPUT_TABLE_SCHEMA = "public";
@@ -45,15 +40,15 @@ public class PostgresQueryBuilder {
       MaskingRule rule,
       FileWriter writer,
       MaskConfiguration config,
-      String url)
-      throws IOException, RedmaskConfigException {
-
+      String url,
+      List<String> queryList)
+      throws IOException, RedmaskConfigException, ClassNotFoundException {
     Set<String> functionDefinitionSet = new LinkedHashSet<>();
     List<String> querySubstring = new ArrayList<>();
     ResultSetMetaData rs = null;
     TemplateConfiguration templateConfig = config.getTemplateConfig();
-    String dbType = config.getDbType().toString().toLowerCase();
-
+    String dbType= config.getDbType().toString().toLowerCase();
+    Class.forName("com.amazon.redshift.jdbc.Driver");
     try (Connection CONN = DriverManager.getConnection(url,
         config.getSuperUser(), config.getSuperUserPassword());
          Statement STATEMENT = CONN.createStatement()) {
@@ -66,7 +61,7 @@ public class PostgresQueryBuilder {
       String query = SELECT_QUERY + rule.getTable();
       rs = STATEMENT.executeQuery(query).getMetaData();
       MaskingRuleFactory maskRuleFactory = new MaskingRuleFactory();
-      
+
       log.info("Storing masking function names required to create the intended masked view.");
       Map<String, MaskingRuleDef> colMaskRuleMap = new HashMap<>();
 
@@ -89,6 +84,9 @@ public class PostgresQueryBuilder {
      */
     for (String functionDefinition : functionDefinitionSet) {
       writer.append(functionDefinition);
+      //TODO to be removed when possible
+      queryList.add(functionDefinition);
+
     }
 
     // Create view query.
@@ -102,6 +100,8 @@ public class PostgresQueryBuilder {
 
     writer.append("\n\n-- Create masked view.\n");
     writer.append(createViewQuery);
+    //TODO to be removed when possible
+    queryList.add(createViewQuery);
 
     writer.append("\n\n-- Revoking access from original table");
     writer.append("\nREVOKE ALL ON TABLE " + DEFAULT_INPUT_TABLE_SCHEMA + "."
@@ -158,7 +158,7 @@ public class PostgresQueryBuilder {
    *                          rule class
    * @param colMaskRuleMap    Map containing the column name as key and the specific rule class as
    *                          value.
-   * @throws SQLException 
+   * @throws SQLException
    */
   private void createColumnMaskRuleMap(
       MaskingRule rule,
@@ -182,7 +182,8 @@ public class PostgresQueryBuilder {
 
   private MaskingRuleDef buildMaskingRuleDef(ColumnRule colRule) {
     Map<String, String> maskParams = new ObjectMapper().convertValue(
-        colRule.getMaskParams(), new TypeReference<Map<String, String>>() { });
+        colRule.getMaskParams(), new TypeReference<Map<String, String>>() {
+        });
 
     return new MaskingRuleDef(colRule.getColumnName(),
         colRule.getMaskType(), maskParams) {
@@ -228,7 +229,7 @@ public class PostgresQueryBuilder {
    * @return True, if the column is present in the table else false.
    */
   private boolean isValidTableColumn(Connection connection, String tableName,
-      String columnName) throws SQLException {
+                                     String columnName) throws SQLException {
     DatabaseMetaData metaData = connection.getMetaData();
     ResultSet rs = metaData.getColumns(null, null, tableName, columnName);
     if (rs.next()) {
