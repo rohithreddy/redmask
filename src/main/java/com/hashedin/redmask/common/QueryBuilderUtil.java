@@ -1,5 +1,18 @@
 package com.hashedin.redmask.common;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.hashedin.redmask.config.ColumnRule;
+import com.hashedin.redmask.config.MaskConfiguration;
+import com.hashedin.redmask.config.MaskingRule;
+import com.hashedin.redmask.config.TemplateConfiguration;
+import com.hashedin.redmask.exception.RedmaskConfigException;
+import com.hashedin.redmask.exception.RedmaskRuntimeException;
+import com.hashedin.redmask.factory.DataBaseType;
+import com.hashedin.redmask.factory.MaskingRuleFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -15,21 +28,8 @@ import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.hashedin.redmask.config.ColumnRule;
-import com.hashedin.redmask.config.MaskConfiguration;
-import com.hashedin.redmask.config.MaskingRule;
-import com.hashedin.redmask.config.TemplateConfiguration;
-import com.hashedin.redmask.exception.RedmaskConfigException;
-import com.hashedin.redmask.exception.RedmaskRuntimeException;
-import com.hashedin.redmask.factory.DataBaseType;
-import com.hashedin.redmask.factory.MaskingRuleFactory;
 
 public class QueryBuilderUtil {
 
@@ -37,7 +37,8 @@ public class QueryBuilderUtil {
   private static final String SELECT_QUERY = "SELECT * FROM ";
   private static final String DEFAULT_INPUT_TABLE_SCHEMA = "public";
 
-  private QueryBuilderUtil() {}
+  private QueryBuilderUtil() {
+  }
 
   public static void buildFunctionsAndQueryForView(
       MaskingRule rule,
@@ -45,23 +46,31 @@ public class QueryBuilderUtil {
       MaskConfiguration config,
       String url)
       throws RedmaskConfigException {
-    
+
     Set<String> functionDefinitionSet = new LinkedHashSet<>();
     List<String> querySubstring = new ArrayList<>();
     ResultSetMetaData rs = null;
     TemplateConfiguration templateConfig = config.getTemplateConfig();
     String dbType = config.getDbType().toString().toLowerCase();
-    
-    if (dbType.equalsIgnoreCase(DataBaseType.POSTGRES.toString())) {
-      try {
+    Properties connectionProps = new Properties();
+    connectionProps.setProperty("user", config.getSuperUser());
+    connectionProps.setProperty("password", config.getSuperUserPassword());
+
+
+    try {
+      if (dbType.equalsIgnoreCase(DataBaseType.REDSHIFT.toString())) {
         Class.forName("com.amazon.redshift.jdbc.Driver");
-      } catch (ClassNotFoundException ex) {
-        throw new RedmaskRuntimeException(ex);
+      } else if (dbType.equalsIgnoreCase(DataBaseType.SNOWFLAKE.toString())) {
+        Class.forName("net.snowflake.client.jdbc.SnowflakeDriver");
+        connectionProps.setProperty("db", config.getDatabase());
+        connectionProps.setProperty("schema", DEFAULT_INPUT_TABLE_SCHEMA);
       }
+    } catch (ClassNotFoundException ex) {
+      throw new RedmaskRuntimeException(ex);
     }
-    
-    try (Connection CONN = DriverManager.getConnection(url,
-        config.getSuperUser(), config.getSuperUserPassword());
+
+
+    try (Connection CONN = DriverManager.getConnection(url, connectionProps);
          Statement STATEMENT = CONN.createStatement()) {
 
       // Check if given table exists.
@@ -82,7 +91,7 @@ public class QueryBuilderUtil {
       // TODO :Validate maskType and column type compatibility.
       // Dynamically build sub query part for create view.
       // FIXME Pass enum value of dbtype instead of string.
-      QueryBuilderUtil.getColumnMaskSubQueries(rule, functionDefinitionSet, 
+      QueryBuilderUtil.getColumnMaskSubQueries(rule, functionDefinitionSet,
           querySubstring, rs, templateConfig,
           colMaskRuleMap, dbType);
 
@@ -111,7 +120,12 @@ public class QueryBuilderUtil {
     sb.append(config.getUsername()).append(".").append(rule.getTable());
 
     String createViewQuery = "CREATE VIEW " + sb.toString() + " AS SELECT "
-        + queryString + " FROM " + rule.getTable() + ";";
+        + queryString + " FROM ";
+    if (dbType.equalsIgnoreCase(DataBaseType.SNOWFLAKE.toString())) {
+      createViewQuery = createViewQuery + "public." + rule.getTable() + ";";
+    } else {
+      createViewQuery = createViewQuery + rule.getTable() + ";";
+    }
 
     try {
       writer.append("\n\n-- Create masked view.\n");
@@ -126,10 +140,11 @@ public class QueryBuilderUtil {
     }
 
   }
-  
+
   public static MaskingRuleDef buildMaskingRuleDef(ColumnRule colRule) {
     Map<String, String> maskParams = new ObjectMapper().convertValue(
-        colRule.getMaskParams(), new TypeReference<Map<String, String>>() { });
+        colRule.getMaskParams(), new TypeReference<Map<String, String>>() {
+        });
 
     return new MaskingRuleDef(colRule.getColumnName(),
         colRule.getMaskType(), maskParams) {
@@ -157,7 +172,7 @@ public class QueryBuilderUtil {
    *                          rule class
    * @param colMaskRuleMap    Map containing the column name as key and the specific rule class as
    *                          value.
-   * @throws SQLException 
+   * @throws SQLException
    */
   public static void createColumnMaskRuleMap(
       MaskingRule rule,
@@ -204,7 +219,7 @@ public class QueryBuilderUtil {
       TemplateConfiguration templateConfig,
       Map<String, MaskingRuleDef> colMaskRuleMap,
       String dbType)
-          throws SQLException {
+      throws SQLException {
     // For each column in a given table.
     for (int i = 1; i <= rs.getColumnCount(); i++) {
       String colName = rs.getColumnName(i);
@@ -246,7 +261,7 @@ public class QueryBuilderUtil {
    * @return True, if the column is present in the table else false.
    */
   public static boolean isValidTableColumn(Connection connection, String tableName,
-      String columnName) throws SQLException {
+                                           String columnName) throws SQLException {
     DatabaseMetaData metaData = connection.getMetaData();
     ResultSet rs = metaData.getColumns(null, null, tableName, columnName);
     if (rs.next()) {
