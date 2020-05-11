@@ -74,8 +74,12 @@ jar {
       'Main-Class': 'com.hashedin.redmask.RedMaskApp'
     )
   }
-  from {
-        configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
+  from(configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }) {
+        exclude 'META-INF/MANIFEST.MF'
+        exclude 'META-INF/*.SF'
+        exclude 'META-INF/*.DSA'
+        exclude 'META-INF/*.RSA'
+
   }
 }
 
