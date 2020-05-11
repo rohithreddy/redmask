@@ -92,11 +92,11 @@ public class RedshiftMaskingService extends DataMasking {
       Class.forName("com.amazon.redshift.jdbc.Driver");
       try (Connection CONN = DriverManager.getConnection(url,
           config.getSuperUser(), config.getSuperUserPassword());
-           Statement stmt = CONN.createStatement()) {
-        int i=0;
+           Statement STMT = CONN.createStatement()) {
+        int i =  0;
         for (String query : tempQueriesList) {
-          System.out.println(i+":"+query);
-          stmt.execute(query);
+          log.info(i + ":" + query);
+          STMT.execute(query);
         }
       } catch (SQLException ex) {
         throw new RedmaskRuntimeException(

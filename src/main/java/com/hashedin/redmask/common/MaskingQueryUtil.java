@@ -5,6 +5,40 @@ import freemarker.template.Template;
 import freemarker.template.TemplateException;
 import org.apache.commons.io.IOUtils;
 
+import static com.hashedin.redmask.config.MaskingConstants.MASK_BIGINT_RANGE_COMMENT; 
+import static com.hashedin.redmask.config.MaskingConstants.MASK_BIGINT_RANGE_FILE;  
+import static com.hashedin.redmask.config.MaskingConstants.MASK_BIGINT_RANGE_FUNC;  
+import static com.hashedin.redmask.config.MaskingConstants.MASK_CARD_COMMENT; 
+import static com.hashedin.redmask.config.MaskingConstants.MASK_CARD_FILE;  
+import static com.hashedin.redmask.config.MaskingConstants.MASK_CARD_FUNC;  
+import static com.hashedin.redmask.config.MaskingConstants.MASK_EMAIL_COMMENT;  
+import static com.hashedin.redmask.config.MaskingConstants.MASK_EMAIL_FILE; 
+import static com.hashedin.redmask.config.MaskingConstants.MASK_EMAIL_FUNC; 
+import static com.hashedin.redmask.config.MaskingConstants.MASK_FLOAT_FIXED_VALUE_COMMENT;  
+import static com.hashedin.redmask.config.MaskingConstants.MASK_FLOAT_FIXED_VALUE_FILE; 
+import static com.hashedin.redmask.config.MaskingConstants.MASK_FLOAT_FIXED_VALUE_FUNC; 
+import static com.hashedin.redmask.config.MaskingConstants.MASK_INTEGER_FIXED_SIZE_COMMENT; 
+import static com.hashedin.redmask.config.MaskingConstants.MASK_INTEGER_FIXED_SIZE_FILE;  
+import static com.hashedin.redmask.config.MaskingConstants.MASK_INTEGER_FIXED_SIZE_FUNC;  
+import static com.hashedin.redmask.config.MaskingConstants.MASK_INTEGER_FIXED_VALUE_COMMENT;  
+import static com.hashedin.redmask.config.MaskingConstants.MASK_INTEGER_FIXED_VALUE_FILE; 
+import static com.hashedin.redmask.config.MaskingConstants.MASK_INTEGER_FIXED_VALUE_FUNC; 
+import static com.hashedin.redmask.config.MaskingConstants.MASK_INTEGER_RANGE_COMMENT;  
+import static com.hashedin.redmask.config.MaskingConstants.MASK_INTEGER_RANGE_FILE; 
+import static com.hashedin.redmask.config.MaskingConstants.MASK_INTEGER_RANGE_FUNC; 
+import static com.hashedin.redmask.config.MaskingConstants.MASK_INTEGER_WITHIN_RANGE_COMMENT; 
+import static com.hashedin.redmask.config.MaskingConstants.MASK_INTEGER_WITHIN_RANGE_FILE;  
+import static com.hashedin.redmask.config.MaskingConstants.MASK_INTEGER_WITHIN_RANGE_FUNC;  
+import static com.hashedin.redmask.config.MaskingConstants.MASK_NUMBERS_COMMENT;  
+import static com.hashedin.redmask.config.MaskingConstants.MASK_NUMBERS_FILE; 
+import static com.hashedin.redmask.config.MaskingConstants.MASK_NUMBERS_FUNC; 
+import static com.hashedin.redmask.config.MaskingConstants.MASK_NUMERIC_RANGE_COMMENT;  
+import static com.hashedin.redmask.config.MaskingConstants.MASK_NUMERIC_RANGE_FILE; 
+import static com.hashedin.redmask.config.MaskingConstants.MASK_NUMERIC_RANGE_FUNC; 
+import static com.hashedin.redmask.config.MaskingConstants.MASK_STRING_COMMENT; 
+import static com.hashedin.redmask.config.MaskingConstants.MASK_STRING_FILE;  
+import static com.hashedin.redmask.config.MaskingConstants.MASK_STRING_FUNC;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
@@ -13,7 +47,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static com.hashedin.redmask.config.MaskingConstants.*;
+
 
 /**
  * This class contain function that will add the masking function to the created for the inputted
@@ -40,13 +74,15 @@ public class MaskingQueryUtil {
   public static final String maskEmail(TemplateConfiguration config, String dbType)
       throws IOException, TemplateException {
     String createFuncString = processTemplate(config, TEMPLATE_NAME, MASK_EMAIL_FUNC);
-    return MASK_EMAIL_COMMENT + createFuncString + readFunctionQueryFromSqlFile(dbType + MASK_EMAIL_FILE);
+    return MASK_EMAIL_COMMENT + createFuncString + readFunctionQueryFromSqlFile(
+        dbType + MASK_EMAIL_FILE);
   }
 
   public static final String maskPaymentCard(TemplateConfiguration config, String dbType)
       throws IOException, TemplateException {
     String createFuncString = processTemplate(config, TEMPLATE_NAME, MASK_CARD_FUNC);
-    return MASK_CARD_COMMENT + createFuncString + readFunctionQueryFromSqlFile(dbType + MASK_CARD_FILE);
+    return MASK_CARD_COMMENT + createFuncString + readFunctionQueryFromSqlFile(
+        dbType + MASK_CARD_FILE);
   }
 
   public static final String maskIntegerFixedSize(TemplateConfiguration config, String dbType)
@@ -66,7 +102,8 @@ public class MaskingQueryUtil {
 
   public static final String maskIntegerFixedValue(TemplateConfiguration config, String dbType)
       throws IOException, TemplateException {
-    String createFuncString = processTemplate(config, TEMPLATE_NAME, MASK_INTEGER_FIXED_VALUE_FUNC);
+    String createFuncString = processTemplate(config, TEMPLATE_NAME, 
+        MASK_INTEGER_FIXED_VALUE_FUNC);
     return MASK_INTEGER_FIXED_VALUE_COMMENT + createFuncString
         + readFunctionQueryFromSqlFile(dbType + MASK_INTEGER_FIXED_VALUE_FILE);
 

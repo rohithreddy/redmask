@@ -31,7 +31,8 @@ import java.util.Set;
 
 public class RedshiftQueryBuilder {
 
-  private static final Logger log = LoggerFactory.getLogger(com.hashedin.redmask.postgres.PostgresQueryBuilder.class);
+  private static final Logger log = 
+      LoggerFactory.getLogger(com.hashedin.redmask.postgres.PostgresQueryBuilder.class);
 
   private static final String SELECT_QUERY = "SELECT * FROM ";
   private static final String DEFAULT_INPUT_TABLE_SCHEMA = "public";
@@ -47,7 +48,7 @@ public class RedshiftQueryBuilder {
     List<String> querySubstring = new ArrayList<>();
     ResultSetMetaData rs = null;
     TemplateConfiguration templateConfig = config.getTemplateConfig();
-    String dbType= config.getDbType().toString().toLowerCase();
+    String dbType = config.getDbType().toString().toLowerCase();
     Class.forName("com.amazon.redshift.jdbc.Driver");
     try (Connection CONN = DriverManager.getConnection(url,
         config.getSuperUser(), config.getSuperUserPassword());
