@@ -38,7 +38,7 @@ public class SnowflakeMaskingService extends DataMasking {
     this.url = url + config.getHost();
     this.dryRunEnabled = dryRunEnabled;
     this.tempQueriesList = new ArrayList<String>();
-    this.tempFilePath = createMaskingSqlFile();
+    this.tempFilePath = QueryBuilderUtil.createMaskingSqlFile();
   }
 
   @Override
@@ -80,19 +80,6 @@ public class SnowflakeMaskingService extends DataMasking {
     if (!dryRunEnabled) {
       log.info("Executing script in order to create view in the database.");
     }
-  }
-
-  private File createMaskingSqlFile() {
-    // create a temp .sql file
-    File sqlFile = null;
-    try {
-      sqlFile = File.createTempFile("redmask-masking", ".sql");
-      log.info("Created a temp file at location: {}", sqlFile.getAbsolutePath());
-    } catch (IOException ex) {
-      throw new RedmaskRuntimeException(
-          "Error while creating temporary file \'redmask-masking.sql\'", ex);
-    }
-    return sqlFile;
   }
 
 }

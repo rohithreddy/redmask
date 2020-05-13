@@ -56,7 +56,6 @@ public class QueryBuilderUtil {
     connectionProps.setProperty("user", config.getSuperUser());
     connectionProps.setProperty("password", config.getSuperUserPassword());
 
-
     try {
       if (dbType.equalsIgnoreCase(DataBaseType.REDSHIFT.toString())) {
         Class.forName("com.amazon.redshift.jdbc.Driver");
@@ -66,9 +65,8 @@ public class QueryBuilderUtil {
         connectionProps.setProperty("schema", DEFAULT_INPUT_TABLE_SCHEMA);
       }
     } catch (ClassNotFoundException ex) {
-      throw new RedmaskRuntimeException(ex);
+      throw new RedmaskRuntimeException("Driver not found.", ex);
     }
-
 
     try (Connection CONN = DriverManager.getConnection(url, connectionProps);
          Statement STATEMENT = CONN.createStatement()) {
@@ -97,7 +95,7 @@ public class QueryBuilderUtil {
 
     } catch (SQLException ex) {
       throw new RedmaskRuntimeException(
-          "SQL Exception occurred while fetching original table data", ex);
+          "Exception occurred while fetching original table data", ex);
     }
 
     /**
