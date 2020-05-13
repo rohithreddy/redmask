@@ -1,4 +1,4 @@
-package com.hashedin.redmask.integration;
+package com.hashedin.redmask.integration.postgres;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -12,11 +12,12 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
-import static com.hashedin.redmask.integration.BaseITPostgresTestContainer.TABLE_NAME_2;
+import static com.hashedin.redmask.integration.postgres.BaseITPostgresTestContainer.TABLE_NAME_2;
 
 public class RedMaskITUtils {
+  protected RedMaskITUtils(){}
 
-  private static final String TABLE_NAME = "customer"; 
+  private static final String TABLE_NAME = "customer";
 
   public static List<MaskingRule> createMaskingRuleVersionOne() throws IOException {
     MaskingRule rule = new MaskingRule();
@@ -33,9 +34,9 @@ public class RedMaskITUtils {
     return maskingRuleList;
   }
 
-  public static List<MaskingRule> createMaskingRuleVersionTwo(){
+  public static List<MaskingRule> createMaskingRuleVersionTwo() {
     MaskingRule rule = new MaskingRule();
-    rule.setTable("Invalid"+TABLE_NAME);
+    rule.setTable("Invalid" + TABLE_NAME);
     List<ColumnRule> columns = new ArrayList<ColumnRule>();
     rule.setColumns(columns);
     List<MaskingRule> maskingRuleList = new LinkedList<>();
@@ -54,6 +55,7 @@ public class RedMaskITUtils {
     return maskingRuleList;
 
   }
+
   public static List<MaskingRule> createMaskingRuleVersionFour() throws JsonProcessingException {
     MaskingRule rule = new MaskingRule();
     rule.setTable(TABLE_NAME);
@@ -69,6 +71,7 @@ public class RedMaskITUtils {
     maskingRuleList.add(rule);
     return maskingRuleList;
   }
+
   public static List<MaskingRule> createMaskingRuleVersionFive() throws JsonProcessingException {
     MaskingRule rule = new MaskingRule();
     rule.setTable(TABLE_NAME);

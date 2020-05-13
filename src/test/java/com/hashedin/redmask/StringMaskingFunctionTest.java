@@ -1,20 +1,19 @@
 package com.hashedin.redmask;
 
+import com.hashedin.redmask.config.MaskingConstants;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.hashedin.redmask.config.MaskingConstants;
-
-import static com.hashedin.redmask.config.MaskingConstants.MASK_STRING_FUNC;
-
 import java.io.IOException;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+
+import static com.hashedin.redmask.config.MaskingConstants.MASK_STRING_FUNC;
 
 public class StringMaskingFunctionTest extends BasePostgresTestContainer {
 
@@ -46,7 +45,8 @@ public class StringMaskingFunctionTest extends BasePostgresTestContainer {
   public void testStringMaskWithSpecifiedSeparator() throws SQLException {
     Statement stmt = getConnection().createStatement();
     // When string and masking pattern is given
-    String selectquery = "Select " + SCHEMA + "." + MASK_STRING_FUNC + "('abcdefghij','*') as masked";
+    String selectquery = "Select " + SCHEMA + "." + MASK_STRING_FUNC
+        + "('abcdefghij','*') as masked";
     ResultSet rs = stmt.executeQuery(selectquery);
     rs.next();
     Assert.assertEquals("**********", rs.getString(1));
@@ -57,7 +57,8 @@ public class StringMaskingFunctionTest extends BasePostgresTestContainer {
   public void testStringMaskWithSeparatorandPrefixLength() throws SQLException {
     Statement stmt = getConnection().createStatement();
     // When string, masking pattern, prefix length is given
-    String selectquery = "Select " + SCHEMA + "." + MASK_STRING_FUNC + "('abcdefghij','#',3) as masked";
+    String selectquery = "Select " + SCHEMA + "." + MASK_STRING_FUNC
+        + "('abcdefghij','#',3) as masked";
     ResultSet rs = stmt.executeQuery(selectquery);
     rs.next();
     Assert.assertEquals("abc#######", rs.getString(1));
@@ -67,7 +68,8 @@ public class StringMaskingFunctionTest extends BasePostgresTestContainer {
   public void testStringMaskWithSeparatorPrefixSuffixLength() throws SQLException {
     Statement stmt = getConnection().createStatement();
     // When string, masking pattern, prefix  and suffix length is given
-    String selectquery = "Select " + SCHEMA + "." + MASK_STRING_FUNC + "('abcdefghij','x',3,2) as masked";
+    String selectquery = "Select " + SCHEMA + "." + MASK_STRING_FUNC
+        + "('abcdefghij','x',3,2) as masked";
     ResultSet rs = stmt.executeQuery(selectquery);
     rs.next();
     Assert.assertEquals("abcxxxxxij", rs.getString(1));

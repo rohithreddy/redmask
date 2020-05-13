@@ -168,21 +168,27 @@ public class CardMasking extends MaskingRuleDef {
     switch (this.getMaskType()) {
       case CREDIT_CARD_SHOW_FIRST:
         parameters.add(MASK_TYPE_SHOW_FIRST);
+        parameters.add("'" + separator + "'");
+        parameters.add(String.valueOf(val1));
+        parameters.add(String.valueOf(val2));
         break;
 
       case CREDIT_CARD_SHOW_LAST:
         parameters.add(MASK_TYPE_SHOW_LAST);
+        parameters.add("'" + separator + "'");
+        parameters.add(String.valueOf(val2));
+        parameters.add(String.valueOf(val1));
         break;
 
       case CREDIT_CARD_SHOW_FIRST_LAST:
         parameters.add(MASK_TYPE_SHOW_FIRST_LAST);
+        parameters.add("'" + separator + "'");
+        parameters.add(String.valueOf(val1));
+        parameters.add(String.valueOf(val2));
         break;
       default:
         break;
     }
-    parameters.add("'" + separator + "'");
-    parameters.add(String.valueOf(val1));
-    parameters.add(String.valueOf(val2));
 
     return true;
   }
