@@ -10,6 +10,7 @@ import org.apache.ibatis.jdbc.ScriptRunner;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,9 +32,18 @@ import static com.hashedin.redmask.integration.redshift.RedMaskITUtils.createMas
 import static com.hashedin.redmask.integration.redshift.RedMaskITUtils.createMaskingRuleVersionThree;
 import static com.hashedin.redmask.integration.redshift.RedMaskITUtils.createMaskingRuleVersionTwo;
 
-public class RedMaskITTest{
+/**
+ * To run the integration test remove @Ignore annotation and
+ * update Redshift credentials.
+ */
+@Ignore
+public class RedMaskITTest {
 
   private static final Logger log = LoggerFactory.getLogger(RedMaskITTest.class);
+  private static final int ORIGINAL_TABLE_1_ROW_COUNT = 6;
+  private static final int ORIGINAL_TABLE_2_ROW_COUNT = 3;
+  private static final String TABLE_NAME = "customer";
+  private static final String TABLE_NAME_2 = "cashier";
 
   private static final String TEST_DATA_FILE = "src/test/resources/HelperSQL/InitializeDB.sql";
   // File to add more data in the tables.
@@ -41,22 +51,17 @@ public class RedMaskITTest{
   private static final String UPDATE_DATA_FILE = "src/test/resources/HelperSQL/UpdateDB.sql";
   private static final String DELETE_DATA_FILE = "src/test/resources/HelperSQL/DeleteDB.sql";
 
-  private static final String DEV_USER = "hashedin";
-  private static final String DEV_USER_PASSWORD = "Hasher123";
-  private static final String TABLE_NAME = "customer";
-  private static final String TABLE_NAME_2 = "cashier";
-
-  private static final int ORIGINAL_TABLE_1_ROW_COUNT = 6;
-  private static final int ORIGINAL_TABLE_2_ROW_COUNT = 3;
-
-
-  private static final String HOST =
-      "redshift-cluster-1.coxloxnpdxcw.us-east-1.redshift.amazonaws.com";
+  /**
+   * TODO To run the integration test you will have to update below credentials.
+   */
+  private static final String HOST = "<redshift-host-url>";
   private static final String PORT = "5439";
-  private static final String DATABASE = "redmask";
+  private static final String DATABASE = "<database-name>";
+  private static final String SUPER_USER = "<super-user-name>";
+  private static final String SUPER_USER_PASSWORD = "<super-user-password>";
+  private static final String DEV_USER = "<dev-user-name>";
+  private static final String DEV_USER_PASSWORD = "<dev-user-password>";
   private static final String URL = "jdbc:redshift://" + HOST + ":" + PORT + "/" + DATABASE;
-  private static final String SUPER_USER = "hashedin";
-  private static final String SUPER_USER_PASSWORD = "Hasher123";
 
   private static MaskConfiguration config = null;
   private Connection devConnection;
