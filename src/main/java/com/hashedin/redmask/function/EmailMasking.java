@@ -136,10 +136,12 @@ public class EmailMasking extends MaskingRuleDef {
     switch (this.getMaskType()) {
       case EMAIL_SHOW_DOMAIN:
         parameters.add(MASK_TYPE_SHOW_DOMAIN);
+        parameters.add(PARAM_SHOW_FIRST_CHARACTERS_DEFAULT);
         break;
 
       case EMAIL_SHOW_FIRST_CHARACTER_DOMAIN:
         parameters.add(MASK_TYPE_SHOW_FIRST_DOMAIN);
+        parameters.add(PARAM_SHOW_FIRST_CHARACTERS_DEFAULT);
         break;
 
       case EMAIL_SHOW_FIRST_CHARACTERS:
@@ -160,6 +162,7 @@ public class EmailMasking extends MaskingRuleDef {
         break;
       case EMAIL_MASK_ALPHANUMERIC:
         parameters.add(MASK_TYPE_SHOW_SPECIAL_CHAR);
+        parameters.add(PARAM_SHOW_FIRST_CHARACTERS_DEFAULT);
         break;
       default:
         return false;

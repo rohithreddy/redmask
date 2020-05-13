@@ -6,7 +6,7 @@ CREATE TABLE customer(
   interest float,
   card text
 );
-insert into customer VALUES ('User Alpha','useralpha@email.com',1,'2019-07-26',5.4,'1234-5679-8723-8789');
+insert into customer VALUES ('User Alpha','useralpha@email.com',1,'2019-07-26',3.5,'1234-5679-8723-8789');
 insert into customer VALUES ('User Beta','userbeta@email.com',2,'2019-06-25',6.4,'1234-5679-3478-6872');
 insert into customer VALUES ('User Charlie','usercharlie@email.com',3,'2019-05-24',7.6,'1234-1048-1224-7389');
 insert into customer VALUES ('User Delta','userdelta@email.com',4,'2019-04-23',3.5,'1234-5679-3247-7234');

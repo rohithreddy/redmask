@@ -24,7 +24,5 @@ jobs:
       run: chmod +x gradlew
     - name: Build with Gradle
       run: ./gradlew clean build
-# Commenting graal VM image build, There is some invalid sign issue while building the image.
-# Once that is fixed, this can be un-commented.
-#- name: Build graal VM image.
-# run: ./gradlew nativeImage
+    - name: Build graal VM image.
+      run: ./gradlew nativeImage

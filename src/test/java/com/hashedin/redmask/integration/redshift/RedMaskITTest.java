@@ -1,4 +1,4 @@
-package com.hashedin.redmask.integration;
+package com.hashedin.redmask.integration.redshift;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.hashedin.redmask.config.MaskConfiguration;
@@ -7,10 +7,10 @@ import com.hashedin.redmask.factory.DataBaseType;
 import com.hashedin.redmask.factory.DataMaskFactory;
 import com.hashedin.redmask.factory.DataMasking;
 import org.apache.ibatis.jdbc.ScriptRunner;
-import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,29 +25,47 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
-import static com.hashedin.redmask.integration.RedMaskITUtils.createMaskingRuleVersionFive;
-import static com.hashedin.redmask.integration.RedMaskITUtils.createMaskingRuleVersionFour;
-import static com.hashedin.redmask.integration.RedMaskITUtils.createMaskingRuleVersionOne;
-import static com.hashedin.redmask.integration.RedMaskITUtils.createMaskingRuleVersionSix;
-import static com.hashedin.redmask.integration.RedMaskITUtils.createMaskingRuleVersionThree;
-import static com.hashedin.redmask.integration.RedMaskITUtils.createMaskingRuleVersionTwo;
+import static com.hashedin.redmask.integration.redshift.RedMaskITUtils.createMaskingRuleVersionFive;
+import static com.hashedin.redmask.integration.redshift.RedMaskITUtils.createMaskingRuleVersionFour;
+import static com.hashedin.redmask.integration.redshift.RedMaskITUtils.createMaskingRuleVersionOne;
+import static com.hashedin.redmask.integration.redshift.RedMaskITUtils.createMaskingRuleVersionSix;
+import static com.hashedin.redmask.integration.redshift.RedMaskITUtils.createMaskingRuleVersionThree;
+import static com.hashedin.redmask.integration.redshift.RedMaskITUtils.createMaskingRuleVersionTwo;
 
-public class RedMaskITTest extends BaseITPostgresTestContainer {
+/**
+ * To run the integration test remove @Ignore annotation and
+ * update Redshift credentials.
+ */
+@Ignore
+public class RedMaskITTest {
 
   private static final Logger log = LoggerFactory.getLogger(RedMaskITTest.class);
-
   private static final int ORIGINAL_TABLE_1_ROW_COUNT = 6;
   private static final int ORIGINAL_TABLE_2_ROW_COUNT = 3;
+  private static final String TABLE_NAME = "customer";
+  private static final String TABLE_NAME_2 = "cashier";
 
-  private static final String URL = postgres.getJdbcUrl();
-  private static final String HOST = postgres.getContainerIpAddress();
-  private static final String PORT = String.valueOf(postgres.getMappedPort(5432));
-  private static final String DATABASE = postgres.getDatabaseName();
-  private static final String SUPER_USER = postgres.getUsername();
-  private static final String SUPER_USER_PASSWORD = postgres.getPassword();
+  private static final String TEST_DATA_FILE = "src/test/resources/HelperSQL/InitializeDB.sql";
+  // File to add more data in the tables.
+  private static final String INSERT_DATA_FILE = "src/test/resources/HelperSQL/InsertDB.sql";
+  private static final String UPDATE_DATA_FILE = "src/test/resources/HelperSQL/UpdateDB.sql";
+  private static final String DELETE_DATA_FILE = "src/test/resources/HelperSQL/DeleteDB.sql";
+
+  /**
+   * TODO To run the integration test you will have to update below credentials.
+   */
+  private static final String HOST = "<redshift-host-url>";
+  private static final String PORT = "5439";
+  private static final String DATABASE = "<database-name>";
+  private static final String SUPER_USER = "<super-user-name>";
+  private static final String SUPER_USER_PASSWORD = "<super-user-password>";
+  private static final String DEV_USER = "<dev-user-name>";
+  private static final String DEV_USER_PASSWORD = "<dev-user-password>";
+  private static final String URL = "jdbc:redshift://" + HOST + ":" + PORT + "/" + DATABASE;
 
   private static MaskConfiguration config = null;
   private Connection devConnection;
+  private static Connection connection = null;
 
   /**
    * TODO :Verify for masked data in respective column for string and card type.
@@ -64,15 +82,7 @@ public class RedMaskITTest extends BaseITPostgresTestContainer {
    */
   @BeforeClass
   public static void setup() throws SQLException, IOException {
-    try {
       log.info("Setting up integration test configuration.");
-      // Create a developer user.
-      connection = DriverManager.getConnection(URL, SUPER_USER, SUPER_USER_PASSWORD);
-      Statement statement = connection.createStatement();
-      String createUser = "CREATE USER " + DEV_USER + " WITH PASSWORD '" + DEV_USER_PASSWORD + "'";
-      statement.executeUpdate(createUser);
-      statement.close();
-
       // Define Masking config.
       config = new MaskConfiguration(SUPER_USER,
           SUPER_USER_PASSWORD,
@@ -81,11 +91,8 @@ public class RedMaskITTest extends BaseITPostgresTestContainer {
           HOST,
           PORT,
           DATABASE,
-          DataBaseType.POSTGRES,
+          DataBaseType.REDSHIFT,
           DEV_USER);
-    } finally {
-      connection.close();
-    }
   }
 
   @Before
@@ -106,7 +113,7 @@ public class RedMaskITTest extends BaseITPostgresTestContainer {
     sr.runScript(reader);
     log.info("Inserted test data into database.");
     reader.close();
-    
+
     // Create a connection object using developer user.
     devConnection = DriverManager.getConnection(
         URL,
@@ -115,18 +122,19 @@ public class RedMaskITTest extends BaseITPostgresTestContainer {
     );
   }
 
-  @After
+ // @After
   public void deleteTableAndMaskedView() throws SQLException {
-    try(Connection CONN = DriverManager.getConnection(
+    try (Connection CONN = DriverManager.getConnection(
         URL,
         SUPER_USER,
         SUPER_USER_PASSWORD
-        )) {
+    )) {
       log.info("Dropping tables: {} {}", TABLE_NAME, TABLE_NAME_2);
       Statement stmt = CONN.createStatement();
       stmt.executeUpdate("DROP TABLE " + TABLE_NAME + "," + TABLE_NAME_2 + " CASCADE");
       log.info("Dropping existing masked view and closing connection");
-      stmt.executeUpdate("DROP VIEW IF EXISTS " + DEV_USER + "." + TABLE_NAME + "," + DEV_USER + "." + TABLE_NAME_2);
+      stmt.executeUpdate("DROP VIEW IF EXISTS " + DEV_USER + "." + TABLE_NAME
+          + "," + DEV_USER + "." + TABLE_NAME_2);
       stmt.close();
     }
     connection.close();
@@ -134,7 +142,8 @@ public class RedMaskITTest extends BaseITPostgresTestContainer {
   }
 
   @Test
-  public void testMultipleMaskSingleTable() throws IOException, SQLException, ClassNotFoundException {
+  public void testMultipleMaskSingleTable() throws IOException, SQLException,
+      ClassNotFoundException {
     config.setRules(createMaskingRuleVersionOne());
     runRedMaskApp(config);
     Statement statement = devConnection.createStatement();
@@ -155,7 +164,8 @@ public class RedMaskITTest extends BaseITPostgresTestContainer {
   }
 
   @Test
-  public void testMultipleMaskSingleTableDeleteData() throws IOException, SQLException, ClassNotFoundException {
+  public void testMultipleMaskSingleTableDeleteData() throws IOException, SQLException,
+      ClassNotFoundException {
     config.setRules(createMaskingRuleVersionOne());
     runRedMaskApp(config);
     Statement statement = devConnection.createStatement();
@@ -193,11 +203,12 @@ public class RedMaskITTest extends BaseITPostgresTestContainer {
   }
 
   @Test
-  public void testMultipleMaskSingleTableUpdateData() throws IOException, SQLException, ClassNotFoundException {
+  public void testMultipleMaskSingleTableUpdateData() throws IOException, SQLException,
+      ClassNotFoundException {
     config.setRules(createMaskingRuleVersionOne());
     runRedMaskApp(config);
     Statement statement = devConnection.createStatement();
-    ResultSet rs = statement.executeQuery("SELECT * FROM " + TABLE_NAME);
+    ResultSet rs = statement.executeQuery("SELECT * FROM " + DEV_USER+"."+TABLE_NAME);
     int rowCount = 0;
     while (rs.next()) {
       rowCount += 1;
@@ -235,7 +246,8 @@ public class RedMaskITTest extends BaseITPostgresTestContainer {
   }
 
   @Test
-  public void testMultipleMaskSingleTableInsertData() throws IOException, SQLException, ClassNotFoundException {
+  public void testMultipleMaskSingleTableInsertData() throws IOException, SQLException,
+      ClassNotFoundException {
     config.setRules(createMaskingRuleVersionOne());
     runRedMaskApp(config);
     Statement statement = devConnection.createStatement();
