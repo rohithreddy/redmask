@@ -7,21 +7,13 @@ import com.hashedin.redmask.config.MaskingRule;
 import com.hashedin.redmask.exception.RedmaskRuntimeException;
 import com.hashedin.redmask.factory.DataMasking;
 
-import org.apache.ibatis.jdbc.ScriptRunner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.Reader;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
-
+import java.util.Properties;
 
 public class RedshiftMaskingService extends DataMasking {
 
@@ -71,16 +63,7 @@ public class RedshiftMaskingService extends DataMasking {
       }
 
       // Grant access of this masked view to user.
-      log.info("Required permission have been granted to the specified user.");
-      writer.append("\n\n-- Grant access to current user on schema: "
-          + MASKING_FUNCTION_SCHEMA + ".\n");
-      writer.append("GRANT USAGE ON SCHEMA " + MASKING_FUNCTION_SCHEMA
-          + " TO " + config.getUser() + ";");
-      writer.append("\n\n-- Grant access to current user on schema: " + config.getUser() + ".\n");
-      writer.append("GRANT ALL PRIVILEGES ON ALL TABLES IN "
-          + "SCHEMA " + config.getUser() + " TO " + config.getUser() + ";");
-      writer.append("\nGRANT USAGE ON SCHEMA " + config.getUser()
-          + " TO " + config.getUser() + ";");
+      grantAccessToMaskedData(writer, MASKING_FUNCTION_SCHEMA, config.getUser());
       writer.flush();
     } catch (IOException ex) {
       throw new RedmaskRuntimeException(
@@ -91,35 +74,12 @@ public class RedshiftMaskingService extends DataMasking {
 
   @Override
   public void executeSqlQueryForMasking() throws IOException, ClassNotFoundException {
-    //TODO implement execute query for redshift from temp query file.
     if (!dryRunEnabled) {
       log.info("Executing script in order to create view in the database.");
-      Reader reader = null;
-      try (Connection CONN = DriverManager.getConnection(url,
-          "hashedin", "Hasher123")) {
-        //Initialize the script runner
-        ScriptRunner sr = new ScriptRunner(CONN);
-
-        //Creating a reader object
-        reader = new BufferedReader(
-            new FileReader(tempFilePath));
-
-        //Running the script
-        sr.setSendFullScript(true);
-        sr.runScript(reader);
-      } catch (SQLException ex) {
-        throw new RedmaskRuntimeException(
-            String.format("DB Connection error while executing masking sql "
-                + "query from file: {} using super username: {}",
-                tempFilePath, config.getSuperUser()), ex);
-      } catch (FileNotFoundException ex) {
-        throw new RedmaskRuntimeException(
-            String.format("Masking sql query file {} not found", tempFilePath.getName()), ex);
-      } finally {
-        if (reader != null) {
-          reader.close();
-        }
-      }
+      Properties connectionProps = new Properties();
+      connectionProps.setProperty("user", config.getSuperUser());
+      connectionProps.setProperty("password", config.getSuperUserPassword());
+      executeSqlScript(url, connectionProps, tempFilePath);
     }
   }
 
