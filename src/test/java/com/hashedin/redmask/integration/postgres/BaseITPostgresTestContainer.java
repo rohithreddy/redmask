@@ -1,4 +1,4 @@
-package com.hashedin.redmask.integration;
+package com.hashedin.redmask.integration.postgres;
 
 import org.junit.AfterClass;
 import org.junit.ClassRule;
@@ -9,6 +9,9 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import java.sql.Connection;
 
 public class BaseITPostgresTestContainer {
+
+  protected BaseITPostgresTestContainer() {
+  }
 
   private static final Logger log = LoggerFactory.getLogger(BaseITPostgresTestContainer.class);
 
@@ -24,7 +27,7 @@ public class BaseITPostgresTestContainer {
   protected static final String TABLE_NAME_2 = "cashier";
 
   protected static final String SCHEMA = "redmask";
-  protected static Connection connection;
+  private static Connection connection;
 
   @ClassRule
   public static PostgreSQLContainer postgres = new PostgreSQLContainer();
@@ -37,6 +40,10 @@ public class BaseITPostgresTestContainer {
     } catch (Exception ex) {
       log.error("Exception while closing postgres test container {}", ex);
     }
+  }
+
+  protected static Connection getConnection() {
+    return connection;
   }
 
 }

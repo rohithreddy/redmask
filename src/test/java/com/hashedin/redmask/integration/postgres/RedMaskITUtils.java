@@ -1,4 +1,4 @@
-package com.hashedin.redmask.integration;
+package com.hashedin.redmask.integration.postgres;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -12,9 +12,10 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
-import static com.hashedin.redmask.integration.BaseITPostgresTestContainer.TABLE_NAME_2;
+import static com.hashedin.redmask.integration.postgres.BaseITPostgresTestContainer.TABLE_NAME_2;
 
 public class RedMaskITUtils {
+  protected RedMaskITUtils(){}
 
   private static final String TABLE_NAME = "customer";
 
