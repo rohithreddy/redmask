@@ -1,82 +1,99 @@
 package com.hashedin.redmask.snowflake;
 
-import com.hashedin.redmask.common.MaskingQueryUtil;
-import com.hashedin.redmask.common.QueryBuilderUtil;
+import com.hashedin.redmask.common.DataMasking;
 import com.hashedin.redmask.config.MaskConfiguration;
 import com.hashedin.redmask.config.MaskingRule;
 import com.hashedin.redmask.exception.RedmaskRuntimeException;
-import com.hashedin.redmask.factory.DataMasking;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Properties;
 
+/**
+ * This class provides implementation of DataMasking for Snowflake.
+ */
 public class SnowflakeMaskingService extends DataMasking {
 
   private static final Logger log = LoggerFactory.getLogger(SnowflakeMaskingService.class);
-
-  private static final String MASKING_FUNCTION_SCHEMA = "redmask";
+  private static final String SNOWFLAKE_JDBC_DRIVER = "net.snowflake.client.jdbc.SnowflakeDriver";
 
   private final MaskConfiguration config;
-  private String url = "jdbc:snowflake://";
   private final boolean dryRunEnabled;
-  // TODO remove the tempQueriesList when logic for running script is added
-  // This temp list will contain all the individual queries.
-  private List<String> tempQueriesList;
+  private String url = "jdbc:snowflake://";
 
-
-  // This temp would store queries to create masked data for when dryrun is true.
+  /**
+   *  This Temp file would store SQL queries/script to create schema, masked views,
+   *  grant permission to user etc. 
+   */
   private final File tempFilePath;
 
   public SnowflakeMaskingService(MaskConfiguration config, boolean dryRunEnabled) {
-    super();
     this.config = config;
     this.url = url + config.getHost();
     this.dryRunEnabled = dryRunEnabled;
-    this.tempQueriesList = new ArrayList<String>();
-    this.tempFilePath = QueryBuilderUtil.createMaskingSqlFile();
+    this.tempFilePath = createMaskingSqlFile();
+    log.trace("Initialized Snowflake masking service.");
   }
 
+  /**
+   * Steps:
+   * <p>1. Create a masking.sql file - This will contain all required masking queries.
+   * <p>2. Build queries to create Schema that will contain masking function and masked data.
+   * <p>3. Build queries to create masking function for given masking rule.
+   * <p>4. Build queries to create masked view using those masking function.
+   * <p>5. Revoke access to public schema from user(dev user).
+   * <p>6. Provide access to schema that contains masked view to user.
+   */
   @Override
   public void generateSqlQueryForMasking() {
     try {
       FileWriter writer = new FileWriter(tempFilePath);
-      log.info("Creating or replacing existing table view.");
       writer.append("USE " + config.getDatabase() + ";");
-      writer.append(MaskingQueryUtil.dropSchemaQuery(MASKING_FUNCTION_SCHEMA));
-      writer.append(MaskingQueryUtil.dropSchemaQuery(config.getUser()));
-      writer.append(MaskingQueryUtil.createSchemaQuery(MASKING_FUNCTION_SCHEMA));
-      writer.append(MaskingQueryUtil.createSchemaQuery(config.getUser()));
+      appendQueryToCreateSchema(writer, config.getUser());
+
+      try {
+        Class.forName(SNOWFLAKE_JDBC_DRIVER);
+      } catch (ClassNotFoundException ex) {
+        writer.close();
+        throw new RedmaskRuntimeException("Snowflake JDBC driver not found.", ex);
+      }
+      
+      // Set database superuser credentials 
+      Properties connectionProps = new Properties();
+      connectionProps.setProperty("user", config.getSuperUser());
+      connectionProps.setProperty("password", config.getSuperUserPassword());
+      connectionProps.setProperty("db", config.getDatabase());
+      connectionProps.setProperty("schema", DEFAULT_INPUT_TABLE_SCHEMA);
 
       /**
-       * For each masking rule, create postgres mask function.
-       * Create view for given table.
-       *
-       * First generate query for creating function query for all the masking rule needed.
-       * Then we can generate query for creating masked view
+       * For each masking rule, build queries to create masking function.
+       * Build queries to create masked view for given table.
+       * 
+       * Append all those queries to file writer.
        */
-      // Generate query for each table and append in the writer.
-      log.info("Adding function and custom queries to build view.");
       for (int i = 0; i < config.getRules().size(); i++) {
         MaskingRule rule = config.getRules().get(i);
-        // TODO remove tempQueriesList when possible
-        QueryBuilderUtil.buildFunctionsAndQueryForView(rule, writer, config, url);
+        buildQueryAndAppend(rule, writer, config, url, connectionProps);
       }
+
       // TODO add required permission to grant access to different users
+      // Grant access to the masked view data to user.
+      grantAccessToMaskedData(writer, config.getUser());
       writer.flush();
     } catch (IOException ex) {
       throw new RedmaskRuntimeException(
           String.format("Error while writing to file {}", tempFilePath.getName()), ex);
     }
+    log.info("Sql script file exists at: {}. It contains all the sql queries"
+        + "needed to create masked data.", tempFilePath);
   }
 
   @Override
-  public void executeSqlQueryForMasking() throws IOException {
-    //TODO implement execute query for redshift from temp query file.
+  public void executeSqlQueryForMasking() {
     if (!dryRunEnabled) {
       log.info("Executing script in order to create view in the database.");
     }
