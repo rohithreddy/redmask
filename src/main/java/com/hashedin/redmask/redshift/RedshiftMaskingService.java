@@ -13,71 +13,78 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Properties;
 
+/**
+ * This class provides implementation of DataMasking for Redshift.
+ */
 public class RedshiftMaskingService extends DataMasking {
 
   private static final Logger log = LoggerFactory.getLogger(RedshiftMaskingService.class);
+  private static final String REDSHIFT_JDBC_DRIVER = "com.amazon.redshift.jdbc.Driver";
 
   private final MaskConfiguration config;
-  private String url = "jdbc:redshift://";
   private final boolean dryRunEnabled;
+  private String url = "jdbc:redshift://";
 
-  // This temp would store queries to create masked data for when dryrun is true.
+  /**
+   *  This Temp file would store SQL queries/script to create schema, masked views,
+   *  grant permission to user etc. 
+   */
   private final File tempFilePath;
 
   public RedshiftMaskingService(MaskConfiguration config, boolean dryRunEnabled) {
-    super();
     this.config = config;
     this.url = url + config.getHost() + ":"
         + config.getPort() + "/" + config.getDatabase();
     this.dryRunEnabled = dryRunEnabled;
     this.tempFilePath = createMaskingSqlFile();
+    log.trace("Initialized Redshift masking service.");
   }
 
   @Override
   public void generateSqlQueryForMasking() {
     try {
+      log.trace("Invoking Redshift masking service to generate data masking sql script.");
       FileWriter writer = new FileWriter(tempFilePath);
-      log.info("Creating or replacing existing table view.");
-      createQueryForFunctionSchema(writer, config.getUser());
+      appendQueryToCreateSchema(writer, config.getUser());
 
+      try {
+        Class.forName(REDSHIFT_JDBC_DRIVER);
+      } catch (ClassNotFoundException ex) {
+        writer.close();
+        throw new RedmaskRuntimeException("Redshift JDBC driver not found.", ex);
+      }
+      
+      // Set database superuser credentials 
       Properties connectionProps = new Properties();
       connectionProps.setProperty("user", config.getSuperUser());
       connectionProps.setProperty("password", config.getSuperUserPassword());
-      try {
-        Class.forName("com.amazon.redshift.jdbc.Driver");
-      } catch (ClassNotFoundException ex) {
-        writer.close();
-        throw new RedmaskRuntimeException("Driver not found.", ex);
-      }
+      
       /**
-       * For each masking rule, create postgres mask function.
-       * Create view for given table.
-       *
-       * First generate query for creating function query for all the masking rule needed.
-       * Then we can generate query for creating masked view
+       * For each masking rule, build queries to create masking function.
+       * Build queries to create masked view for given table.
+       * 
+       * Append all those queries to file writer.
        */
-      // Generate query for each table and append in the writer.
-      log.info("Adding function and custom queries to build view.");
       for (int i = 0; i < config.getRules().size(); i++) {
         MaskingRule rule = config.getRules().get(i);
-        // TODO remove tempQueriesList when possible
-        buildFunctionsAndQueryForView(rule, writer, config, url, connectionProps);
+        buildQueryAndAppend(rule, writer, config, url, connectionProps);
       }
 
-      // Grant access of this masked view to user.
+      // Grant access to the masked view data to user.
       grantAccessToMaskedData(writer, config.getUser());
       writer.flush();
     } catch (IOException ex) {
       throw new RedmaskRuntimeException(
           String.format("Error while writing to file {}", tempFilePath.getName()), ex);
     }
-    log.info("Sql script file exists at: {}. You can review it.", tempFilePath);
+    log.info("Sql script file exists at: {}. It contains all the sql queries"
+        + "needed to create masked data.", tempFilePath);
   }
 
   @Override
   public void executeSqlQueryForMasking() throws IOException, ClassNotFoundException {
     if (!dryRunEnabled) {
-      log.info("Executing script in order to create view in the database.");
+      log.trace("Invoking Redshift masking service to run data masking sql script.");
       Properties connectionProps = new Properties();
       connectionProps.setProperty("user", config.getSuperUser());
       connectionProps.setProperty("password", config.getSuperUserPassword());

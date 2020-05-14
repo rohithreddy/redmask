@@ -54,18 +54,21 @@ public abstract class DataMasking {
 
   public abstract void executeSqlQueryForMasking() throws IOException, ClassNotFoundException;
 
-  public void buildFunctionsAndQueryForView(
-      MaskingRule rule,
-      FileWriter writer,
-      MaskConfiguration config,
-      String url, Properties connectionProps)
-      throws RedmaskConfigException {
+  /**
+   * This method builds all the needed query to create masking functions and views.
+   * @param rule    MaskingRule rule object.
+   * @param writer  FileWriter object. All the queries are appended to this writer.
+   * @param config  MaskConfiguration object
+   * @param url     database url.
+   * @param connectionProps  DB connection properties.
+   */
+  public void buildQueryAndAppend(MaskingRule rule, FileWriter writer,
+      MaskConfiguration config, String url, Properties connectionProps) {
 
     Set<String> functionDefinitionSet = new LinkedHashSet<>();
     List<String> querySubstring = new ArrayList<>();
     ResultSetMetaData rs = null;
     TemplateConfiguration templateConfig = config.getTemplateConfig();
-    String dbType = config.getDbType().toString().toLowerCase();
 
     try (Connection CONN = DriverManager.getConnection(url, connectionProps);
          Statement STATEMENT = CONN.createStatement()) {
@@ -80,20 +83,14 @@ public abstract class DataMasking {
       MaskingRuleFactory maskRuleFactory = new MaskingRuleFactory();
 
       log.info("Storing masking function names required to create the intended masked view.");
+      // Create a map of column and their associated masking rule.
       Map<String, MaskingRuleDef> colMaskRuleMap = new HashMap<>();
 
-      // Create a map of column and their associated masking rule.
       createColumnMaskRuleMap(rule, CONN, maskRuleFactory, colMaskRuleMap);
-
-      // TODO :Validate maskType and column type compatibility.
-      // FIXME Pass enum value of dbtype instead of string.
-      getColumnMaskSubQueries(rule, functionDefinitionSet,
-          querySubstring, rs, templateConfig,
-          colMaskRuleMap, dbType);
-
+      getColumnMaskSubQueries(rule, functionDefinitionSet, querySubstring, rs, templateConfig,
+          colMaskRuleMap, config.getDbType());
     } catch (SQLException ex) {
-      throw new RedmaskRuntimeException(
-          "Exception occurred while fetching original table data", ex);
+      throw new RedmaskRuntimeException(ex);
     }
 
     /**
@@ -117,7 +114,7 @@ public abstract class DataMasking {
 
     String createViewQuery = "CREATE VIEW " + sb.toString() + " AS SELECT "
         + queryString + " FROM ";
-    if (dbType.equalsIgnoreCase(DataBaseType.SNOWFLAKE.toString())) {
+    if (config.getDbType().toString().equalsIgnoreCase(DataBaseType.SNOWFLAKE.toString())) {
       createViewQuery = createViewQuery + "public." + rule.getTable() + ";";
     } else {
       createViewQuery = createViewQuery + rule.getTable() + ";";
@@ -168,25 +165,29 @@ public abstract class DataMasking {
    *                          rule class
    * @param colMaskRuleMap    Map containing the column name as key and the specific rule class as
    *                          value.
-   * @throws SQLException
    */
   public void createColumnMaskRuleMap(
       MaskingRule rule,
       Connection connection,
       MaskingRuleFactory columnRuleFactory,
-      Map<String, MaskingRuleDef> colMaskRuleMap) throws SQLException {
+      Map<String, MaskingRuleDef> colMaskRuleMap) {
 
     // For each column rule in a given table.
     for (ColumnRule col : rule.getColumns()) {
-      if (!isValidTableColumn(connection, rule.getTable(), col.getColumnName())) {
-        throw new RedmaskConfigException(
-            String.format("Column {} was not found in {} table.",
-                col.getColumnName(), rule.getTable()));
-      } else {
-        // Build MaskingRuleDef object.
-        MaskingRuleDef def = buildMaskingRuleDef(col);
-        colMaskRuleMap.put(col.getColumnName(), columnRuleFactory.getColumnMaskingRule(def));
+      try {
+        if (!isValidColumn(connection, rule.getTable(), col.getColumnName())) {
+          throw new RedmaskConfigException(
+              String.format("Column {} was not found in {} table.",
+                  col.getColumnName(), rule.getTable()));
+        }
+      } catch (SQLException ex) {
+        throw new RedmaskRuntimeException(
+            String.format("Error while fetching column detail for Column {} in table {}.",
+                col.getColumnName(), rule.getTable()), ex);
       }
+      // Build MaskingRuleDef object.
+      MaskingRuleDef ruleDef = buildMaskingRuleDef(col);
+      colMaskRuleMap.put(col.getColumnName(), columnRuleFactory.getColumnMaskingRule(ruleDef));
     }
   }
   
@@ -198,7 +199,7 @@ public abstract class DataMasking {
    * @param columnName The name of the column to be checked.
    * @return True, if the column is present in the table else false.
    */
-  public static boolean isValidTableColumn(Connection connection, String tableName,
+  public boolean isValidColumn(Connection connection, String tableName,
                                            String columnName) throws SQLException {
     DatabaseMetaData metaData = connection.getMetaData();
     ResultSet rs = metaData.getColumns(null, null, tableName, columnName);
@@ -210,15 +211,18 @@ public abstract class DataMasking {
     return false;
   }
 
-  public static File createMaskingSqlFile() {
-    // create a temp .sql file
+  /**
+   * Creates a temp .sql file to store SQL script on local machine/server.
+   * @return Path to the created new temp file.
+   */
+  protected File createMaskingSqlFile() {
     File sqlFile = null;
     try {
       sqlFile = File.createTempFile("redmask-masking", ".sql");
       log.info("Created a temp file at location: {}", sqlFile.getAbsolutePath());
     } catch (IOException ex) {
       throw new RedmaskRuntimeException(
-          "Error while creating temporary file \'redmask-masking.sql\'", ex);
+          "Error while creating a temporary file \'redmask-masking.sql\'", ex);
     }
     return sqlFile;
   }
@@ -238,28 +242,27 @@ public abstract class DataMasking {
    * @param templateConfig        Template Configuration in order to access the different templates
    *                              to create user specific function definition and sub-queries
    * @param colMaskRuleMap        Map of the column to be masked and their masking function
-   * @throws SQLException
    */
-  public static void getColumnMaskSubQueries(
-      MaskingRule rule,
-      Set<String> functionDefinitionSet,
-      List<String> querySubstring,
-      ResultSetMetaData rs,
-      TemplateConfiguration templateConfig,
-      Map<String, MaskingRuleDef> colMaskRuleMap,
-      String dbType)
-      throws SQLException {
+  public static void getColumnMaskSubQueries(MaskingRule rule, Set<String> functionDefinitionSet,
+      List<String> querySubstring, ResultSetMetaData rs, TemplateConfiguration templateConfig,
+      Map<String, MaskingRuleDef> colMaskRuleMap, DataBaseType dbType) {
     // For each column in a given table.
-    for (int i = 1; i <= rs.getColumnCount(); i++) {
-      String colName = rs.getColumnName(i);
-      if (colMaskRuleMap.containsKey(colName)) { // Check if masking has to be done for this column.
-        querySubstring.add(colMaskRuleMap.get(colName)
-            .getSubQuery(templateConfig, rule.getTable()));
-        colMaskRuleMap.get(colName).addFunctionDefinition(templateConfig, functionDefinitionSet,
-            dbType);
-      } else {
-        querySubstring.add(rs.getColumnName(i));
+    try {
+      for (int i = 1; i <= rs.getColumnCount(); i++) {
+        String colName = rs.getColumnName(i);
+        // Check if masking has to be done for this column.
+        if (colMaskRuleMap.containsKey(colName)) {
+          querySubstring.add(colMaskRuleMap.get(colName)
+              .getSubQuery(templateConfig, rule.getTable()));
+          String databaseType = dbType.toString().toLowerCase();
+          colMaskRuleMap.get(colName)
+            .addFunctionDefinition(templateConfig, functionDefinitionSet, databaseType);
+        } else {
+          querySubstring.add(rs.getColumnName(i));
+        }
       }
+    } catch (SQLException ex) {
+      throw new RedmaskRuntimeException(ex);
     }
   }
 
@@ -280,14 +283,21 @@ public abstract class DataMasking {
     rs.close();
     return false;
   }
-  
-  public void createQueryForFunctionSchema(FileWriter writer, String user) throws IOException {
-    writer.append(MaskingQueryUtil.dropSchemaQuery(MASKING_FUNCTION_SCHEMA));
-    writer.append(MaskingQueryUtil.dropSchemaQuery(user));
-    writer.append(MaskingQueryUtil.createSchemaQuery(MASKING_FUNCTION_SCHEMA));
-    writer.append(MaskingQueryUtil.createSchemaQuery(user));
+
+  protected void appendQueryToCreateSchema(FileWriter writer, String userSchema) {
+    log.trace("Appending sql query to drop and create schema in temp file."
+        + "Schema to be created are {}, {}", MASKING_FUNCTION_SCHEMA, userSchema);
+    try {
+      writer.append(MaskingQueryUtil.dropSchemaQuery(MASKING_FUNCTION_SCHEMA));
+      writer.append(MaskingQueryUtil.dropSchemaQuery(userSchema));
+      writer.append(MaskingQueryUtil.createSchemaQuery(MASKING_FUNCTION_SCHEMA));
+      writer.append(MaskingQueryUtil.createSchemaQuery(userSchema));
+    } catch (IOException ex) {
+      throw new RedmaskRuntimeException(
+          "Erorr while appending sql query to drop and create schema in temp file.", ex);
+    }
   }
-  
+
   public void grantAccessToMaskedData(FileWriter writer, String user) throws IOException {
     log.info("Required permission have been granted to the specified user.");
     writer.append("\n\n-- Grant access to current user on schema: "
@@ -301,7 +311,7 @@ public abstract class DataMasking {
         + " TO " + user + ";");
   }
   
-  public void executeSqlScript(String url, Properties props,
+  protected void executeSqlScript(String url, Properties props,
       File scriptFilePath) throws IOException {
     Reader reader = null;
     try (Connection CONN = DriverManager.getConnection(url, props)) {
@@ -311,6 +321,7 @@ public abstract class DataMasking {
       //Creating a reader object and running the script
       reader = new BufferedReader(new FileReader(scriptFilePath));
       sr.setSendFullScript(true);
+      log.trace("Executing sql script located at {}", scriptFilePath);
       sr.runScript(reader);
     } catch (SQLException ex) {
       throw new RedmaskRuntimeException(
