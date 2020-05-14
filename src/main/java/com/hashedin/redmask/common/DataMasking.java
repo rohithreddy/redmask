@@ -1,21 +1,12 @@
 package com.hashedin.redmask.common;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.hashedin.redmask.config.ColumnRule;
-import com.hashedin.redmask.config.MaskConfiguration;
-import com.hashedin.redmask.config.MaskingRule;
-import com.hashedin.redmask.config.TemplateConfiguration;
-import com.hashedin.redmask.exception.RedmaskConfigException;
-import com.hashedin.redmask.exception.RedmaskRuntimeException;
-import com.hashedin.redmask.factory.DataBaseType;
-import com.hashedin.redmask.factory.MaskingRuleFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.Reader;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.DriverManager;
@@ -31,20 +22,43 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
-public class QueryBuilderUtil {
+import org.apache.ibatis.jdbc.ScriptRunner;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-  private static final Logger log = LoggerFactory.getLogger(QueryBuilderUtil.class);
-  private static final String SELECT_QUERY = "SELECT * FROM ";
-  private static final String DEFAULT_INPUT_TABLE_SCHEMA = "public";
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.hashedin.redmask.config.ColumnRule;
+import com.hashedin.redmask.config.MaskConfiguration;
+import com.hashedin.redmask.config.MaskingRule;
+import com.hashedin.redmask.config.TemplateConfiguration;
+import com.hashedin.redmask.exception.RedmaskConfigException;
+import com.hashedin.redmask.exception.RedmaskRuntimeException;
+import com.hashedin.redmask.factory.DataBaseType;
+import com.hashedin.redmask.factory.MaskingRuleFactory;
 
-  private QueryBuilderUtil() {
-  }
+/**
+ * This DataMasking class contains common methods to implement data masking.
+ * 
+ * Any Specific DataBase/Data Warehouse class implementing data masking 
+ * has to extend this class and provide implementation to abstract methods.
+ */
+public abstract class DataMasking {
 
-  public static void buildFunctionsAndQueryForView(
+  private static final Logger log = LoggerFactory.getLogger(DataMasking.class);
+  public static final String MASKING_FUNCTION_SCHEMA = "redmask";
+  public static final String SELECT_QUERY = "SELECT * FROM ";
+  public static final String DEFAULT_INPUT_TABLE_SCHEMA = "public";
+
+  public abstract void generateSqlQueryForMasking() throws RedmaskConfigException;
+
+  public abstract void executeSqlQueryForMasking() throws IOException, ClassNotFoundException;
+
+  public void buildFunctionsAndQueryForView(
       MaskingRule rule,
       FileWriter writer,
       MaskConfiguration config,
-      String url)
+      String url, Properties connectionProps)
       throws RedmaskConfigException {
 
     Set<String> functionDefinitionSet = new LinkedHashSet<>();
@@ -52,27 +66,12 @@ public class QueryBuilderUtil {
     ResultSetMetaData rs = null;
     TemplateConfiguration templateConfig = config.getTemplateConfig();
     String dbType = config.getDbType().toString().toLowerCase();
-    Properties connectionProps = new Properties();
-    connectionProps.setProperty("user", config.getSuperUser());
-    connectionProps.setProperty("password", config.getSuperUserPassword());
-
-    try {
-      if (dbType.equalsIgnoreCase(DataBaseType.REDSHIFT.toString())) {
-        Class.forName("com.amazon.redshift.jdbc.Driver");
-      } else if (dbType.equalsIgnoreCase(DataBaseType.SNOWFLAKE.toString())) {
-        Class.forName("net.snowflake.client.jdbc.SnowflakeDriver");
-        connectionProps.setProperty("db", config.getDatabase());
-        connectionProps.setProperty("schema", DEFAULT_INPUT_TABLE_SCHEMA);
-      }
-    } catch (ClassNotFoundException ex) {
-      throw new RedmaskRuntimeException("Driver not found.", ex);
-    }
 
     try (Connection CONN = DriverManager.getConnection(url, connectionProps);
          Statement STATEMENT = CONN.createStatement()) {
 
       // Check if given table exists.
-      if (!QueryBuilderUtil.isValidTable(CONN, rule.getTable())) {
+      if (!isValidTable(CONN, rule.getTable())) {
         throw new RedmaskConfigException(String.format("Table {} was not found.", rule.getTable()));
       }
 
@@ -84,12 +83,11 @@ public class QueryBuilderUtil {
       Map<String, MaskingRuleDef> colMaskRuleMap = new HashMap<>();
 
       // Create a map of column and their associated masking rule.
-      QueryBuilderUtil.createColumnMaskRuleMap(rule, CONN, maskRuleFactory, colMaskRuleMap);
+      createColumnMaskRuleMap(rule, CONN, maskRuleFactory, colMaskRuleMap);
 
       // TODO :Validate maskType and column type compatibility.
-      // Dynamically build sub query part for create view.
       // FIXME Pass enum value of dbtype instead of string.
-      QueryBuilderUtil.getColumnMaskSubQueries(rule, functionDefinitionSet,
+      getColumnMaskSubQueries(rule, functionDefinitionSet,
           querySubstring, rs, templateConfig,
           colMaskRuleMap, dbType);
 
@@ -138,8 +136,8 @@ public class QueryBuilderUtil {
     }
 
   }
-
-  public static MaskingRuleDef buildMaskingRuleDef(ColumnRule colRule) {
+  
+  private MaskingRuleDef buildMaskingRuleDef(ColumnRule colRule) {
     Map<String, String> maskParams = new ObjectMapper().convertValue(
         colRule.getMaskParams(), new TypeReference<Map<String, String>>() {
         });
@@ -160,7 +158,7 @@ public class QueryBuilderUtil {
 
     };
   }
-
+  
   /**
    * Creates a map of the column name and the associated masking rule.
    *
@@ -172,7 +170,7 @@ public class QueryBuilderUtil {
    *                          value.
    * @throws SQLException
    */
-  public static void createColumnMaskRuleMap(
+  public void createColumnMaskRuleMap(
       MaskingRule rule,
       Connection connection,
       MaskingRuleFactory columnRuleFactory,
@@ -180,18 +178,51 @@ public class QueryBuilderUtil {
 
     // For each column rule in a given table.
     for (ColumnRule col : rule.getColumns()) {
-      if (!QueryBuilderUtil.isValidTableColumn(connection, rule.getTable(), col.getColumnName())) {
+      if (!isValidTableColumn(connection, rule.getTable(), col.getColumnName())) {
         throw new RedmaskConfigException(
             String.format("Column {} was not found in {} table.",
                 col.getColumnName(), rule.getTable()));
       } else {
         // Build MaskingRuleDef object.
-        MaskingRuleDef def = QueryBuilderUtil.buildMaskingRuleDef(col);
+        MaskingRuleDef def = buildMaskingRuleDef(col);
         colMaskRuleMap.put(col.getColumnName(), columnRuleFactory.getColumnMaskingRule(def));
       }
     }
   }
+  
+  /**
+   * This function check whether a column exists in a particular table.
+   *
+   * @param connection Connection Object to the intended Database.
+   * @param tableName  The name of the table that should contain the column.
+   * @param columnName The name of the column to be checked.
+   * @return True, if the column is present in the table else false.
+   */
+  public static boolean isValidTableColumn(Connection connection, String tableName,
+                                           String columnName) throws SQLException {
+    DatabaseMetaData metaData = connection.getMetaData();
+    ResultSet rs = metaData.getColumns(null, null, tableName, columnName);
+    if (rs.next()) {
+      rs.close();
+      return true;
+    }
+    rs.close();
+    return false;
+  }
 
+  public static File createMaskingSqlFile() {
+    // create a temp .sql file
+    File sqlFile = null;
+    try {
+      sqlFile = File.createTempFile("redmask-masking", ".sql");
+      log.info("Created a temp file at location: {}", sqlFile.getAbsolutePath());
+    } catch (IOException ex) {
+      throw new RedmaskRuntimeException(
+          "Error while creating temporary file \'redmask-masking.sql\'", ex);
+    }
+    return sqlFile;
+  }
+  
   /**
    * This function add all the dynamically design sub-queries based on the columns dn the mask type
    * and adds it into the querySubstring list.
@@ -249,38 +280,51 @@ public class QueryBuilderUtil {
     rs.close();
     return false;
   }
-
-  /**
-   * This function check whether a column exists in a particular table.
-   *
-   * @param connection Connection Object to the intended Database.
-   * @param tableName  The name of the table that should contain the column.
-   * @param columnName The name of the column to be checked.
-   * @return True, if the column is present in the table else false.
-   */
-  public static boolean isValidTableColumn(Connection connection, String tableName,
-                                           String columnName) throws SQLException {
-    DatabaseMetaData metaData = connection.getMetaData();
-    ResultSet rs = metaData.getColumns(null, null, tableName, columnName);
-    if (rs.next()) {
-      rs.close();
-      return true;
-    }
-    rs.close();
-    return false;
+  
+  public void createQueryForFunctionSchema(FileWriter writer, String user) throws IOException {
+    writer.append(MaskingQueryUtil.dropSchemaQuery(MASKING_FUNCTION_SCHEMA));
+    writer.append(MaskingQueryUtil.dropSchemaQuery(user));
+    writer.append(MaskingQueryUtil.createSchemaQuery(MASKING_FUNCTION_SCHEMA));
+    writer.append(MaskingQueryUtil.createSchemaQuery(user));
   }
+  
+  public void grantAccessToMaskedData(FileWriter writer, String user) throws IOException {
+    log.info("Required permission have been granted to the specified user.");
+    writer.append("\n\n-- Grant access to current user on schema: "
+        + MASKING_FUNCTION_SCHEMA + ".\n");
+    writer.append("GRANT USAGE ON SCHEMA " + MASKING_FUNCTION_SCHEMA
+        + " TO " + user + ";");
+    writer.append("\n\n-- Grant access to current user on schema: " + user + ".\n");
+    writer.append("GRANT ALL PRIVILEGES ON ALL TABLES IN "
+        + "SCHEMA " + user + " TO " + user + ";");
+    writer.append("\nGRANT USAGE ON SCHEMA " + user
+        + " TO " + user + ";");
+  }
+  
+  public void executeSqlScript(String url, Properties props,
+      File scriptFilePath) throws IOException {
+    Reader reader = null;
+    try (Connection CONN = DriverManager.getConnection(url, props)) {
+      //Initialize the script runner
+      ScriptRunner sr = new ScriptRunner(CONN);
 
-  public static File createMaskingSqlFile() {
-    // create a temp .sql file
-    File sqlFile = null;
-    try {
-      sqlFile = File.createTempFile("redmask-masking", ".sql");
-      log.info("Created a temp file at location: {}", sqlFile.getAbsolutePath());
-    } catch (IOException ex) {
+      //Creating a reader object and running the script
+      reader = new BufferedReader(new FileReader(scriptFilePath));
+      sr.setSendFullScript(true);
+      sr.runScript(reader);
+    } catch (SQLException ex) {
       throw new RedmaskRuntimeException(
-          "Error while creating temporary file \'redmask-masking.sql\'", ex);
+          String.format("Error while executing masking sql "
+              + "query from file: {} using super username: {}",
+              scriptFilePath, props.get("user")), ex);
+    } catch (FileNotFoundException ex) {
+      throw new RedmaskRuntimeException(
+          String.format("Masking sql query file {} not found", scriptFilePath.getName()), ex);
+    } finally {
+      if (reader != null) {
+        reader.close();
+      }
     }
-    return sqlFile;
   }
 
 }

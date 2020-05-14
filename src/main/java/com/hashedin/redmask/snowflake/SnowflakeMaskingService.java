@@ -1,11 +1,10 @@
 package com.hashedin.redmask.snowflake;
 
-import com.hashedin.redmask.common.MaskingQueryUtil;
-import com.hashedin.redmask.common.QueryBuilderUtil;
+import com.hashedin.redmask.common.DataMasking;
 import com.hashedin.redmask.config.MaskConfiguration;
 import com.hashedin.redmask.config.MaskingRule;
 import com.hashedin.redmask.exception.RedmaskRuntimeException;
-import com.hashedin.redmask.factory.DataMasking;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -14,6 +13,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
 
 public class SnowflakeMaskingService extends DataMasking {
 
@@ -38,7 +38,7 @@ public class SnowflakeMaskingService extends DataMasking {
     this.url = url + config.getHost();
     this.dryRunEnabled = dryRunEnabled;
     this.tempQueriesList = new ArrayList<String>();
-    this.tempFilePath = QueryBuilderUtil.createMaskingSqlFile();
+    this.tempFilePath = createMaskingSqlFile();
   }
 
   @Override
@@ -47,11 +47,20 @@ public class SnowflakeMaskingService extends DataMasking {
       FileWriter writer = new FileWriter(tempFilePath);
       log.info("Creating or replacing existing table view.");
       writer.append("USE " + config.getDatabase() + ";");
-      writer.append(MaskingQueryUtil.dropSchemaQuery(MASKING_FUNCTION_SCHEMA));
-      writer.append(MaskingQueryUtil.dropSchemaQuery(config.getUser()));
-      writer.append(MaskingQueryUtil.createSchemaQuery(MASKING_FUNCTION_SCHEMA));
-      writer.append(MaskingQueryUtil.createSchemaQuery(config.getUser()));
+      createQueryForFunctionSchema(writer, config.getUser());
+      
+      Properties connectionProps = new Properties();
+      connectionProps.setProperty("user", config.getSuperUser());
+      connectionProps.setProperty("password", config.getSuperUserPassword());
+      connectionProps.setProperty("db", config.getDatabase());
+      connectionProps.setProperty("schema", DEFAULT_INPUT_TABLE_SCHEMA);
 
+      try {
+        Class.forName("net.snowflake.client.jdbc.SnowflakeDriver");
+      } catch (ClassNotFoundException ex) {
+        writer.close();
+        throw new RedmaskRuntimeException("Driver not found.", ex);
+      }
       /**
        * For each masking rule, create postgres mask function.
        * Create view for given table.
@@ -64,7 +73,7 @@ public class SnowflakeMaskingService extends DataMasking {
       for (int i = 0; i < config.getRules().size(); i++) {
         MaskingRule rule = config.getRules().get(i);
         // TODO remove tempQueriesList when possible
-        QueryBuilderUtil.buildFunctionsAndQueryForView(rule, writer, config, url);
+        buildFunctionsAndQueryForView(rule, writer, config, url, connectionProps);
       }
       // TODO add required permission to grant access to different users
       writer.flush();
