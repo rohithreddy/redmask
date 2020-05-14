@@ -1,12 +1,13 @@
 package com.hashedin.redmask.integration.redshift;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.hashedin.redmask.common.DataMasking;
 import com.hashedin.redmask.config.MaskConfiguration;
 import com.hashedin.redmask.exception.RedmaskConfigException;
 import com.hashedin.redmask.factory.DataBaseType;
 import com.hashedin.redmask.factory.DataMaskFactory;
-import com.hashedin.redmask.factory.DataMasking;
 import org.apache.ibatis.jdbc.ScriptRunner;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -122,7 +123,7 @@ public class RedMaskITTest {
     );
   }
 
- // @After
+  @After
   public void deleteTableAndMaskedView() throws SQLException {
     try (Connection CONN = DriverManager.getConnection(
         URL,
