@@ -13,11 +13,13 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Properties;
 
+/**
+ * This class provides implementation of DataMasking for Snowflake.
+ */
 public class SnowflakeMaskingService extends DataMasking {
 
   private static final Logger log = LoggerFactory.getLogger(SnowflakeMaskingService.class);
   private static final String SNOWFLAKE_JDBC_DRIVER = "net.snowflake.client.jdbc.SnowflakeDriver";
-
 
   private final MaskConfiguration config;
   private final boolean dryRunEnabled;
@@ -37,6 +39,15 @@ public class SnowflakeMaskingService extends DataMasking {
     log.trace("Initialized Snowflake masking service.");
   }
 
+  /**
+   * Steps:
+   * <p>1. Create a masking.sql file - This will contain all required masking queries.
+   * <p>2. Build queries to create Schema that will contain masking function and masked data.
+   * <p>3. Build queries to create masking function for given masking rule.
+   * <p>4. Build queries to create masked view using those masking function.
+   * <p>5. Revoke access to public schema from user(dev user).
+   * <p>6. Provide access to schema that contains masked view to user.
+   */
   @Override
   public void generateSqlQueryForMasking() {
     try {
@@ -82,7 +93,7 @@ public class SnowflakeMaskingService extends DataMasking {
   }
 
   @Override
-  public void executeSqlQueryForMasking() throws IOException {
+  public void executeSqlQueryForMasking() {
     if (!dryRunEnabled) {
       log.info("Executing script in order to create view in the database.");
     }

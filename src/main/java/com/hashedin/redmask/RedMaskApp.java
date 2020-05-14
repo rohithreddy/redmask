@@ -1,9 +1,10 @@
 package com.hashedin.redmask;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.hashedin.redmask.common.DataMasking;
 import com.hashedin.redmask.config.MaskConfiguration;
 import com.hashedin.redmask.factory.DataMaskFactory;
-import com.hashedin.redmask.factory.DataMasking;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
@@ -54,16 +55,10 @@ public class RedMaskApp implements Callable<Integer> {
       log.error("Terminating the Redmask Application.");
       return 0;
     }
-    try {
-      DataMasking dataMasking = DataMaskFactory.buildDataMask(config, dryRun);
-      dataMasking.generateSqlQueryForMasking();
-      dataMasking.executeSqlQueryForMasking();
-      log.info("Closing redmask application.");
-      return 0;
-    } catch (Exception ex) {
-      log.error("Error occurred while executing redmask application: ", ex);
-      log.error("Terminating the Redmask Application.");
-    }
+    DataMasking dataMasking = DataMaskFactory.buildDataMask(config, dryRun);
+    dataMasking.generateSqlQueryForMasking();
+    dataMasking.executeSqlQueryForMasking();
+    log.info("Closing redmask application.");
     return 0;
   }
 
