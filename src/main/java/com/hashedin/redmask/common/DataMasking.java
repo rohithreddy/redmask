@@ -1,5 +1,19 @@
 package com.hashedin.redmask.common;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.hashedin.redmask.config.ColumnRule;
+import com.hashedin.redmask.config.MaskConfiguration;
+import com.hashedin.redmask.config.MaskingRule;
+import com.hashedin.redmask.config.TemplateConfiguration;
+import com.hashedin.redmask.exception.RedmaskConfigException;
+import com.hashedin.redmask.exception.RedmaskRuntimeException;
+import com.hashedin.redmask.factory.DataBaseType;
+import com.hashedin.redmask.factory.MaskingRuleFactory;
+import org.apache.ibatis.jdbc.ScriptRunner;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -22,21 +36,6 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
-import org.apache.ibatis.jdbc.ScriptRunner;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.hashedin.redmask.config.ColumnRule;
-import com.hashedin.redmask.config.MaskConfiguration;
-import com.hashedin.redmask.config.MaskingRule;
-import com.hashedin.redmask.config.TemplateConfiguration;
-import com.hashedin.redmask.exception.RedmaskConfigException;
-import com.hashedin.redmask.exception.RedmaskRuntimeException;
-import com.hashedin.redmask.factory.DataBaseType;
-import com.hashedin.redmask.factory.MaskingRuleFactory;
-
 /**
  * This DataMasking class contains common methods to implement data masking.
  * 
@@ -50,9 +49,21 @@ public abstract class DataMasking {
   public static final String SELECT_QUERY = "SELECT * FROM ";
   public static final String DEFAULT_INPUT_TABLE_SCHEMA = "public";
 
-  public abstract void generateSqlQueryForMasking() throws RedmaskConfigException;
+  /**
+   * Steps:
+   * <p>1. Create a masking.sql file - This will contain all required masking queries.
+   * <p>2. Build queries to create Schema that will contain masking function and masked data.
+   * <p>3. Build queries to create masking function for given masking rule.
+   * <p>4. Build queries to create masked view using those masking function.
+   * <p>5. Revoke access to public schema from user(dev user).
+   * <p>6. Provide access to schema that contains masked view to user.
+   */
+  public abstract void generateSqlQueryForMasking();
 
-  public abstract void executeSqlQueryForMasking() throws IOException, ClassNotFoundException;
+  /**
+   * Run the SQL script present in .sql temp file.
+   */
+  public abstract void executeSqlQueryForMasking();
 
   /**
    * This method builds all the needed query to create masking functions and views.
@@ -133,29 +144,7 @@ public abstract class DataMasking {
     }
 
   }
-  
-  private MaskingRuleDef buildMaskingRuleDef(ColumnRule colRule) {
-    Map<String, String> maskParams = new ObjectMapper().convertValue(
-        colRule.getMaskParams(), new TypeReference<Map<String, String>>() {
-        });
 
-    return new MaskingRuleDef(colRule.getColumnName(),
-        colRule.getMaskType(), maskParams) {
-
-      @Override
-      public void addFunctionDefinition(
-          TemplateConfiguration config,
-          Set<String> funcSet, String dbType) {
-      }
-
-      @Override
-      public String getSubQuery(TemplateConfiguration config, String tableName) {
-        return "";
-      }
-
-    };
-  }
-  
   /**
    * Creates a map of the column name and the associated masking rule.
    *
@@ -166,7 +155,7 @@ public abstract class DataMasking {
    * @param colMaskRuleMap    Map containing the column name as key and the specific rule class as
    *                          value.
    */
-  public void createColumnMaskRuleMap(
+  protected void createColumnMaskRuleMap(
       MaskingRule rule,
       Connection connection,
       MaskingRuleFactory columnRuleFactory,
@@ -189,26 +178,6 @@ public abstract class DataMasking {
       MaskingRuleDef ruleDef = buildMaskingRuleDef(col);
       colMaskRuleMap.put(col.getColumnName(), columnRuleFactory.getColumnMaskingRule(ruleDef));
     }
-  }
-  
-  /**
-   * This function check whether a column exists in a particular table.
-   *
-   * @param connection Connection Object to the intended Database.
-   * @param tableName  The name of the table that should contain the column.
-   * @param columnName The name of the column to be checked.
-   * @return True, if the column is present in the table else false.
-   */
-  public boolean isValidColumn(Connection connection, String tableName,
-                                           String columnName) throws SQLException {
-    DatabaseMetaData metaData = connection.getMetaData();
-    ResultSet rs = metaData.getColumns(null, null, tableName, columnName);
-    if (rs.next()) {
-      rs.close();
-      return true;
-    }
-    rs.close();
-    return false;
   }
 
   /**
@@ -243,7 +212,7 @@ public abstract class DataMasking {
    *                              to create user specific function definition and sub-queries
    * @param colMaskRuleMap        Map of the column to be masked and their masking function
    */
-  public static void getColumnMaskSubQueries(MaskingRule rule, Set<String> functionDefinitionSet,
+  protected void getColumnMaskSubQueries(MaskingRule rule, Set<String> functionDefinitionSet,
       List<String> querySubstring, ResultSetMetaData rs, TemplateConfiguration templateConfig,
       Map<String, MaskingRuleDef> colMaskRuleMap, DataBaseType dbType) {
     // For each column in a given table.
@@ -266,24 +235,6 @@ public abstract class DataMasking {
     }
   }
 
-  /**
-   * This function check whether a table exists in the connected Database.
-   *
-   * @param connection Connection Object to the intended Database.
-   * @param tableName  The name of the table to be checked.
-   * @return True, if the Table is present in the database else false.
-   */
-  public static boolean isValidTable(Connection connection, String tableName) throws SQLException {
-    DatabaseMetaData metaData = connection.getMetaData();
-    ResultSet rs = metaData.getTables(null, null, tableName, null);
-    if (rs.next()) {
-      rs.close();
-      return true;
-    }
-    rs.close();
-    return false;
-  }
-
   protected void appendQueryToCreateSchema(FileWriter writer, String userSchema) {
     log.trace("Appending sql query to drop and create schema in temp file."
         + "Schema to be created are {}, {}", MASKING_FUNCTION_SCHEMA, userSchema);
@@ -298,17 +249,82 @@ public abstract class DataMasking {
     }
   }
 
-  public void grantAccessToMaskedData(FileWriter writer, String user) throws IOException {
-    log.info("Required permission have been granted to the specified user.");
-    writer.append("\n\n-- Grant access to current user on schema: "
-        + MASKING_FUNCTION_SCHEMA + ".\n");
-    writer.append("GRANT USAGE ON SCHEMA " + MASKING_FUNCTION_SCHEMA
-        + " TO " + user + ";");
-    writer.append("\n\n-- Grant access to current user on schema: " + user + ".\n");
-    writer.append("GRANT ALL PRIVILEGES ON ALL TABLES IN "
-        + "SCHEMA " + user + " TO " + user + ";");
-    writer.append("\nGRANT USAGE ON SCHEMA " + user
-        + " TO " + user + ";");
+  protected void grantAccessToMaskedData(FileWriter writer, String user) {
+    log.info("Appending sql query to provide required permission"
+        + "masked data to the user: {}.", user);
+    try {
+      writer.append("\n\n-- Grant access to current user on schema: "
+          + MASKING_FUNCTION_SCHEMA + ".\n");
+      writer.append("GRANT USAGE ON SCHEMA " + MASKING_FUNCTION_SCHEMA
+          + " TO " + user + ";");
+      writer.append("\n\n-- Grant access to current user on schema: " + user + ".\n");
+      writer.append("GRANT ALL PRIVILEGES ON ALL TABLES IN "
+          + "SCHEMA " + user + " TO " + user + ";");
+      writer.append("\nGRANT USAGE ON SCHEMA " + user
+          + " TO " + user + ";");
+    } catch (IOException ex) {
+      throw new RedmaskRuntimeException(
+          "Erorr while appending sql query to grant access to maksed data in temp file.", ex);
+    }
+  }
+
+  /**
+   * This function check whether a table exists in the connected Database.
+   *
+   * @param connection Connection Object to the intended Database.
+   * @param tableName  The name of the table to be checked.
+   * @return True, if the Table is present in the database else false.
+   */
+  private boolean isValidTable(Connection connection, String tableName) throws SQLException {
+    DatabaseMetaData metaData = connection.getMetaData();
+    ResultSet rs = metaData.getTables(null, null, tableName, null);
+    if (rs.next()) {
+      rs.close();
+      return true;
+    }
+    rs.close();
+    return false;
+  }
+
+  /**
+   * This function check whether a column exists in a particular table.
+   *
+   * @param connection Connection Object to the intended Database.
+   * @param tableName  The name of the table that should contain the column.
+   * @param columnName The name of the column to be checked.
+   * @return True, if the column is present in the table else false.
+   */
+  private boolean isValidColumn(Connection connection, String tableName,
+                                           String columnName) throws SQLException {
+    DatabaseMetaData metaData = connection.getMetaData();
+    ResultSet rs = metaData.getColumns(null, null, tableName, columnName);
+    if (rs.next()) {
+      rs.close();
+      return true;
+    }
+    rs.close();
+    return false;
+  }
+
+  private MaskingRuleDef buildMaskingRuleDef(ColumnRule colRule) {
+    Map<String, String> maskParams = new ObjectMapper().convertValue(
+        colRule.getMaskParams(), new TypeReference<Map<String, String>>() {
+        });
+
+    return new MaskingRuleDef(colRule.getColumnName(),
+        colRule.getMaskType(), maskParams) {
+
+      @Override
+      public void addFunctionDefinition(
+          TemplateConfiguration config,
+          Set<String> funcSet, String dbType) {
+      }
+
+      @Override
+      public String getSubQuery(TemplateConfiguration config, String tableName) {
+        return "";
+      }
+    };
   }
   
   protected void executeSqlScript(String url, Properties props,

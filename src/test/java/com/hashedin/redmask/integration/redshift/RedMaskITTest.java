@@ -1,11 +1,11 @@
 package com.hashedin.redmask.integration.redshift;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.hashedin.redmask.common.DataMasking;
 import com.hashedin.redmask.config.MaskConfiguration;
 import com.hashedin.redmask.exception.RedmaskConfigException;
 import com.hashedin.redmask.factory.DataBaseType;
 import com.hashedin.redmask.factory.DataMaskFactory;
-import com.hashedin.redmask.common.DataMasking;
 import org.apache.ibatis.jdbc.ScriptRunner;
 import org.junit.After;
 import org.junit.Assert;
@@ -124,8 +124,7 @@ public class RedMaskITTest {
   }
 
   @After
-  public void deleteTableAndMaskedView() throws SQLException, ClassNotFoundException {
-    Class.forName("com.amazon.redshift.jdbc.Driver");
+  public void deleteTableAndMaskedView() throws SQLException {
     try (Connection CONN = DriverManager.getConnection(
         URL,
         SUPER_USER,

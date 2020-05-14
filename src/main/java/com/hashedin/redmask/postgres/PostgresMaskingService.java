@@ -3,7 +3,6 @@ package com.hashedin.redmask.postgres;
 import com.hashedin.redmask.common.DataMasking;
 import com.hashedin.redmask.config.MaskConfiguration;
 import com.hashedin.redmask.config.MaskingRule;
-import com.hashedin.redmask.exception.RedmaskConfigException;
 import com.hashedin.redmask.exception.RedmaskRuntimeException;
 
 import org.slf4j.Logger;
@@ -41,15 +40,15 @@ public class PostgresMaskingService extends DataMasking {
 
   /**
    * Steps:
-   * <p>
-   * Create a masking.sql file. This will contain all required masking queries.
-   * Create Schema.
-   * Create masking function for given masking rule.
-   * Create View using those masking function.
-   * Provide access to user to read data from masked view.
+   * <p>1. Create a masking.sql file - This will contain all required masking queries.
+   * <p>2. Build queries to create Schema that will contain masking function and masked data.
+   * <p>3. Build queries to create masking function for given masking rule.
+   * <p>4. Build queries to create masked view using those masking function.
+   * <p>5. Revoke access to public schema from user(dev user).
+   * <p>6. Provide access to schema that contains masked view to user.
    */
   @Override
-  public void generateSqlQueryForMasking() throws RedmaskConfigException {
+  public void generateSqlQueryForMasking() {
 
     try {
       FileWriter writer = new FileWriter(tempFilePath);
@@ -82,14 +81,21 @@ public class PostgresMaskingService extends DataMasking {
         + "needed to create masked data.", tempFilePath);
   }
 
+  /**
+   * Run the SQL script present in Temp file created earlier.
+   */
   @Override
-  public void executeSqlQueryForMasking() throws IOException {
+  public void executeSqlQueryForMasking() {
     if (!dryRunEnabled) {
       log.info("Executing script in order to create view in the database.");
       Properties connectionProps = new Properties();
       connectionProps.setProperty("user", config.getSuperUser());
       connectionProps.setProperty("password", config.getSuperUserPassword());
-      executeSqlScript(url, connectionProps, tempFilePath);
+      try {
+        executeSqlScript(url, connectionProps, tempFilePath);
+      } catch (IOException ex) {
+        throw new RedmaskRuntimeException(ex);
+      }
     }
   }
 

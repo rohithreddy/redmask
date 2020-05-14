@@ -33,13 +33,21 @@ public class RedshiftMaskingService extends DataMasking {
 
   public RedshiftMaskingService(MaskConfiguration config, boolean dryRunEnabled) {
     this.config = config;
-    this.url = url + config.getHost() + ":"
-        + config.getPort() + "/" + config.getDatabase();
+    this.url = url + config.getHost() + ":" + config.getPort() + "/" + config.getDatabase();
     this.dryRunEnabled = dryRunEnabled;
     this.tempFilePath = createMaskingSqlFile();
     log.trace("Initialized Redshift masking service.");
   }
 
+  /**
+   * Steps:
+   * <p>1. Create a masking.sql file - This will contain all required masking queries.
+   * <p>2. Build queries to create Schema that will contain masking function and masked data.
+   * <p>3. Build queries to create masking function for given masking rule.
+   * <p>4. Build queries to create masked view using those masking function.
+   * <p>5. Revoke access to public schema from user(dev user).
+   * <p>6. Provide access to schema that contains masked view to user.
+   */
   @Override
   public void generateSqlQueryForMasking() {
     try {
@@ -82,13 +90,17 @@ public class RedshiftMaskingService extends DataMasking {
   }
 
   @Override
-  public void executeSqlQueryForMasking() throws IOException, ClassNotFoundException {
+  public void executeSqlQueryForMasking() {
     if (!dryRunEnabled) {
       log.trace("Invoking Redshift masking service to run data masking sql script.");
       Properties connectionProps = new Properties();
       connectionProps.setProperty("user", config.getSuperUser());
       connectionProps.setProperty("password", config.getSuperUserPassword());
-      executeSqlScript(url, connectionProps, tempFilePath);
+      try {
+        executeSqlScript(url, connectionProps, tempFilePath);
+      } catch (IOException ex) {
+        throw new RedmaskRuntimeException(ex);
+      }
     }
   }
 

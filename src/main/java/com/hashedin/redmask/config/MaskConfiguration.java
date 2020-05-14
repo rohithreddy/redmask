@@ -122,11 +122,8 @@ public class MaskConfiguration {
 
   @Override
   public String toString() {
-    return "MaskConfiguration [host=" + host
-        + ", port=" + port
-        + ", database=" + database
-        + ", user=" + user
-        + ", rules=" + rules
-        + ", templateConfig=" + templateConfig + "]";
+    return "MaskConfiguration [host=" + host + ", port=" + port + ", database=" + database
+        + ", user=" + user + ", dbType=" + dbType + ", rules=" + rules + "]";
   }
+
 }

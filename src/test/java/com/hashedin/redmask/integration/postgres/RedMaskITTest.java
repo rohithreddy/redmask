@@ -1,11 +1,12 @@
 package com.hashedin.redmask.integration.postgres;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.hashedin.redmask.common.DataMasking;
 import com.hashedin.redmask.config.MaskConfiguration;
 import com.hashedin.redmask.exception.RedmaskConfigException;
 import com.hashedin.redmask.factory.DataBaseType;
 import com.hashedin.redmask.factory.DataMaskFactory;
-import com.hashedin.redmask.factory.DataMasking;
+
 import org.apache.ibatis.jdbc.ScriptRunner;
 import org.junit.After;
 import org.junit.Assert;
