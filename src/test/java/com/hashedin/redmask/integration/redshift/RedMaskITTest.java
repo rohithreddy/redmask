@@ -5,12 +5,12 @@ import com.hashedin.redmask.config.MaskConfiguration;
 import com.hashedin.redmask.exception.RedmaskConfigException;
 import com.hashedin.redmask.factory.DataBaseType;
 import com.hashedin.redmask.factory.DataMaskFactory;
-import com.hashedin.redmask.factory.DataMasking;
+import com.hashedin.redmask.common.DataMasking;
 import org.apache.ibatis.jdbc.ScriptRunner;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,7 +36,7 @@ import static com.hashedin.redmask.integration.redshift.RedMaskITUtils.createMas
  * To run the integration test remove @Ignore annotation and
  * update Redshift credentials.
  */
-@Ignore
+
 public class RedMaskITTest {
 
   private static final Logger log = LoggerFactory.getLogger(RedMaskITTest.class);
@@ -96,9 +96,10 @@ public class RedMaskITTest {
   }
 
   @Before
-  public void createConnections() throws SQLException, IOException {
+  public void createConnections() throws SQLException, IOException, ClassNotFoundException {
     log.info("Creating connection object");
     // Create a connection object using super user.
+    Class.forName("com.amazon.redshift.jdbc.Driver");
     connection = DriverManager.getConnection(
         URL,
         SUPER_USER,
@@ -122,8 +123,9 @@ public class RedMaskITTest {
     );
   }
 
- // @After
-  public void deleteTableAndMaskedView() throws SQLException {
+  @After
+  public void deleteTableAndMaskedView() throws SQLException, ClassNotFoundException {
+    Class.forName("com.amazon.redshift.jdbc.Driver");
     try (Connection CONN = DriverManager.getConnection(
         URL,
         SUPER_USER,
@@ -155,7 +157,7 @@ public class RedMaskITTest {
       Assert.assertTrue(rs.getInt("age") > 0);
       Assert.assertEquals(3.5, rs.getFloat("interest"), 0.01);
       Assert.assertTrue(rs.getString("name").matches("^.\\**.$"));
-      Assert.assertTrue(rs.getString("email").matches("^.x*@.*\\..*"));
+      Assert.assertTrue(rs.getString("email").matches("^.\\**@.*\\..*"));
       Assert.assertTrue(rs.getString("card").matches("^[0-9]{3}x-x{4}-x{3}[0-9]-[0-9]{4}$"));
     }
     Assert.assertEquals(ORIGINAL_TABLE_1_ROW_COUNT, rowCount);
@@ -177,7 +179,7 @@ public class RedMaskITTest {
       Assert.assertTrue(rs.getInt("age") > 0);
       Assert.assertEquals(3.5, rs.getFloat("interest"), 0.01);
       Assert.assertTrue(rs.getString("name").matches("^.\\**.$"));
-      Assert.assertTrue(rs.getString("email").matches("^.x*@.*\\..*"));
+      Assert.assertTrue(rs.getString("email").matches("^.\\**@.*\\..*"));
       Assert.assertTrue(rs.getString("card").matches("^[0-9]{3}x-x{4}-x{3}[0-9]-[0-9]{4}$"));
 
     }
@@ -193,7 +195,7 @@ public class RedMaskITTest {
       Assert.assertTrue(rs.getInt("age") > 0);
       Assert.assertEquals(3.5, rs.getFloat("interest"), 0.01);
       Assert.assertTrue(rs.getString("name").matches("^.\\**.$"));
-      Assert.assertTrue(rs.getString("email").matches("^.x*@.*\\..*"));
+      Assert.assertTrue(rs.getString("email").matches("^.\\**@.*\\..*"));
       Assert.assertTrue(rs.getString("card").matches("^[0-9]{3}x-x{4}-x{3}[0-9]-[0-9]{4}$"));
 
     }
@@ -216,7 +218,7 @@ public class RedMaskITTest {
       Assert.assertTrue(rs.getInt("age") > 0);
       Assert.assertEquals(3.5, rs.getFloat("interest"), 0.01);
       Assert.assertTrue(rs.getString("name").matches("^.\\**.$"));
-      Assert.assertTrue(rs.getString("email").matches("^.x*@.*\\..*"));
+      Assert.assertTrue(rs.getString("email").matches("^.\\**@.*\\..*"));
       Assert.assertTrue(rs.getString("card").matches("^[0-9]{3}x-x{4}-x{3}[0-9]-[0-9]{4}$"));
 
     }
@@ -236,7 +238,7 @@ public class RedMaskITTest {
       }
       Assert.assertEquals(3.5, rs.getFloat("interest"), 0.01);
       Assert.assertTrue(rs.getString("name").matches("^.\\**.$"));
-      Assert.assertTrue(rs.getString("email").matches("^.x*@.*\\..*"));
+      Assert.assertTrue(rs.getString("email").matches("^.\\**@.*\\..*"));
       Assert.assertTrue(rs.getString("card").matches("^[0-9]{3}x-x{4}-x{3}[0-9]-[0-9]{4}$"));
 
     }
@@ -259,7 +261,7 @@ public class RedMaskITTest {
       Assert.assertTrue(rs.getInt("age") > 0);
       Assert.assertEquals(3.5, rs.getFloat("interest"), 0.01);
       Assert.assertTrue(rs.getString("name").matches("^.\\**.$"));
-      Assert.assertTrue(rs.getString("email").matches("^.x*@.*\\..*"));
+      Assert.assertTrue(rs.getString("email").matches("^.\\**@.*\\..*"));
       Assert.assertTrue(rs.getString("card").matches("^[0-9]{3}x-x{4}-x{3}[0-9]-[0-9]{4}$"));
 
     }
@@ -275,7 +277,7 @@ public class RedMaskITTest {
       Assert.assertTrue(rs.getInt("age") > 0);
       Assert.assertEquals(3.5, rs.getFloat("interest"), 0.01);
       Assert.assertTrue(rs.getString("name").matches("^.\\**.$"));
-      Assert.assertTrue(rs.getString("email").matches("^.x*@.*\\..*"));
+      Assert.assertTrue(rs.getString("email").matches("^.\\**@.*\\..*"));
       Assert.assertTrue(rs.getString("card").matches("^[0-9]{3}x-x{4}-x{3}[0-9]-[0-9]{4}$"));
 
     }
