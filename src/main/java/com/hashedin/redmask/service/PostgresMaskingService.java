@@ -1,4 +1,4 @@
-package com.hashedin.redmask.postgres;
+package com.hashedin.redmask.service;
 
 import com.hashedin.redmask.common.DataMasking;
 import com.hashedin.redmask.config.MaskConfiguration;

@@ -141,7 +141,7 @@ public abstract class DataMasking {
           + rule.getTable() + " FROM " + config.getUser() + ";");
     } catch (IOException e) {
       throw new RedmaskRuntimeException(
-          "Exception while appending masking function definition to file writer", e);
+          "Exception while appending to file writer", e);
     }
 
   }
