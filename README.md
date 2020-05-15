@@ -2,7 +2,7 @@
 
 It is a CLI proxyless administration tool to mask sensitive information in a data warehouse. Unlike commercial solutions, RedMask is proxyless. You only need to run RedMask when you define the rules and access control. After that, you can bring down RedMask.
 
-Currently, RedMask supports Postgres. Support for snowflake and Redshift will be added soon.
+Currently, RedMask supports Postgres, Redshift and Snowflake.
 It is an open source tool, released under Apache 2.0 license, and is free to use.
 
 This tool supports two type of data masking - static and dynamic masking:
@@ -45,6 +45,7 @@ Applications connecting to the data warehouse have to make 2 small changes:
   "port": <port_number>,
   "user": <dev_user_name>,
   "database": <database_name>,
+  "dbType": <database-type>,
   "rules": [
     {
       "table": <table_name>,
