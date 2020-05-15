@@ -118,10 +118,10 @@ public class SnowflakeMaskingService extends DataMasking {
   }
 
   @Override
-  protected void executeSqlScript(String url, Properties props,
+  protected void executeSqlScript(String dbUrl, Properties props,
                                   File scriptFilePath) throws IOException {
     Reader reader = null;
-    try (Connection CONN = DriverManager.getConnection(url, props)) {
+    try (Connection CONN = DriverManager.getConnection(dbUrl, props)) {
       //Initialize the script runner
       ScriptRunner sr = new ScriptRunner(CONN);
 
