@@ -91,6 +91,34 @@ where:
 
 After running the command, the RedMask will create appropriate schemas/views/permissions in the underlying data warehouse.
 
+##### Snowflake
+The Snowflake data warehouse supports role based access control, therefore the role name is to be provided under the user field in the configuration file as follows.
+```
+{
+  "host": "localhost",
+  "port": <port_number>,
+  "user": <dev_role>,
+  "database": <database_name>,
+  "dbType": <database-type>,
+  "rules": [
+    {
+      "table": <table_name>,
+      "columns": [
+        {
+          "name": <column_name>,
+          "mask_type": <masking_type>,
+          "mask_params": {
+            <Key>: <value>,
+            <Key>: <value>,
+            <Key>: <value>
+          }
+        }
+      ]
+    }
+  ]
+}
+```
+
 #### Todo:
 - Add document for masking various functions.
 - Troubleshooting
