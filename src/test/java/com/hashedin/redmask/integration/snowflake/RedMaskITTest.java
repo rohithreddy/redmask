@@ -11,6 +11,7 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,9 +36,9 @@ import static com.hashedin.redmask.integration.snowflake.RedMaskITUtils.createMa
 
 /**
  * To run the integration test remove @Ignore annotation and
- * update Redshift credentials.
+ * update Snowflake credentials.
  */
-
+@Ignore
 public class RedMaskITTest {
 
   private static final Logger log = LoggerFactory.getLogger(RedMaskITTest.class);
@@ -146,7 +147,7 @@ public class RedMaskITTest {
       stmt.executeUpdate("DROP TABLE " + TABLE_NAME_2 + " CASCADE");
       log.info("Dropping existing masked view and closing connection");
       stmt.executeUpdate("DROP VIEW IF EXISTS " + DEV_USER.toUpperCase() + "." + TABLE_NAME);
-      stmt.executeUpdate("DROP VIEW IF EXISTS " + DEV_USER.toUpperCase()+ "." + TABLE_NAME_2);
+      stmt.executeUpdate("DROP VIEW IF EXISTS " + DEV_USER.toUpperCase() + "." + TABLE_NAME_2);
       stmt.close();
     }
     connection.close();
@@ -263,7 +264,7 @@ public class RedMaskITTest {
     config.setRules(createMaskingRuleVersionOne());
     runRedMaskApp(config);
     Statement statement = devConnection.createStatement();
-    ResultSet rs = statement.executeQuery("SELECT * FROM " + DEV_USER.toUpperCase()+'.'+TABLE_NAME);
+    ResultSet rs = statement.executeQuery("SELECT * FROM " + DEV_USER.toUpperCase() + '.' + TABLE_NAME);
     int rowCount = 0;
     while (rs.next()) {
       rowCount++;
@@ -330,9 +331,9 @@ public class RedMaskITTest {
     try {
       runRedMaskApp(config);
     } catch (IOException e) {
-      e.printStackTrace();
+      log.error("Unable to read file:", e);
     } catch (ClassNotFoundException e) {
-      e.printStackTrace();
+      log.error("Snowflake JDBC driver not found", e);
     }
   }
 
@@ -342,7 +343,7 @@ public class RedMaskITTest {
     try {
       runRedMaskApp(config);
     } catch (ClassNotFoundException e) {
-      e.printStackTrace();
+      log.error("Snowflake JDBC driver not found", e);
     }
   }
 
@@ -352,9 +353,9 @@ public class RedMaskITTest {
     try {
       runRedMaskApp(config);
     } catch (IOException e) {
-      e.printStackTrace();
+      log.error("Unable to read file:", e);
     } catch (ClassNotFoundException e) {
-      e.printStackTrace();
+      log.error("Snowflake JDBC driver not found", e);
     }
   }
 
@@ -364,7 +365,7 @@ public class RedMaskITTest {
     try {
       runRedMaskApp(config);
     } catch (ClassNotFoundException e) {
-      e.printStackTrace();
+      log.error("Snowflake JDBC driver not found", e);
     }
   }
 

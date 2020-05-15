@@ -11,6 +11,7 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,7 +37,7 @@ import static com.hashedin.redmask.integration.redshift.RedMaskITUtils.createMas
  * To run the integration test remove @Ignore annotation and
  * update Redshift credentials.
  */
-
+@Ignore
 public class RedMaskITTest {
 
   private static final Logger log = LoggerFactory.getLogger(RedMaskITTest.class);
@@ -62,6 +63,7 @@ public class RedMaskITTest {
   private static final String DEV_USER = "<dev-user-name>";
   private static final String DEV_USER_PASSWORD = "<dev-user-password>";
   private static final String URL = "jdbc:redshift://" + HOST + ":" + PORT + "/" + DATABASE;
+  private static final String REDSHIFT_JDBC_DRIVER = "com.amazon.redshift.jdbc.Driver";
 
   private static MaskConfiguration config = null;
   private Connection devConnection;
@@ -82,24 +84,24 @@ public class RedMaskITTest {
    */
   @BeforeClass
   public static void setup() throws SQLException, IOException {
-      log.info("Setting up integration test configuration.");
-      // Define Masking config.
-      config = new MaskConfiguration(SUPER_USER,
-          SUPER_USER_PASSWORD,
-          DEV_USER,
-          DEV_USER_PASSWORD,
-          HOST,
-          PORT,
-          DATABASE,
-          DataBaseType.REDSHIFT,
-          DEV_USER);
+    log.info("Setting up integration test configuration.");
+    // Define Masking config.
+    config = new MaskConfiguration(SUPER_USER,
+        SUPER_USER_PASSWORD,
+        DEV_USER,
+        DEV_USER_PASSWORD,
+        HOST,
+        PORT,
+        DATABASE,
+        DataBaseType.REDSHIFT,
+        DEV_USER);
   }
 
   @Before
   public void createConnections() throws SQLException, IOException, ClassNotFoundException {
     log.info("Creating connection object");
     // Create a connection object using super user.
-    Class.forName("com.amazon.redshift.jdbc.Driver");
+    Class.forName(REDSHIFT_JDBC_DRIVER);
     connection = DriverManager.getConnection(
         URL,
         SUPER_USER,
@@ -209,7 +211,7 @@ public class RedMaskITTest {
     config.setRules(createMaskingRuleVersionOne());
     runRedMaskApp(config);
     Statement statement = devConnection.createStatement();
-    ResultSet rs = statement.executeQuery("SELECT * FROM " + DEV_USER+"."+TABLE_NAME);
+    ResultSet rs = statement.executeQuery("SELECT * FROM " + DEV_USER + "." + TABLE_NAME);
     int rowCount = 0;
     while (rs.next()) {
       rowCount += 1;
@@ -319,9 +321,9 @@ public class RedMaskITTest {
     try {
       runRedMaskApp(config);
     } catch (IOException e) {
-      e.printStackTrace();
+      log.error("Unable to read file:", e);
     } catch (ClassNotFoundException e) {
-      e.printStackTrace();
+      log.error("Redshift JDBC driver not found", e);
     }
   }
 
@@ -331,7 +333,7 @@ public class RedMaskITTest {
     try {
       runRedMaskApp(config);
     } catch (ClassNotFoundException e) {
-      e.printStackTrace();
+      log.error("Redshift JDBC driver not found", e);
     }
   }
 
@@ -341,9 +343,9 @@ public class RedMaskITTest {
     try {
       runRedMaskApp(config);
     } catch (IOException e) {
-      e.printStackTrace();
+      log.error("Unable to read file:", e);
     } catch (ClassNotFoundException e) {
-      e.printStackTrace();
+      log.error("Redshift JDBC driver not found", e);
     }
   }
 
@@ -353,7 +355,7 @@ public class RedMaskITTest {
     try {
       runRedMaskApp(config);
     } catch (ClassNotFoundException e) {
-      e.printStackTrace();
+      log.error("Redshift JDBC driver not found", e);
     }
   }
 

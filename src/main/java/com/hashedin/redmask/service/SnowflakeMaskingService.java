@@ -28,7 +28,6 @@ public class SnowflakeMaskingService extends DataMasking {
 
   private static final Logger log = LoggerFactory.getLogger(SnowflakeMaskingService.class);
   private static final String SNOWFLAKE_JDBC_DRIVER = "net.snowflake.client.jdbc.SnowflakeDriver";
-  private static final String SNOWFLAKE_DEFAULT_SCHEMA = "PUBLIC";
 
   private final MaskConfiguration config;
   private final boolean dryRunEnabled;
@@ -104,12 +103,12 @@ public class SnowflakeMaskingService extends DataMasking {
   @Override
   public void executeSqlQueryForMasking() {
     if (!dryRunEnabled) {
-      log.trace("Invoking Redshift masking service to run data masking sql script.");
+      log.trace("Invoking Snowflake masking service to run data masking sql script.");
       Properties connectionProps = new Properties();
       connectionProps.setProperty("user", config.getSuperUser());
       connectionProps.setProperty("password", config.getSuperUserPassword());
       connectionProps.setProperty("db", config.getDatabase());
-      connectionProps.setProperty("schema", SNOWFLAKE_DEFAULT_SCHEMA);
+      connectionProps.setProperty("schema", DEFAULT_INPUT_TABLE_SCHEMA.toUpperCase());
       try {
         executeSqlScript(url, connectionProps, tempFilePath);
       } catch (IOException ex) {
@@ -128,6 +127,7 @@ public class SnowflakeMaskingService extends DataMasking {
 
       //Creating a reader object and running the script
       reader = new BufferedReader(new FileReader(scriptFilePath));
+      // The following is set to false as snowflake expects only one SQL query at a time.
       sr.setSendFullScript(false);
       log.trace("Executing sql script located at {}", scriptFilePath);
       sr.runScript(reader);
@@ -164,7 +164,7 @@ public class SnowflakeMaskingService extends DataMasking {
           + " TO " + user + ";");
     } catch (IOException ex) {
       throw new RedmaskRuntimeException(
-          "Erorr while appending sql query to grant access to maksed data in temp file.", ex);
+          "Error while appending sql query to grant access to masked data in temp file.", ex);
     }
   }
 

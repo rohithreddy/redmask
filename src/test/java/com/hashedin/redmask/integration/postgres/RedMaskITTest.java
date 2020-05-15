@@ -313,9 +313,9 @@ public class RedMaskITTest extends BaseITPostgresTestContainer {
     try {
       runRedMaskApp(config);
     } catch (IOException e) {
-      e.printStackTrace();
+      log.error("Unable to load file", e);
     } catch (ClassNotFoundException e) {
-      e.printStackTrace();
+      log.error("JDBC driver not found", e);
     }
   }
 
@@ -325,7 +325,7 @@ public class RedMaskITTest extends BaseITPostgresTestContainer {
     try {
       runRedMaskApp(config);
     } catch (ClassNotFoundException e) {
-      e.printStackTrace();
+      log.error("JDBC driver not found", e);
     }
   }
 
@@ -335,9 +335,9 @@ public class RedMaskITTest extends BaseITPostgresTestContainer {
     try {
       runRedMaskApp(config);
     } catch (IOException e) {
-      e.printStackTrace();
+      log.error("Unable to load file", e);
     } catch (ClassNotFoundException e) {
-      e.printStackTrace();
+      log.error("JDBC driver not found", e);
     }
   }
 
@@ -347,7 +347,7 @@ public class RedMaskITTest extends BaseITPostgresTestContainer {
     try {
       runRedMaskApp(config);
     } catch (ClassNotFoundException e) {
-      e.printStackTrace();
+      log.error("JDBC driver not found", e);
     }
   }
 

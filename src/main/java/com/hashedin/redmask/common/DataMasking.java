@@ -245,7 +245,7 @@ public abstract class DataMasking {
       writer.append(MaskingQueryUtil.createSchemaQuery(userSchema));
     } catch (IOException ex) {
       throw new RedmaskRuntimeException(
-          "Erorr while appending sql query to drop and create schema in temp file.", ex);
+          " Error while appending sql query to drop and create schema in temp file.", ex);
     }
   }
 
@@ -264,7 +264,7 @@ public abstract class DataMasking {
           + " TO " + user + ";");
     } catch (IOException ex) {
       throw new RedmaskRuntimeException(
-          "Erorr while appending sql query to grant access to maksed data in temp file.", ex);
+          "Error while appending sql query to grant access to masked data in temp file.", ex);
     }
   }
 
