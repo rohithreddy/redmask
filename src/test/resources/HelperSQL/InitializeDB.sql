@@ -1,3 +1,5 @@
+DROP TABLE IF EXISTS customer;
+DROP TABLE IF EXISTS cashier;
 CREATE TABLE IF NOT EXISTS customer(
   name text,
   email text,

@@ -2,7 +2,7 @@
 RETURNS float
 LANGUAGE JAVASCRIPT
 AS $$
-  return Math.floor(Math.random() * (MAX - MIN)) + MIN;
+  return Math.floor(Math.random() * (MAX - MIN)) + MIN
 $$
 ;
 
