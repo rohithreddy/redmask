@@ -86,7 +86,7 @@ public abstract class DataMasking {
 
       // Check if given table exists.
       if (!isValidTable(CONN, rule.getTable())) {
-        throw new RedmaskConfigException(String.format("Table {} was not found.", rule.getTable()));
+        throw new RedmaskConfigException(String.format("Table %s was not found.", rule.getTable()));
       }
 
       String query = SELECT_QUERY + rule.getTable();
@@ -166,12 +166,12 @@ public abstract class DataMasking {
       try {
         if (!isValidColumn(connection, rule.getTable(), col.getColumnName())) {
           throw new RedmaskConfigException(
-              String.format("Column {} was not found in {} table.",
+              String.format("Column %s was not found in %s table.",
                   col.getColumnName(), rule.getTable()));
         }
       } catch (SQLException ex) {
         throw new RedmaskRuntimeException(
-            String.format("Error while fetching column detail for Column {} in table {}.",
+            String.format("Error while fetching column detail for Column %s in table %s.",
                 col.getColumnName(), rule.getTable()), ex);
       }
       // Build MaskingRuleDef object.
@@ -342,11 +342,11 @@ public abstract class DataMasking {
     } catch (SQLException ex) {
       throw new RedmaskRuntimeException(
           String.format("Error while executing masking sql "
-              + "query from file: {} using super username: {}",
+              + "query from file: %s using super username: %s",
               scriptFilePath, props.get("user")), ex);
     } catch (FileNotFoundException ex) {
       throw new RedmaskRuntimeException(
-          String.format("Masking sql query file {} not found", scriptFilePath.getName()), ex);
+          String.format("Masking sql query file %s not found", scriptFilePath.getName()), ex);
     } finally {
       if (reader != null) {
         reader.close();
