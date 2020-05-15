@@ -1,5 +1,19 @@
 package com.hashedin.redmask.common;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.hashedin.redmask.config.ColumnRule;
+import com.hashedin.redmask.config.MaskConfiguration;
+import com.hashedin.redmask.config.MaskingRule;
+import com.hashedin.redmask.config.TemplateConfiguration;
+import com.hashedin.redmask.exception.RedmaskConfigException;
+import com.hashedin.redmask.exception.RedmaskRuntimeException;
+import com.hashedin.redmask.factory.DataBaseType;
+import com.hashedin.redmask.factory.MaskingRuleFactory;
+import org.apache.ibatis.jdbc.ScriptRunner;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -21,21 +35,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
-
-import org.apache.ibatis.jdbc.ScriptRunner;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.hashedin.redmask.config.ColumnRule;
-import com.hashedin.redmask.config.MaskConfiguration;
-import com.hashedin.redmask.config.MaskingRule;
-import com.hashedin.redmask.config.TemplateConfiguration;
-import com.hashedin.redmask.exception.RedmaskConfigException;
-import com.hashedin.redmask.exception.RedmaskRuntimeException;
-import com.hashedin.redmask.factory.DataBaseType;
-import com.hashedin.redmask.factory.MaskingRuleFactory;
 
 /**
  * This DataMasking class contains common methods to implement data masking.
@@ -87,7 +86,7 @@ public abstract class DataMasking {
 
       // Check if given table exists.
       if (!isValidTable(CONN, rule.getTable())) {
-        throw new RedmaskConfigException(String.format("Table {} was not found.", rule.getTable()));
+        throw new RedmaskConfigException(String.format("Table %s was not found.", rule.getTable()));
       }
 
       String query = SELECT_QUERY + rule.getTable();
@@ -167,12 +166,12 @@ public abstract class DataMasking {
       try {
         if (!isValidColumn(connection, rule.getTable(), col.getColumnName())) {
           throw new RedmaskConfigException(
-              String.format("Column {} was not found in {} table.",
+              String.format("Column %s was not found in %s table.",
                   col.getColumnName(), rule.getTable()));
         }
       } catch (SQLException ex) {
         throw new RedmaskRuntimeException(
-            String.format("Error while fetching column detail for Column {} in table {}.",
+            String.format("Error while fetching column detail for Column %s in table %s.",
                 col.getColumnName(), rule.getTable()), ex);
       }
       // Build MaskingRuleDef object.
@@ -246,7 +245,7 @@ public abstract class DataMasking {
       writer.append(MaskingQueryUtil.createSchemaQuery(userSchema));
     } catch (IOException ex) {
       throw new RedmaskRuntimeException(
-          "Erorr while appending sql query to drop and create schema in temp file.", ex);
+          " Error while appending sql query to drop and create schema in temp file.", ex);
     }
   }
 
@@ -265,7 +264,7 @@ public abstract class DataMasking {
           + " TO " + user + ";");
     } catch (IOException ex) {
       throw new RedmaskRuntimeException(
-          "Erorr while appending sql query to grant access to maksed data in temp file.", ex);
+          "Error while appending sql query to grant access to masked data in temp file.", ex);
     }
   }
 
@@ -343,11 +342,11 @@ public abstract class DataMasking {
     } catch (SQLException ex) {
       throw new RedmaskRuntimeException(
           String.format("Error while executing masking sql "
-              + "query from file: {} using super username: {}",
+              + "query from file: %s using super username: %s",
               scriptFilePath, props.get("user")), ex);
     } catch (FileNotFoundException ex) {
       throw new RedmaskRuntimeException(
-          String.format("Masking sql query file {} not found", scriptFilePath.getName()), ex);
+          String.format("Masking sql query file %s not found", scriptFilePath.getName()), ex);
     } finally {
       if (reader != null) {
         reader.close();

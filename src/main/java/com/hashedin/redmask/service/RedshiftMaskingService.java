@@ -83,7 +83,7 @@ public class RedshiftMaskingService extends DataMasking {
       writer.flush();
     } catch (IOException ex) {
       throw new RedmaskRuntimeException(
-          String.format("Error while writing to file {}", tempFilePath.getName()), ex);
+          String.format("Error while writing to file %s", tempFilePath.getName()), ex);
     }
     log.info("Sql script file exists at: {}. It contains all the sql queries"
         + "needed to create masked data.", tempFilePath);

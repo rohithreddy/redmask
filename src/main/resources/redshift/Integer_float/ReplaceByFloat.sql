@@ -1,4 +1,4 @@
-(ColName float, ReplacementNumber float default 0.0)
+(ColName float, ReplacementNumber float)
 RETURNS float  stable AS $$
 return ReplacementNumber;
 $$ LANGUAGE plpythonu;
