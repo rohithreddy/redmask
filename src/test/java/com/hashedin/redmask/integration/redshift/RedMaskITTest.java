@@ -11,7 +11,6 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,18 +25,18 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
-import static com.hashedin.redmask.integration.redshift.RedMaskITUtils.createMaskingRuleVersionFive;
-import static com.hashedin.redmask.integration.redshift.RedMaskITUtils.createMaskingRuleVersionFour;
-import static com.hashedin.redmask.integration.redshift.RedMaskITUtils.createMaskingRuleVersionOne;
-import static com.hashedin.redmask.integration.redshift.RedMaskITUtils.createMaskingRuleVersionSix;
-import static com.hashedin.redmask.integration.redshift.RedMaskITUtils.createMaskingRuleVersionThree;
-import static com.hashedin.redmask.integration.redshift.RedMaskITUtils.createMaskingRuleVersionTwo;
+import static com.hashedin.redmask.integration.redshift.RedshiftITUtils.createMaskingRuleVersionOne;
+import static com.hashedin.redmask.integration.redshift.RedshiftITUtils.createMaskingRuleVersionTwo;
+import static com.hashedin.redmask.integration.redshift.RedshiftITUtils.createMaskingRuleVersionThree;
+import static com.hashedin.redmask.integration.redshift.RedshiftITUtils.createMaskingRuleVersionFour;
+import static com.hashedin.redmask.integration.redshift.RedshiftITUtils.createMaskingRuleVersionFive;
+import static com.hashedin.redmask.integration.redshift.RedshiftITUtils.createMaskingRuleVersionSix;
 
 /**
  * To run the integration test remove @Ignore annotation and
  * update Redshift credentials.
  */
-@Ignore
+//@Ignore
 public class RedMaskITTest {
 
   private static final Logger log = LoggerFactory.getLogger(RedMaskITTest.class);
@@ -318,54 +317,34 @@ public class RedMaskITTest {
   @Test(expected = RedmaskConfigException.class)
   public void testInvalidTableName() {
     config.setRules(createMaskingRuleVersionTwo());
-    try {
-      runRedMaskApp(config);
-    } catch (IOException e) {
-      log.error("Unable to read file:", e);
-    } catch (ClassNotFoundException e) {
-      log.error("Redshift JDBC driver not found", e);
-    }
+    runRedMaskApp(config);
   }
 
   @Test(expected = RedmaskConfigException.class)
   public void testInvalidColumnName() throws IOException {
     config.setRules(createMaskingRuleVersionThree());
-    try {
-      runRedMaskApp(config);
-    } catch (ClassNotFoundException e) {
-      log.error("Redshift JDBC driver not found", e);
-    }
+    runRedMaskApp(config);
   }
 
   @Test(expected = RedmaskConfigException.class)
   public void testInvalidParameterValue() throws JsonProcessingException {
     config.setRules(createMaskingRuleVersionFour());
-    try {
-      runRedMaskApp(config);
-    } catch (IOException e) {
-      log.error("Unable to read file:", e);
-    } catch (ClassNotFoundException e) {
-      log.error("Redshift JDBC driver not found", e);
-    }
+    runRedMaskApp(config);
   }
 
   @Test(expected = RedmaskConfigException.class)
   public void testUnknownParameterSpecified() throws IOException {
     config.setRules(createMaskingRuleVersionFive());
-    try {
-      runRedMaskApp(config);
-    } catch (ClassNotFoundException e) {
-      log.error("Redshift JDBC driver not found", e);
-    }
+    runRedMaskApp(config);
   }
 
-  private void runRedMaskApp(MaskConfiguration config) throws IOException, ClassNotFoundException {
+  private void runRedMaskApp(MaskConfiguration config) {
     DataMasking dataMasking = DataMaskFactory.buildDataMask(config, false);
     dataMasking.generateSqlQueryForMasking();
     dataMasking.executeSqlQueryForMasking();
   }
 
-  private void addMoreDataToTable() throws SQLException, IOException {
+  private void addMoreDataToTable() throws IOException {
     // Add additional test data in table.
     ScriptRunner sr = new ScriptRunner(connection);
     Reader reader = new BufferedReader(
@@ -376,7 +355,7 @@ public class RedMaskITTest {
     reader.close();
   }
 
-  private void deleteDataFromTable() throws SQLException, IOException {
+  private void deleteDataFromTable() throws IOException {
     // Delete test data from table.
     ScriptRunner sr = new ScriptRunner(connection);
     Reader reader = new BufferedReader(
@@ -388,7 +367,7 @@ public class RedMaskITTest {
 
   }
 
-  private void updateDataInTable() throws SQLException, IOException {
+  private void updateDataInTable() throws IOException {
     // Update data in table.
     ScriptRunner sr = new ScriptRunner(connection);
     Reader reader = new BufferedReader(

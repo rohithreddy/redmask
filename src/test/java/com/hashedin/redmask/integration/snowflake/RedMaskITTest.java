@@ -11,7 +11,6 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,18 +26,18 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Properties;
 
-import static com.hashedin.redmask.integration.snowflake.RedMaskITUtils.createMaskingRuleVersionFive;
-import static com.hashedin.redmask.integration.snowflake.RedMaskITUtils.createMaskingRuleVersionFour;
-import static com.hashedin.redmask.integration.snowflake.RedMaskITUtils.createMaskingRuleVersionOne;
-import static com.hashedin.redmask.integration.snowflake.RedMaskITUtils.createMaskingRuleVersionSix;
-import static com.hashedin.redmask.integration.snowflake.RedMaskITUtils.createMaskingRuleVersionThree;
-import static com.hashedin.redmask.integration.snowflake.RedMaskITUtils.createMaskingRuleVersionTwo;
+import static com.hashedin.redmask.integration.snowflake.SnowflakeITUtils.createMaskingRuleVersionFive;
+import static com.hashedin.redmask.integration.snowflake.SnowflakeITUtils.createMaskingRuleVersionFour;
+import static com.hashedin.redmask.integration.snowflake.SnowflakeITUtils.createMaskingRuleVersionOne;
+import static com.hashedin.redmask.integration.snowflake.SnowflakeITUtils.createMaskingRuleVersionSix;
+import static com.hashedin.redmask.integration.snowflake.SnowflakeITUtils.createMaskingRuleVersionThree;
+import static com.hashedin.redmask.integration.snowflake.SnowflakeITUtils.createMaskingRuleVersionTwo;
 
 /**
  * To run the integration test remove @Ignore annotation and
  * update Snowflake credentials.
  */
-@Ignore
+//@Ignore
 public class RedMaskITTest {
 
   private static final Logger log = LoggerFactory.getLogger(RedMaskITTest.class);
@@ -64,8 +63,8 @@ public class RedMaskITTest {
   private static final String DEV_USER = "<dev-user-name>";
   private static final String DEV_USER_PASSWORD = "<dev-user-password>";
   private static final String SUPER_USER_SCHEMA = "PUBLIC";
-  private static final String DEV_USER_SCHEMA = DEV_USER.toUpperCase();
-  private static final String DEV_USER_ROLE = DEV_USER.toUpperCase();
+  private static final String DEV_USER_SCHEMA = "<dev-user-schema>";
+  private static final String DEV_USER_ROLE = "<dev-user-role>";
   private static final String URL = "jdbc:snowflake://" + HOST;
   private static final String SNOWFLAKE_JDBC_DRIVER = "net.snowflake.client.jdbc.SnowflakeDriver";
 
@@ -328,54 +327,34 @@ public class RedMaskITTest {
   @Test(expected = RedmaskConfigException.class)
   public void testInvalidTableName() {
     config.setRules(createMaskingRuleVersionTwo());
-    try {
-      runRedMaskApp(config);
-    } catch (IOException e) {
-      log.error("Unable to read file:", e);
-    } catch (ClassNotFoundException e) {
-      log.error("Snowflake JDBC driver not found", e);
-    }
+    runRedMaskApp(config);
   }
 
   @Test(expected = RedmaskConfigException.class)
   public void testInvalidColumnName() throws IOException {
     config.setRules(createMaskingRuleVersionThree());
-    try {
-      runRedMaskApp(config);
-    } catch (ClassNotFoundException e) {
-      log.error("Snowflake JDBC driver not found", e);
-    }
+    runRedMaskApp(config);
   }
 
   @Test(expected = RedmaskConfigException.class)
   public void testInvalidParameterValue() throws JsonProcessingException {
     config.setRules(createMaskingRuleVersionFour());
-    try {
-      runRedMaskApp(config);
-    } catch (IOException e) {
-      log.error("Unable to read file:", e);
-    } catch (ClassNotFoundException e) {
-      log.error("Snowflake JDBC driver not found", e);
-    }
+    runRedMaskApp(config);
   }
 
   @Test(expected = RedmaskConfigException.class)
   public void testUnknownParameterSpecified() throws IOException {
     config.setRules(createMaskingRuleVersionFive());
-    try {
-      runRedMaskApp(config);
-    } catch (ClassNotFoundException e) {
-      log.error("Snowflake JDBC driver not found", e);
-    }
+    runRedMaskApp(config);
   }
 
-  private void runRedMaskApp(MaskConfiguration config) throws IOException, ClassNotFoundException {
+  private void runRedMaskApp(MaskConfiguration config) {
     DataMasking dataMasking = DataMaskFactory.buildDataMask(config, false);
     dataMasking.generateSqlQueryForMasking();
     dataMasking.executeSqlQueryForMasking();
   }
 
-  private void addMoreDataToTable() throws SQLException, IOException {
+  private void addMoreDataToTable() throws IOException {
     // Add additional test data in table.
     ScriptRunner sr = new ScriptRunner(connection);
     Reader reader = new BufferedReader(
@@ -386,7 +365,7 @@ public class RedMaskITTest {
     reader.close();
   }
 
-  private void deleteDataFromTable() throws SQLException, IOException {
+  private void deleteDataFromTable() throws IOException {
     // Delete test data from table.
     ScriptRunner sr = new ScriptRunner(connection);
     Reader reader = new BufferedReader(
@@ -398,7 +377,7 @@ public class RedMaskITTest {
 
   }
 
-  private void updateDataInTable() throws SQLException, IOException {
+  private void updateDataInTable() throws IOException {
     // Update data in table.
     ScriptRunner sr = new ScriptRunner(connection);
     Reader reader = new BufferedReader(
