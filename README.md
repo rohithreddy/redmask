@@ -119,6 +119,197 @@ The Snowflake data warehouse supports role based access control, therefore the r
 }
 ```
 
+### Masking Functions
+All masking functions are required to have the following json configuration
+```
+{
+  "name": <column_name>,
+  "mask_type": <masking_type>,
+  "mask_params": {
+    <Key>: <value>,
+    <Key>: <value>,
+    <Key>: <value>
+  }
+}
+```
+
+**Mandatory Arguments**
+- **name:** The column name to be masked with the mentioned masking type
+- **mask_type:** The mask to be used to mask the data
+- **mask_params:** JSON for additional parameter. Leave Empty to use default parameters
+
+#### Common Masking Types
+The following types are supported on all supported data warehouses.
+
+##### 1. STRING_MASKING
+
+It masks the string column with a user-defined pattern. Additionally you can mention the number of letter to be left unmasked from the start and the end of  the string.
+
+**Supported datatypes:** text,varchar, character varying    
+**Result datatype:** text  
+
+**Additional Paramters**  
+- **pattern:** The pattern by which you would want to mask the text column. Default value is \*
+- **show_first:** The number of characters you don’t want to mask from the beginning. The default value is *0*.
+- **show_last:** The number of characters you don’t want to mask from the end. The default value is *0*.  
+
+     
+
+##### 2. RANDOM_INTEGER_WITHIN_RANGE
+
+It masks a integer column by replacing the original value with a random generated value between the specified min and max values. 
+
+**Supported datatypes:** int,integer, short    
+**Result datatype:** int  
+
+**Additional Paramters**  
+- **min:** The minimum allowed value for the random integer. Default value is *0*.
+- **max:** The maximum allowed value for the random integer. Default value is *10*.
+
+---
+
+##### 3. RANDOM_INTEGER_FIXED_WIDTH  
+
+It masks a integer column by replacing the original value with a random generated value having digits equal to the specified size. 
+
+**Supported datatypes:** int,integer, bigint,short    
+**Result datatype:** Bigint
+
+**Additional Paramters**  
+- **size:** An integer type value representing the number of digits there should be in the randomly generated number. The default value is *2*.
+  
+##### 4. INTEGER_FIXED_VALUE
+
+It masks an integer type column by the fixed number passed as the value parameter.
+
+**Supported datatypes:** int,integer, short   
+**Result datatype:** integer  
+
+**Additional Paramters**  
+- **value:** The integer type value the column is to be replaced by. The default value is *0*.  
+
+
+
+##### 5. FLOAT_FIXED_VALUE
+
+It masks a float type column by the fixed number passed as the value parameter.
+
+**Supported datatypes:** float
+**Result datatype:** float  
+
+**Additional Paramters**  
+- **value:** The integer type value the column is to be replaced by. The default value is *0.00*.   
+
+
+##### 6. EMAIL_SHOW_DOMAIN
+
+It masks the username part of the Email ID, while displaying the domain part.
+
+**Supported datatypes:** text,varchar, character varying    
+**Result datatype:** text  
+
+
+##### 7. EMAIL_MASK_ALPHANUMERIC
+
+It masks the all alphanumeric characters in the Email ID.
+
+**Supported datatypes:** text,varchar, character varying    
+**Result datatype:** text  
+
+
+##### 8. EMAIL_SHOW_FIRST_CHARACTER_DOMAIN
+
+It masks the username part of the Email ID, while displaying the first character and the domain.
+
+**Supported datatypes:** text,varchar, character varying    
+**Result datatype:** text  
+
+
+##### 9. EMAIL_SHOW_FIRST_CHARACTERS
+
+It masks entire email except the starting N characters specified in the show_first argument. 
+
+**Supported datatypes:** text,varchar, character varying    
+**Result datatype:** text  
+
+**Additional Paramters**  
+- **show_first:** The number of characters you want to display. default value is *0*.
+
+
+
+##### 10. CREDIT_CARD_SHOW_FIRST
+
+It mask column containing credit/debit card data, while showing the first few characters as passed in the show_first argument.
+
+**Supported datatypes:** text,varchar, character varying    
+**Result datatype:** text  
+
+**Additional Paramters**  
+- **separator:** String/character used to separate the card number into group of digits.
+- **show_first:** The number of digits to be left unmasked from the start.
+
+
+##### 11. CREDIT_CARD_SHOW_LAST
+
+It mask column containing credit/debit card data, while showing the last few characters as passed in the show_last argument.
+
+**Supported datatypes:** text,varchar, character varying    
+**Result datatype:** text  
+
+**Additional Paramters**  
+- **separator:** String/character used to separate the card number into group of digits.
+- **show_last:** The number of digits to be left unmasked from the last.
+
+
+##### 12. CREDIT_CARD_SHOW_FIRST_LAST
+
+It mask column containing credit/debit card data, while showing the first and last few characters as passed in the show_first and show_last argument.
+
+**Supported datatypes:** text,varchar, character varying    
+**Result datatype:** text  
+
+**Additional Paramters**  
+- **separator:** String/character used to separate the card number into group of digits.
+- **show_first:** The number of digits to be left unmasked from the start.
+- **show_last:** The number of digits to be left unmasked from the last.
+
+#### Postgres Masking Types
+The following types are supported only on the Postgres
+
+##### 1. INTEGER_RANGE
+
+It mask the integer column and convert into a int4range type with a range equal to the step parameter. 
+
+**Supported datatypes:** int, integer   
+**Result datatype:** int4range  
+
+**Additional Paramters**  
+- **step:** The integer type value denoting the range width. the default value is *10*.
+
+
+##### 2. BIGINT_RANGE
+
+It mask the integer column and convert into a int8range type with a range equal to the step parameter. 
+
+**Supported datatypes:** int, integer   
+**Result datatype:** int8range  
+
+**Additional Paramters**  
+- **step:** The integer type value denoting the range width. the default value is *10*.
+
+
+##### 3. NUMERIC_RANGE
+
+It mask the integer column and convert into a numrange type with a range equal to the step parameter. 
+
+**Supported datatypes:** int, integer   
+**Result datatype:** numrange  
+
+**Additional Paramters**  
+- **step:** The integer type value denoting the range width. the default value is *10*.
+
+
+
 #### Todo:
 - Add document for masking various functions.
 - Troubleshooting
