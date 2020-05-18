@@ -165,8 +165,6 @@ It masks a integer column by replacing the original value with a random generate
 - **min:** The minimum allowed value for the random integer. Default value is *0*.
 - **max:** The maximum allowed value for the random integer. Default value is *10*.
 
----
-
 ##### 3. RANDOM_INTEGER_FIXED_WIDTH  
 
 It masks a integer column by replacing the original value with a random generated value having digits equal to the specified size. 
