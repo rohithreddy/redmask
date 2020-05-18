@@ -153,7 +153,6 @@ It masks the string column with a user-defined pattern. Additionally you can men
 - **show_first:** The number of characters you don’t want to mask from the beginning. The default value is *0*.
 - **show_last:** The number of characters you don’t want to mask from the end. The default value is *0*.  
 
-     
 
 ##### 2. RANDOM_INTEGER_WITHIN_RANGE
 
@@ -272,6 +271,8 @@ It mask column containing credit/debit card data, while showing the first and la
 - **separator:** String/character used to separate the card number into group of digits.
 - **show_first:** The number of digits to be left unmasked from the start.
 - **show_last:** The number of digits to be left unmasked from the last.
+
+--- 
 
 #### Postgres Masking Types
 The following types are supported only on the Postgres
