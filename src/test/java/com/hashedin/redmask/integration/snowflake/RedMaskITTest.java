@@ -1,4 +1,4 @@
-package com.hashedin.redmask.integration.redshift;
+package com.hashedin.redmask.integration.snowflake;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.hashedin.redmask.common.DataMasking;
@@ -25,17 +25,18 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Properties;
 
-import static com.hashedin.redmask.integration.redshift.RedshiftITUtils.createMaskingRuleVersionOne;
-import static com.hashedin.redmask.integration.redshift.RedshiftITUtils.createMaskingRuleVersionTwo;
-import static com.hashedin.redmask.integration.redshift.RedshiftITUtils.createMaskingRuleVersionThree;
-import static com.hashedin.redmask.integration.redshift.RedshiftITUtils.createMaskingRuleVersionFour;
-import static com.hashedin.redmask.integration.redshift.RedshiftITUtils.createMaskingRuleVersionFive;
-import static com.hashedin.redmask.integration.redshift.RedshiftITUtils.createMaskingRuleVersionSix;
+import static com.hashedin.redmask.integration.snowflake.SnowflakeITUtils.createMaskingRuleVersionFive;
+import static com.hashedin.redmask.integration.snowflake.SnowflakeITUtils.createMaskingRuleVersionFour;
+import static com.hashedin.redmask.integration.snowflake.SnowflakeITUtils.createMaskingRuleVersionOne;
+import static com.hashedin.redmask.integration.snowflake.SnowflakeITUtils.createMaskingRuleVersionSix;
+import static com.hashedin.redmask.integration.snowflake.SnowflakeITUtils.createMaskingRuleVersionThree;
+import static com.hashedin.redmask.integration.snowflake.SnowflakeITUtils.createMaskingRuleVersionTwo;
 
 /**
  * To run the integration test remove @Ignore annotation and
- * update Redshift credentials.
+ * update Snowflake credentials.
  */
 @Ignore
 public class RedMaskITTest {
@@ -43,8 +44,8 @@ public class RedMaskITTest {
   private static final Logger log = LoggerFactory.getLogger(RedMaskITTest.class);
   private static final int ORIGINAL_TABLE_1_ROW_COUNT = 6;
   private static final int ORIGINAL_TABLE_2_ROW_COUNT = 3;
-  private static final String TABLE_NAME = "customer";
-  private static final String TABLE_NAME_2 = "cashier";
+  private static final String TABLE_NAME = "CUSTOMER";
+  private static final String TABLE_NAME_2 = "CASHIER";
 
   private static final String TEST_DATA_FILE = "src/test/resources/HelperSQL/InitializeDB.sql";
   // File to add more data in the tables.
@@ -55,15 +56,18 @@ public class RedMaskITTest {
   /**
    * TODO To run the integration test you will have to update below credentials.
    */
-  private static final String HOST = "<redshift-host-url>";
-  private static final String PORT = "5439";
+  private static final String HOST = "<snowflake-host-url>";
+  private static final String PORT = "<snowflake_port>";
   private static final String DATABASE = "<database-name>";
   private static final String SUPER_USER = "<super-user-name>";
   private static final String SUPER_USER_PASSWORD = "<super-user-password>";
   private static final String DEV_USER = "<dev-user-name>";
   private static final String DEV_USER_PASSWORD = "<dev-user-password>";
-  private static final String URL = "jdbc:redshift://" + HOST + ":" + PORT + "/" + DATABASE;
-  private static final String REDSHIFT_JDBC_DRIVER = "com.amazon.redshift.jdbc.Driver";
+  private static final String SUPER_USER_SCHEMA = "PUBLIC";
+  private static final String DEV_USER_SCHEMA = "<dev-user-schema>";
+  private static final String DEV_USER_ROLE = "<dev-user-role>";
+  private static final String URL = "jdbc:snowflake://" + HOST;
+  private static final String SNOWFLAKE_JDBC_DRIVER = "net.snowflake.client.jdbc.SnowflakeDriver";
 
   private static MaskConfiguration config = null;
   private Connection devConnection;
@@ -93,7 +97,7 @@ public class RedMaskITTest {
         HOST,
         PORT,
         DATABASE,
-        DataBaseType.REDSHIFT,
+        DataBaseType.SNOWFLAKE,
         DEV_USER);
   }
 
@@ -101,43 +105,49 @@ public class RedMaskITTest {
   public void createConnections() throws SQLException, IOException, ClassNotFoundException {
     log.info("Creating connection object");
     // Create a connection object using super user.
-    Class.forName(REDSHIFT_JDBC_DRIVER);
-    connection = DriverManager.getConnection(
-        URL,
-        SUPER_USER,
-        SUPER_USER_PASSWORD
-    );
+    Class.forName(SNOWFLAKE_JDBC_DRIVER);
+    Properties superUserConnProps = new Properties();
+    superUserConnProps.setProperty("user", SUPER_USER);
+    superUserConnProps.setProperty("password", SUPER_USER_PASSWORD);
+    superUserConnProps.setProperty("db", DATABASE);
+    superUserConnProps.setProperty("schema", SUPER_USER_SCHEMA);
+    connection = DriverManager.getConnection(URL, superUserConnProps);
 
     // Populate test data in table.
     ScriptRunner sr = new ScriptRunner(connection);
     Reader reader = new BufferedReader(
         new FileReader(TEST_DATA_FILE));
-    sr.setSendFullScript(true);
+    sr.setSendFullScript(false);
     sr.runScript(reader);
     log.info("Inserted test data into database.");
     reader.close();
 
+    Properties devUserConnProps = new Properties();
+    devUserConnProps.setProperty("user", DEV_USER);
+    devUserConnProps.setProperty("password", DEV_USER_PASSWORD);
+    devUserConnProps.setProperty("db", DATABASE);
+    devUserConnProps.setProperty("schema", DEV_USER_SCHEMA);
+    devUserConnProps.setProperty("role", DEV_USER_ROLE);
+    devUserConnProps.setProperty("warehouse", "COMPUTE_WH");
     // Create a connection object using developer user.
-    devConnection = DriverManager.getConnection(
-        URL,
-        DEV_USER,
-        DEV_USER_PASSWORD
-    );
+    devConnection = DriverManager.getConnection(URL, devUserConnProps);
   }
 
   @After
   public void deleteTableAndMaskedView() throws SQLException {
-    try (Connection CONN = DriverManager.getConnection(
-        URL,
-        SUPER_USER,
-        SUPER_USER_PASSWORD
-    )) {
+    Properties superUserConnProps = new Properties();
+    superUserConnProps.setProperty("user", SUPER_USER);
+    superUserConnProps.setProperty("password", SUPER_USER_PASSWORD);
+    superUserConnProps.setProperty("db", DATABASE);
+    superUserConnProps.setProperty("schema", SUPER_USER_SCHEMA);
+    try (Connection CONN = DriverManager.getConnection(URL, superUserConnProps)) {
       log.info("Dropping tables: {} {}", TABLE_NAME, TABLE_NAME_2);
       Statement stmt = CONN.createStatement();
-      stmt.executeUpdate("DROP TABLE " + TABLE_NAME + "," + TABLE_NAME_2 + " CASCADE");
+      stmt.executeUpdate("DROP TABLE " + TABLE_NAME + " CASCADE");
+      stmt.executeUpdate("DROP TABLE " + TABLE_NAME_2 + " CASCADE");
       log.info("Dropping existing masked view and closing connection");
-      stmt.executeUpdate("DROP VIEW IF EXISTS " + DEV_USER + "." + TABLE_NAME
-          + "," + DEV_USER + "." + TABLE_NAME_2);
+      stmt.executeUpdate("DROP VIEW IF EXISTS " + DEV_USER.toUpperCase() + "." + TABLE_NAME);
+      stmt.executeUpdate("DROP VIEW IF EXISTS " + DEV_USER.toUpperCase() + "." + TABLE_NAME_2);
       stmt.close();
     }
     connection.close();
@@ -154,12 +164,12 @@ public class RedMaskITTest {
     int rowCount = 0;
     while (rs.next()) {
       rowCount++;
-      Assert.assertTrue(rs.getInt("age") <= 10);
-      Assert.assertTrue(rs.getInt("age") > 0);
-      Assert.assertEquals(3.5, rs.getFloat("interest"), 0.01);
-      Assert.assertTrue(rs.getString("name").matches("^.\\**.$"));
-      Assert.assertTrue(rs.getString("email").matches("^.\\**@.*\\..*"));
-      Assert.assertTrue(rs.getString("card").matches("^[0-9]{3}x-x{4}-x{3}[0-9]-[0-9]{4}$"));
+      Assert.assertTrue(rs.getInt("AGE") <= 10);
+      Assert.assertTrue(rs.getInt("AGE") > 0);
+      Assert.assertEquals(3.5, rs.getFloat("INTEREST"), 0.01);
+      Assert.assertTrue(rs.getString("NAME").matches("^.\\**.$"));
+      Assert.assertTrue(rs.getString("EMAIL").matches("^.\\**@.*\\..*"));
+      Assert.assertTrue(rs.getString("CARD").matches("^[0-9]{3}x-x{4}-x{3}[0-9]-[0-9]{4}$"));
     }
     Assert.assertEquals(ORIGINAL_TABLE_1_ROW_COUNT, rowCount);
     rs.close();
@@ -176,12 +186,12 @@ public class RedMaskITTest {
     int rowCount = 0;
     while (rs.next()) {
       rowCount += 1;
-      Assert.assertTrue(rs.getInt("age") <= 10);
-      Assert.assertTrue(rs.getInt("age") > 0);
-      Assert.assertEquals(3.5, rs.getFloat("interest"), 0.01);
-      Assert.assertTrue(rs.getString("name").matches("^.\\**.$"));
-      Assert.assertTrue(rs.getString("email").matches("^.\\**@.*\\..*"));
-      Assert.assertTrue(rs.getString("card").matches("^[0-9]{3}x-x{4}-x{3}[0-9]-[0-9]{4}$"));
+      Assert.assertTrue(rs.getInt("AGE") <= 10);
+      Assert.assertTrue(rs.getInt("AGE") > 0);
+      Assert.assertEquals(3.5, rs.getFloat("INTEREST"), 0.01);
+      Assert.assertTrue(rs.getString("NAME").matches("^.\\**.$"));
+      Assert.assertTrue(rs.getString("EMAIL").matches("^.\\**@.*\\..*"));
+      Assert.assertTrue(rs.getString("CARD").matches("^[0-9]{3}x-x{4}-x{3}[0-9]-[0-9]{4}$"));
 
     }
     Assert.assertEquals(6, rowCount);
@@ -192,12 +202,12 @@ public class RedMaskITTest {
     rowCount = 0;
     while (rs.next()) {
       rowCount += 1;
-      Assert.assertTrue(rs.getInt("age") <= 10);
-      Assert.assertTrue(rs.getInt("age") > 0);
-      Assert.assertEquals(3.5, rs.getFloat("interest"), 0.01);
-      Assert.assertTrue(rs.getString("name").matches("^.\\**.$"));
-      Assert.assertTrue(rs.getString("email").matches("^.\\**@.*\\..*"));
-      Assert.assertTrue(rs.getString("card").matches("^[0-9]{3}x-x{4}-x{3}[0-9]-[0-9]{4}$"));
+      Assert.assertTrue(rs.getInt("AGE") <= 10);
+      Assert.assertTrue(rs.getInt("AGE") > 0);
+      Assert.assertEquals(3.5, rs.getFloat("INTEREST"), 0.01);
+      Assert.assertTrue(rs.getString("NAME").matches("^.\\**.$"));
+      Assert.assertTrue(rs.getString("EMAIL").matches("^.\\**@.*\\..*"));
+      Assert.assertTrue(rs.getString("CARD").matches("^[0-9]{3}x-x{4}-x{3}[0-9]-[0-9]{4}$"));
 
     }
     Assert.assertEquals(ORIGINAL_TABLE_1_ROW_COUNT - deletedRows, rowCount);
@@ -215,12 +225,12 @@ public class RedMaskITTest {
     int rowCount = 0;
     while (rs.next()) {
       rowCount += 1;
-      Assert.assertTrue(rs.getInt("age") <= 10);
-      Assert.assertTrue(rs.getInt("age") > 0);
-      Assert.assertEquals(3.5, rs.getFloat("interest"), 0.01);
-      Assert.assertTrue(rs.getString("name").matches("^.\\**.$"));
-      Assert.assertTrue(rs.getString("email").matches("^.\\**@.*\\..*"));
-      Assert.assertTrue(rs.getString("card").matches("^[0-9]{3}x-x{4}-x{3}[0-9]-[0-9]{4}$"));
+      Assert.assertTrue(rs.getInt("AGE") <= 10);
+      Assert.assertTrue(rs.getInt("AGE") > 0);
+      Assert.assertEquals(3.5, rs.getFloat("INTEREST"), 0.01);
+      Assert.assertTrue(rs.getString("NAME").matches("^.\\**.$"));
+      Assert.assertTrue(rs.getString("EMAIL").matches("^.\\**@.*\\..*"));
+      Assert.assertTrue(rs.getString("CARD").matches("^[0-9]{3}x-x{4}-x{3}[0-9]-[0-9]{4}$"));
 
     }
     Assert.assertEquals(6, rowCount);
@@ -231,16 +241,16 @@ public class RedMaskITTest {
     rowCount = 0;
     while (rs.next()) {
       rowCount += 1;
-      if (rs.getString("name").equals(dataChangedUsername)) {
-        Assert.assertEquals(14, rs.getInt("age"));
+      if (rs.getString("NAME").equals(dataChangedUsername)) {
+        Assert.assertEquals(14, rs.getInt("AGE"));
       } else {
-        Assert.assertTrue(rs.getInt("age") <= 10);
-        Assert.assertTrue(rs.getInt("age") > 0);
+        Assert.assertTrue(rs.getInt("AGE") <= 10);
+        Assert.assertTrue(rs.getInt("AGE") > 0);
       }
-      Assert.assertEquals(3.5, rs.getFloat("interest"), 0.01);
-      Assert.assertTrue(rs.getString("name").matches("^.\\**.$"));
-      Assert.assertTrue(rs.getString("email").matches("^.\\**@.*\\..*"));
-      Assert.assertTrue(rs.getString("card").matches("^[0-9]{3}x-x{4}-x{3}[0-9]-[0-9]{4}$"));
+      Assert.assertEquals(3.5, rs.getFloat("INTEREST"), 0.01);
+      Assert.assertTrue(rs.getString("NAME").matches("^.\\**.$"));
+      Assert.assertTrue(rs.getString("EMAIL").matches("^.\\**@.*\\..*"));
+      Assert.assertTrue(rs.getString("CARD").matches("^[0-9]{3}x-x{4}-x{3}[0-9]-[0-9]{4}$"));
 
     }
     Assert.assertEquals(ORIGINAL_TABLE_1_ROW_COUNT, rowCount);
@@ -254,16 +264,16 @@ public class RedMaskITTest {
     config.setRules(createMaskingRuleVersionOne());
     runRedMaskApp(config);
     Statement statement = devConnection.createStatement();
-    ResultSet rs = statement.executeQuery("SELECT * FROM " + TABLE_NAME);
+    ResultSet rs = statement.executeQuery("SELECT * FROM " + DEV_USER.toUpperCase() + '.' + TABLE_NAME);
     int rowCount = 0;
     while (rs.next()) {
       rowCount++;
-      Assert.assertTrue(rs.getInt("age") <= 10);
-      Assert.assertTrue(rs.getInt("age") > 0);
-      Assert.assertEquals(3.5, rs.getFloat("interest"), 0.01);
-      Assert.assertTrue(rs.getString("name").matches("^.\\**.$"));
-      Assert.assertTrue(rs.getString("email").matches("^.\\**@.*\\..*"));
-      Assert.assertTrue(rs.getString("card").matches("^[0-9]{3}x-x{4}-x{3}[0-9]-[0-9]{4}$"));
+      Assert.assertTrue(rs.getInt("AGE") <= 10);
+      Assert.assertTrue(rs.getInt("AGE") > 0);
+      Assert.assertEquals(3.5, rs.getFloat("INTEREST"), 0.01);
+      Assert.assertTrue(rs.getString("NAME").matches("^.\\**.$"));
+      Assert.assertTrue(rs.getString("EMAIL").matches("^.\\**@.*\\..*"));
+      Assert.assertTrue(rs.getString("CARD").matches("^[0-9]{3}x-x{4}-x{3}[0-9]-[0-9]{4}$"));
 
     }
     Assert.assertEquals(6, rowCount);
@@ -274,12 +284,12 @@ public class RedMaskITTest {
     rowCount = 0;
     while (rs.next()) {
       rowCount += 1;
-      Assert.assertTrue(rs.getInt("age") <= 10);
-      Assert.assertTrue(rs.getInt("age") > 0);
-      Assert.assertEquals(3.5, rs.getFloat("interest"), 0.01);
-      Assert.assertTrue(rs.getString("name").matches("^.\\**.$"));
-      Assert.assertTrue(rs.getString("email").matches("^.\\**@.*\\..*"));
-      Assert.assertTrue(rs.getString("card").matches("^[0-9]{3}x-x{4}-x{3}[0-9]-[0-9]{4}$"));
+      Assert.assertTrue(rs.getInt("AGE") <= 10);
+      Assert.assertTrue(rs.getInt("AGE") > 0);
+      Assert.assertEquals(3.5, rs.getFloat("INTEREST"), 0.01);
+      Assert.assertTrue(rs.getString("NAME").matches("^.\\**.$"));
+      Assert.assertTrue(rs.getString("EMAIL").matches("^.\\**@.*\\..*"));
+      Assert.assertTrue(rs.getString("CARD").matches("^[0-9]{3}x-x{4}-x{3}[0-9]-[0-9]{4}$"));
 
     }
     Assert.assertEquals(ORIGINAL_TABLE_1_ROW_COUNT + insertedRows, rowCount);
@@ -296,8 +306,8 @@ public class RedMaskITTest {
     int rowCount = 0;
     while (rs.next()) {
       rowCount += 1;
-      Assert.assertTrue(rs.getInt("age") <= 10);
-      Assert.assertTrue(rs.getInt("age") > 0);
+      Assert.assertTrue(rs.getInt("AGE") <= 10);
+      Assert.assertTrue(rs.getInt("AGE") > 0);
     }
     Assert.assertEquals(ORIGINAL_TABLE_1_ROW_COUNT, rowCount);
     rs.close();
@@ -308,7 +318,7 @@ public class RedMaskITTest {
     int rowCount2 = 0;
     while (rs2.next()) {
       rowCount2 += 1;
-      Assert.assertTrue(rs2.getString("name").matches("^.\\**.$"));
+      Assert.assertTrue(rs2.getString("NAME").matches("^.\\**.$"));
     }
     Assert.assertEquals(ORIGINAL_TABLE_2_ROW_COUNT, rowCount2);
     rs2.close();
@@ -350,7 +360,7 @@ public class RedMaskITTest {
     ScriptRunner sr = new ScriptRunner(connection);
     Reader reader = new BufferedReader(
         new FileReader(INSERT_DATA_FILE));
-    sr.setSendFullScript(true);
+    sr.setSendFullScript(false);
     sr.runScript(reader);
     log.info("Added additional test data.");
     reader.close();
@@ -361,7 +371,7 @@ public class RedMaskITTest {
     ScriptRunner sr = new ScriptRunner(connection);
     Reader reader = new BufferedReader(
         new FileReader(DELETE_DATA_FILE));
-    sr.setSendFullScript(true);
+    sr.setSendFullScript(false);
     sr.runScript(reader);
     log.info("Deleted few records from database.");
     reader.close();
@@ -373,7 +383,7 @@ public class RedMaskITTest {
     ScriptRunner sr = new ScriptRunner(connection);
     Reader reader = new BufferedReader(
         new FileReader(UPDATE_DATA_FILE));
-    sr.setSendFullScript(true);
+    sr.setSendFullScript(false);
     sr.runScript(reader);
     reader.close();
     log.info("Updated test data into database.");

@@ -1,4 +1,4 @@
-(ColName text, masktype text, arg1)
+(ColName text, masktype text, arg1 integer)
 RETURNS text stable AS $$
 import re
 usernametext,domaintext = ColName.split('@')

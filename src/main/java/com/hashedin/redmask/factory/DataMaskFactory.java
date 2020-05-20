@@ -2,9 +2,9 @@ package com.hashedin.redmask.factory;
 
 import com.hashedin.redmask.common.DataMasking;
 import com.hashedin.redmask.config.MaskConfiguration;
-import com.hashedin.redmask.postgres.PostgresMaskingService;
-import com.hashedin.redmask.redshift.RedshiftMaskingService;
-import com.hashedin.redmask.snowflake.SnowflakeMaskingService;
+import com.hashedin.redmask.service.PostgresMaskingService;
+import com.hashedin.redmask.service.RedshiftMaskingService;
+import com.hashedin.redmask.service.SnowflakeMaskingService;
 
 public class DataMaskFactory {
 

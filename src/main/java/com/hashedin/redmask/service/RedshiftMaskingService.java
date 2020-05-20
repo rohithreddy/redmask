@@ -1,4 +1,4 @@
-package com.hashedin.redmask.redshift;
+package com.hashedin.redmask.service;
 
 import com.hashedin.redmask.common.DataMasking;
 import com.hashedin.redmask.config.MaskConfiguration;
@@ -61,7 +61,7 @@ public class RedshiftMaskingService extends DataMasking {
         writer.close();
         throw new RedmaskRuntimeException("Redshift JDBC driver not found.", ex);
       }
-      
+
       // Set database superuser credentials 
       Properties connectionProps = new Properties();
       connectionProps.setProperty("user", config.getSuperUser());
@@ -83,7 +83,7 @@ public class RedshiftMaskingService extends DataMasking {
       writer.flush();
     } catch (IOException ex) {
       throw new RedmaskRuntimeException(
-          String.format("Error while writing to file {}", tempFilePath.getName()), ex);
+          String.format("Error while writing to file %s", tempFilePath.getName()), ex);
     }
     log.info("Sql script file exists at: {}. It contains all the sql queries"
         + "needed to create masked data.", tempFilePath);

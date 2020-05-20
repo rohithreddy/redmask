@@ -1,16 +1,24 @@
-package com.hashedin.redmask.snowflake;
+package com.hashedin.redmask.service;
 
 import com.hashedin.redmask.common.DataMasking;
 import com.hashedin.redmask.config.MaskConfiguration;
 import com.hashedin.redmask.config.MaskingRule;
 import com.hashedin.redmask.exception.RedmaskRuntimeException;
 
+import org.apache.ibatis.jdbc.ScriptRunner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.Reader;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
 import java.util.Properties;
 
 /**
@@ -26,8 +34,8 @@ public class SnowflakeMaskingService extends DataMasking {
   private String url = "jdbc:snowflake://";
 
   /**
-   *  This Temp file would store SQL queries/script to create schema, masked views,
-   *  grant permission to user etc. 
+   * This Temp file would store SQL queries/script to create schema, masked views,
+   * grant permission to user etc.
    */
   private final File tempFilePath;
 
@@ -61,7 +69,7 @@ public class SnowflakeMaskingService extends DataMasking {
         writer.close();
         throw new RedmaskRuntimeException("Snowflake JDBC driver not found.", ex);
       }
-      
+
       // Set database superuser credentials 
       Properties connectionProps = new Properties();
       connectionProps.setProperty("user", config.getSuperUser());
@@ -72,7 +80,7 @@ public class SnowflakeMaskingService extends DataMasking {
       /**
        * For each masking rule, build queries to create masking function.
        * Build queries to create masked view for given table.
-       * 
+       *
        * Append all those queries to file writer.
        */
       for (int i = 0; i < config.getRules().size(); i++) {
@@ -86,7 +94,7 @@ public class SnowflakeMaskingService extends DataMasking {
       writer.flush();
     } catch (IOException ex) {
       throw new RedmaskRuntimeException(
-          String.format("Error while writing to file {}", tempFilePath.getName()), ex);
+          String.format("Error while writing to file '%s'", tempFilePath.getName()), ex);
     }
     log.info("Sql script file exists at: {}. It contains all the sql queries"
         + "needed to create masked data.", tempFilePath);
@@ -95,7 +103,68 @@ public class SnowflakeMaskingService extends DataMasking {
   @Override
   public void executeSqlQueryForMasking() {
     if (!dryRunEnabled) {
-      log.info("Executing script in order to create view in the database.");
+      log.trace("Invoking Snowflake masking service to run data masking sql script.");
+      Properties connectionProps = new Properties();
+      connectionProps.setProperty("user", config.getSuperUser());
+      connectionProps.setProperty("password", config.getSuperUserPassword());
+      connectionProps.setProperty("db", config.getDatabase());
+      connectionProps.setProperty("schema", DEFAULT_INPUT_TABLE_SCHEMA.toUpperCase());
+      try {
+        executeSqlScript(url, connectionProps, tempFilePath);
+      } catch (IOException ex) {
+        throw new RedmaskRuntimeException(ex);
+      }
+    }
+  }
+
+  @Override
+  protected void executeSqlScript(String dbUrl, Properties props,
+                                  File scriptFilePath) throws IOException {
+    Reader reader = null;
+    try (Connection CONN = DriverManager.getConnection(dbUrl, props)) {
+      //Initialize the script runner
+      ScriptRunner sr = new ScriptRunner(CONN);
+
+      //Creating a reader object and running the script
+      reader = new BufferedReader(new FileReader(scriptFilePath));
+      // The following is set to false as snowflake expects only one SQL query at a time.
+      sr.setSendFullScript(false);
+      log.trace("Executing sql script located at {}", scriptFilePath);
+      sr.runScript(reader);
+    } catch (SQLException ex) {
+      throw new RedmaskRuntimeException(
+          String.format("Error while executing masking sql "
+                  + "query from file: %s using super username: %s",
+              scriptFilePath, props.get("user")), ex);
+    } catch (FileNotFoundException ex) {
+      throw new RedmaskRuntimeException(
+          String.format("Masking sql query file '%s' not found", scriptFilePath.getName()), ex);
+    } finally {
+      if (reader != null) {
+        reader.close();
+      }
+    }
+  }
+
+  @Override
+  protected void grantAccessToMaskedData(FileWriter writer, String user) {
+    log.info("Appending sql query to provide required permission"
+        + "masked data to the user: {}.", user);
+    try {
+      writer.append("\n\n-- Grant access to current user on schema: "
+          + MASKING_FUNCTION_SCHEMA + ".\n");
+      writer.append("GRANT USAGE ON SCHEMA " + MASKING_FUNCTION_SCHEMA
+          + " TO " + user + ";");
+      writer.append("\n\n-- Grant access to current user on schema: " + user + ".\n");
+      writer.append("GRANT ALL PRIVILEGES ON ALL TABLES IN "
+          + "SCHEMA " + user + " TO " + user + ";");
+      writer.append("\nGRANT ALL PRIVILEGES ON ALL VIEWS IN "
+          + "SCHEMA " + user + " TO " + user + ";");
+      writer.append("\nGRANT USAGE ON SCHEMA " + user
+          + " TO " + user + ";");
+    } catch (IOException ex) {
+      throw new RedmaskRuntimeException(
+          "Error while appending sql query to grant access to masked data in temp file.", ex);
     }
   }
 

@@ -1,4 +1,6 @@
-CREATE TABLE customer(
+DROP TABLE IF EXISTS customer;
+DROP TABLE IF EXISTS cashier;
+CREATE TABLE IF NOT EXISTS customer(
   name text,
   email text,
   age integer,
@@ -13,7 +15,7 @@ insert into customer VALUES ('User Delta','userdelta@email.com',4,'2019-04-23',3
 insert into customer VALUES ('User Echo','userecho@email.com',5,'2019-03-22',2.9,'1234-5679-7892-0934');
 insert into customer VALUES ('User Foxtrot','userfoxtrot@email.com',5,'2019-02-21',10.25,'1234-4783-4234-7923');
 
-CREATE TABLE cashier(
+CREATE TABLE IF NOT EXISTS cashier(
   name text,
   sales numeric(15,2),
   aadhaarNo bigint

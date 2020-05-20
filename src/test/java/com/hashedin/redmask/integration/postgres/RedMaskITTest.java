@@ -26,12 +26,12 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
-import static com.hashedin.redmask.integration.postgres.RedMaskITUtils.createMaskingRuleVersionFive;
-import static com.hashedin.redmask.integration.postgres.RedMaskITUtils.createMaskingRuleVersionFour;
-import static com.hashedin.redmask.integration.postgres.RedMaskITUtils.createMaskingRuleVersionOne;
-import static com.hashedin.redmask.integration.postgres.RedMaskITUtils.createMaskingRuleVersionSix;
-import static com.hashedin.redmask.integration.postgres.RedMaskITUtils.createMaskingRuleVersionThree;
-import static com.hashedin.redmask.integration.postgres.RedMaskITUtils.createMaskingRuleVersionTwo;
+import static com.hashedin.redmask.integration.postgres.PostgresITUtils.createMaskingRuleVersionOne;
+import static com.hashedin.redmask.integration.postgres.PostgresITUtils.createMaskingRuleVersionTwo;
+import static com.hashedin.redmask.integration.postgres.PostgresITUtils.createMaskingRuleVersionThree;
+import static com.hashedin.redmask.integration.postgres.PostgresITUtils.createMaskingRuleVersionFour;
+import static com.hashedin.redmask.integration.postgres.PostgresITUtils.createMaskingRuleVersionFive;
+import static com.hashedin.redmask.integration.postgres.PostgresITUtils.createMaskingRuleVersionSix;
 
 public class RedMaskITTest extends BaseITPostgresTestContainer {
 
@@ -310,54 +310,34 @@ public class RedMaskITTest extends BaseITPostgresTestContainer {
   @Test(expected = RedmaskConfigException.class)
   public void testInvalidTableName() {
     config.setRules(createMaskingRuleVersionTwo());
-    try {
-      runRedMaskApp(config);
-    } catch (IOException e) {
-      e.printStackTrace();
-    } catch (ClassNotFoundException e) {
-      e.printStackTrace();
-    }
+    runRedMaskApp(config);
   }
 
   @Test(expected = RedmaskConfigException.class)
   public void testInvalidColumnName() throws IOException {
     config.setRules(createMaskingRuleVersionThree());
-    try {
-      runRedMaskApp(config);
-    } catch (ClassNotFoundException e) {
-      e.printStackTrace();
-    }
+    runRedMaskApp(config);
   }
 
   @Test(expected = RedmaskConfigException.class)
   public void testInvalidParameterValue() throws JsonProcessingException {
     config.setRules(createMaskingRuleVersionFour());
-    try {
-      runRedMaskApp(config);
-    } catch (IOException e) {
-      e.printStackTrace();
-    } catch (ClassNotFoundException e) {
-      e.printStackTrace();
-    }
+    runRedMaskApp(config);
   }
 
   @Test(expected = RedmaskConfigException.class)
   public void testUnknownParameterSpecified() throws IOException {
     config.setRules(createMaskingRuleVersionFive());
-    try {
-      runRedMaskApp(config);
-    } catch (ClassNotFoundException e) {
-      e.printStackTrace();
-    }
+    runRedMaskApp(config);
   }
 
-  private void runRedMaskApp(MaskConfiguration config) throws IOException, ClassNotFoundException {
+  private void runRedMaskApp(MaskConfiguration config) {
     DataMasking dataMasking = DataMaskFactory.buildDataMask(config, false);
     dataMasking.generateSqlQueryForMasking();
     dataMasking.executeSqlQueryForMasking();
   }
 
-  private void addMoreDataToTable() throws SQLException, IOException {
+  private void addMoreDataToTable() throws IOException {
     // Add additional test data in table.
     ScriptRunner sr = new ScriptRunner(connection);
     Reader reader = new BufferedReader(
@@ -368,7 +348,7 @@ public class RedMaskITTest extends BaseITPostgresTestContainer {
     reader.close();
   }
 
-  private void deleteDataFromTable() throws SQLException, IOException {
+  private void deleteDataFromTable() throws IOException {
     // Delete test data from table.
     ScriptRunner sr = new ScriptRunner(connection);
     Reader reader = new BufferedReader(
@@ -380,7 +360,7 @@ public class RedMaskITTest extends BaseITPostgresTestContainer {
 
   }
 
-  private void updateDataInTable() throws SQLException, IOException {
+  private void updateDataInTable() throws IOException {
     // Update data in table.
     ScriptRunner sr = new ScriptRunner(connection);
     Reader reader = new BufferedReader(
