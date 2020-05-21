@@ -332,7 +332,7 @@ public class RedMaskITTest extends BaseITPostgresTestContainer {
   }
 
   private void runRedMaskApp(MaskConfiguration config) {
-    DataMasking dataMasking = DataMaskFactory.buildDataMask(config, false);
+    DataMasking dataMasking = DataMaskFactory.buildDataMask(config, false, "dynamic");
     dataMasking.generateSqlQueryForMasking();
     dataMasking.executeSqlQueryForMasking();
   }

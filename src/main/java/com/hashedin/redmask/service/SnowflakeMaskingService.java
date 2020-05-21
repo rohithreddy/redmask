@@ -31,6 +31,7 @@ public class SnowflakeMaskingService extends DataMasking {
 
   private final MaskConfiguration config;
   private final boolean dryRunEnabled;
+  private final String maskingMode;
   private String url = "jdbc:snowflake://";
 
   /**
@@ -39,10 +40,15 @@ public class SnowflakeMaskingService extends DataMasking {
    */
   private final File tempFilePath;
 
-  public SnowflakeMaskingService(MaskConfiguration config, boolean dryRunEnabled) {
+  public SnowflakeMaskingService(
+      MaskConfiguration config,
+      boolean dryRunEnabled,
+      String maskingMode) {
+
     this.config = config;
     this.url = url + config.getHost();
     this.dryRunEnabled = dryRunEnabled;
+    this.maskingMode = maskingMode;
     this.tempFilePath = createMaskingSqlFile();
     log.trace("Initialized Snowflake masking service.");
   }
@@ -85,12 +91,14 @@ public class SnowflakeMaskingService extends DataMasking {
        */
       for (int i = 0; i < config.getRules().size(); i++) {
         MaskingRule rule = config.getRules().get(i);
-        buildQueryAndAppend(rule, writer, config, url, connectionProps);
+        buildQueryAndAppend(rule, writer, config, url, connectionProps, maskingMode);
       }
 
       // TODO add required permission to grant access to different users
       // Grant access to the masked view data to user.
-      grantAccessToMaskedData(writer, config.getUser());
+      if (maskingMode.equals("dynamic")) {
+        grantAccessToMaskedData(writer, config.getUser());
+      }
       writer.flush();
     } catch (IOException ex) {
       throw new RedmaskRuntimeException(

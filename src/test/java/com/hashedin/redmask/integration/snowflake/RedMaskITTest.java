@@ -350,7 +350,7 @@ public class RedMaskITTest {
   }
 
   private void runRedMaskApp(MaskConfiguration config) {
-    DataMasking dataMasking = DataMaskFactory.buildDataMask(config, false);
+    DataMasking dataMasking = DataMaskFactory.buildDataMask(config, false, "dynamic");
     dataMasking.generateSqlQueryForMasking();
     dataMasking.executeSqlQueryForMasking();
   }

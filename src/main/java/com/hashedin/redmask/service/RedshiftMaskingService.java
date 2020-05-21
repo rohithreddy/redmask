@@ -23,18 +23,24 @@ public class RedshiftMaskingService extends DataMasking {
 
   private final MaskConfiguration config;
   private final boolean dryRunEnabled;
+  private final String maskingMode;
   private String url = "jdbc:redshift://";
 
   /**
-   *  This Temp file would store SQL queries/script to create schema, masked views,
-   *  grant permission to user etc. 
+   * This Temp file would store SQL queries/script to create schema, masked views,
+   * grant permission to user etc.
    */
   private final File tempFilePath;
 
-  public RedshiftMaskingService(MaskConfiguration config, boolean dryRunEnabled) {
+  public RedshiftMaskingService(
+      MaskConfiguration config,
+      boolean dryRunEnabled,
+      String maskingMode) {
+
     this.config = config;
     this.url = url + config.getHost() + ":" + config.getPort() + "/" + config.getDatabase();
     this.dryRunEnabled = dryRunEnabled;
+    this.maskingMode = maskingMode;
     this.tempFilePath = createMaskingSqlFile();
     log.trace("Initialized Redshift masking service.");
   }
@@ -66,20 +72,22 @@ public class RedshiftMaskingService extends DataMasking {
       Properties connectionProps = new Properties();
       connectionProps.setProperty("user", config.getSuperUser());
       connectionProps.setProperty("password", config.getSuperUserPassword());
-      
+
       /**
        * For each masking rule, build queries to create masking function.
        * Build queries to create masked view for given table.
-       * 
+       *
        * Append all those queries to file writer.
        */
       for (int i = 0; i < config.getRules().size(); i++) {
         MaskingRule rule = config.getRules().get(i);
-        buildQueryAndAppend(rule, writer, config, url, connectionProps);
+        buildQueryAndAppend(rule, writer, config, url, connectionProps, maskingMode);
       }
 
       // Grant access to the masked view data to user.
-      grantAccessToMaskedData(writer, config.getUser());
+      if (maskingMode.equals("dynamic")) {
+        grantAccessToMaskedData(writer, config.getUser());
+      }
       writer.flush();
     } catch (IOException ex) {
       throw new RedmaskRuntimeException(
