@@ -19,6 +19,7 @@ import java.util.Properties;
 public class PostgresMaskingService extends DataMasking {
 
   private static final Logger log = LoggerFactory.getLogger(PostgresMaskingService.class);
+  private static final String DYNAMIC_MASKING_MODE = "dynamic";
 
   private final MaskConfiguration config;
   private final boolean dryRunEnabled;
@@ -77,7 +78,7 @@ public class PostgresMaskingService extends DataMasking {
       }
 
       // Grant access to the masked view data to user.
-      if (maskingMode.equals("dynamic")) {
+      if (maskingMode.equals(DYNAMIC_MASKING_MODE)) {
         grantAccessToMaskedData(writer, config.getUser());
       }
 

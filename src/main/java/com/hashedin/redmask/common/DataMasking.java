@@ -48,6 +48,7 @@ public abstract class DataMasking {
   public static final String MASKING_FUNCTION_SCHEMA = "redmask";
   public static final String SELECT_QUERY = "SELECT * FROM ";
   public static final String DEFAULT_INPUT_TABLE_SCHEMA = "public";
+  private static final String STATIC_MASKING_MODE = "static";
 
   /**
    * Steps:
@@ -117,9 +118,8 @@ public abstract class DataMasking {
             "Exception while appending masking function definition to file writer", e);
       }
     }
-    log.info("Masking data");
-    if (maskingMode.equals("static")) {
-      createTableQuery(rule, writer, config, querySubstring);
+    if (maskingMode.equals(STATIC_MASKING_MODE)) {
+      createTableQuery(rule, writer, config, querySubstring, config.getUser());
     } else {
       createVieWQuery(rule, writer, config, querySubstring);
     }
@@ -137,7 +137,7 @@ public abstract class DataMasking {
   void createVieWQuery(MaskingRule rule, FileWriter writer, MaskConfiguration config,
                        List<String> querySubstring) {
     // Create view query for Dynamic masking.
-    log.info("Creating the query in order to create the intended masked view.");
+    log.info("Creating the query in order to create the view for the intended masked view.");
     String queryString = String.join(",", querySubstring);
     StringBuilder sb = new StringBuilder();
     sb.append(config.getUsername()).append(".").append(rule.getTable());
@@ -172,9 +172,9 @@ public abstract class DataMasking {
    * @param querySubstring List of  masked column queries
    */
   void createTableQuery(MaskingRule rule, FileWriter writer, MaskConfiguration config,
-                        List<String> querySubstring) {
+                        List<String> querySubstring, String user) {
     // Create view query for Dynamic masking.
-    log.info("Creating the query in order to create the intended masked view.");
+    log.info("Creating the query in order to create the table for the intended masked view.");
     String queryString = String.join(",", querySubstring);
     StringBuilder sb = new StringBuilder();
     if (config.getDbType().toString().equalsIgnoreCase(DataBaseType.SNOWFLAKE.toString())) {
@@ -190,10 +190,12 @@ public abstract class DataMasking {
       createTableQuery = createTableQuery + rule.getTable() + ";";
     }
     try {
-      //Dropping existing table if exist
+      //Dropping existing masked version of the table if it exists.
       writer.append("\nDROP TABLE IF EXISTS " + sb.toString() + ";");
       writer.append("\n\n-- Create masked table.\n");
       writer.append(createTableQuery);
+      writer.append("\nGRANT ALL PRIVILEGES ON TABLE " + sb.toString()
+          + " TO " + user + ";");
     } catch (IOException e) {
       throw new RedmaskRuntimeException(
           "Exception while appending to file writer", e);

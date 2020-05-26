@@ -20,6 +20,7 @@ public class RedshiftMaskingService extends DataMasking {
 
   private static final Logger log = LoggerFactory.getLogger(RedshiftMaskingService.class);
   private static final String REDSHIFT_JDBC_DRIVER = "com.amazon.redshift.jdbc.Driver";
+  private static final String DYNAMIC_MASKING_MODE = "dynamic";
 
   private final MaskConfiguration config;
   private final boolean dryRunEnabled;
@@ -85,7 +86,7 @@ public class RedshiftMaskingService extends DataMasking {
       }
 
       // Grant access to the masked view data to user.
-      if (maskingMode.equals("dynamic")) {
+      if (maskingMode.equals(DYNAMIC_MASKING_MODE)) {
         grantAccessToMaskedData(writer, config.getUser());
       }
       writer.flush();

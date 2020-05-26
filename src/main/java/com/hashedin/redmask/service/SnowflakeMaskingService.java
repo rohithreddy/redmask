@@ -28,6 +28,7 @@ public class SnowflakeMaskingService extends DataMasking {
 
   private static final Logger log = LoggerFactory.getLogger(SnowflakeMaskingService.class);
   private static final String SNOWFLAKE_JDBC_DRIVER = "net.snowflake.client.jdbc.SnowflakeDriver";
+  private static final String DYNAMIC_MASKING_MODE = "dynamic";
 
   private final MaskConfiguration config;
   private final boolean dryRunEnabled;
@@ -94,9 +95,12 @@ public class SnowflakeMaskingService extends DataMasking {
         buildQueryAndAppend(rule, writer, config, url, connectionProps, maskingMode);
       }
 
-      // TODO add required permission to grant access to different users
-      // Grant access to the masked view data to user.
-      if (maskingMode.equals("dynamic")) {
+      /* Grant access to the masked view data to user is ony executed for the dynamc mode since
+      of the user has to be removed form the original schema and added to the new schema so that
+      he has access only to the masked view.
+      */
+      if (maskingMode.equals(DYNAMIC_MASKING_MODE)) {
+
         grantAccessToMaskedData(writer, config.getUser());
       }
       writer.flush();

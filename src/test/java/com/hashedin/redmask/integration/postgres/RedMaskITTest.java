@@ -46,6 +46,8 @@ public class RedMaskITTest extends BaseITPostgresTestContainer {
   private static final String DATABASE = postgres.getDatabaseName();
   private static final String SUPER_USER = postgres.getUsername();
   private static final String SUPER_USER_PASSWORD = postgres.getPassword();
+  private static final String DYNAMIC_MASKING = "dynamic";
+  private static final String STATIC_MASKING = "static";
 
   private static MaskConfiguration config = null;
   private Connection devConnection;
@@ -137,10 +139,9 @@ public class RedMaskITTest extends BaseITPostgresTestContainer {
   }
 
   @Test
-  public void testMultipleMaskSingleTable() throws IOException, SQLException,
-      ClassNotFoundException {
+  public void testMultipleMaskSingleTable() throws IOException, SQLException {
     config.setRules(createMaskingRuleVersionOne());
-    runRedMaskApp(config);
+    runRedMaskApp(config, DYNAMIC_MASKING);
     Statement statement = devConnection.createStatement();
     ResultSet rs = statement.executeQuery("SELECT * FROM " + TABLE_NAME);
     int rowCount = 0;
@@ -159,10 +160,9 @@ public class RedMaskITTest extends BaseITPostgresTestContainer {
   }
 
   @Test
-  public void testMultipleMaskSingleTableDeleteData() throws IOException, SQLException,
-      ClassNotFoundException {
+  public void testMultipleMaskSingleTableDeleteData() throws IOException, SQLException {
     config.setRules(createMaskingRuleVersionOne());
-    runRedMaskApp(config);
+    runRedMaskApp(config, DYNAMIC_MASKING);
     Statement statement = devConnection.createStatement();
     ResultSet rs = statement.executeQuery("SELECT * FROM " + TABLE_NAME);
     int rowCount = 0;
@@ -198,10 +198,9 @@ public class RedMaskITTest extends BaseITPostgresTestContainer {
   }
 
   @Test
-  public void testMultipleMaskSingleTableUpdateData() throws IOException, SQLException,
-      ClassNotFoundException {
+  public void testMultipleMaskSingleTableUpdateData() throws IOException, SQLException {
     config.setRules(createMaskingRuleVersionOne());
-    runRedMaskApp(config);
+    runRedMaskApp(config, DYNAMIC_MASKING);
     Statement statement = devConnection.createStatement();
     ResultSet rs = statement.executeQuery("SELECT * FROM " + TABLE_NAME);
     int rowCount = 0;
@@ -241,10 +240,9 @@ public class RedMaskITTest extends BaseITPostgresTestContainer {
   }
 
   @Test
-  public void testMultipleMaskSingleTableInsertData() throws IOException, SQLException,
-      ClassNotFoundException {
+  public void testMultipleMaskSingleTableInsertData() throws IOException, SQLException {
     config.setRules(createMaskingRuleVersionOne());
-    runRedMaskApp(config);
+    runRedMaskApp(config, DYNAMIC_MASKING);
     Statement statement = devConnection.createStatement();
     ResultSet rs = statement.executeQuery("SELECT * FROM " + TABLE_NAME);
     int rowCount = 0;
@@ -280,9 +278,9 @@ public class RedMaskITTest extends BaseITPostgresTestContainer {
   }
 
   @Test
-  public void testMultipleTables() throws IOException, SQLException, ClassNotFoundException {
+  public void testMultipleTables() throws IOException, SQLException {
     config.setRules(createMaskingRuleVersionSix());
-    runRedMaskApp(config);
+    runRedMaskApp(config, DYNAMIC_MASKING);
     Statement statement = devConnection.createStatement();
     ResultSet rs = statement.executeQuery("SELECT * FROM " + TABLE_NAME);
     int rowCount = 0;
@@ -310,29 +308,200 @@ public class RedMaskITTest extends BaseITPostgresTestContainer {
   @Test(expected = RedmaskConfigException.class)
   public void testInvalidTableName() {
     config.setRules(createMaskingRuleVersionTwo());
-    runRedMaskApp(config);
+    runRedMaskApp(config, DYNAMIC_MASKING);
   }
 
   @Test(expected = RedmaskConfigException.class)
   public void testInvalidColumnName() throws IOException {
     config.setRules(createMaskingRuleVersionThree());
-    runRedMaskApp(config);
+    runRedMaskApp(config, DYNAMIC_MASKING);
   }
 
   @Test(expected = RedmaskConfigException.class)
   public void testInvalidParameterValue() throws JsonProcessingException {
     config.setRules(createMaskingRuleVersionFour());
-    runRedMaskApp(config);
+    runRedMaskApp(config, DYNAMIC_MASKING);
   }
 
   @Test(expected = RedmaskConfigException.class)
   public void testUnknownParameterSpecified() throws IOException {
     config.setRules(createMaskingRuleVersionFive());
-    runRedMaskApp(config);
+    runRedMaskApp(config, DYNAMIC_MASKING);
   }
 
-  private void runRedMaskApp(MaskConfiguration config) {
-    DataMasking dataMasking = DataMaskFactory.buildDataMask(config, false, "dynamic");
+  @Test
+  public void testMultipleMaskSingleTableStaticMasking() throws IOException, SQLException {
+    config.setRules(createMaskingRuleVersionOne());
+    runRedMaskApp(config, STATIC_MASKING);
+    Statement statement = devConnection.createStatement();
+    ResultSet rs = statement.executeQuery("SELECT * FROM mask_" + TABLE_NAME);
+    int rowCount = 0;
+    while (rs.next()) {
+      rowCount++;
+      Assert.assertTrue(rs.getInt("age") <= 10);
+      Assert.assertTrue(rs.getInt("age") > 0);
+      Assert.assertEquals(3.5, rs.getFloat("interest"), 0.01);
+      Assert.assertTrue(rs.getString("name").matches("^.\\**.$"));
+      Assert.assertTrue(rs.getString("email").matches("^.x*@.*\\..*"));
+      Assert.assertTrue(rs.getString("card").matches("^[0-9]{3}x-x{4}-x{3}[0-9]-[0-9]{4}$"));
+    }
+    Assert.assertEquals(ORIGINAL_TABLE_1_ROW_COUNT, rowCount);
+    rs.close();
+    statement.close();
+  }
+
+  @Test
+  public void testMultipleMaskSingleTableDeleteDataStaticMasking() throws IOException,
+      SQLException {
+    config.setRules(createMaskingRuleVersionOne());
+    runRedMaskApp(config, STATIC_MASKING);
+    Statement statement = devConnection.createStatement();
+    ResultSet rs = statement.executeQuery("SELECT * FROM mask_" + TABLE_NAME);
+    int rowCount = 0;
+    while (rs.next()) {
+      rowCount += 1;
+      Assert.assertTrue(rs.getInt("age") <= 10);
+      Assert.assertTrue(rs.getInt("age") > 0);
+      Assert.assertEquals(3.5, rs.getFloat("interest"), 0.01);
+      Assert.assertTrue(rs.getString("name").matches("^.\\**.$"));
+      Assert.assertTrue(rs.getString("email").matches("^.x*@.*\\..*"));
+      Assert.assertTrue(rs.getString("card").matches("^[0-9]{3}x-x{4}-x{3}[0-9]-[0-9]{4}$"));
+
+    }
+    Assert.assertEquals(6, rowCount);
+    // Deletes User Alpha and User Delta from original table customer
+    deleteDataFromTable();
+    int deletedRows = 2;
+    rs = statement.executeQuery("SELECT * FROM mask_" + TABLE_NAME);
+    rowCount = 0;
+    while (rs.next()) {
+      rowCount += 1;
+      Assert.assertTrue(rs.getInt("age") <= 10);
+      Assert.assertTrue(rs.getInt("age") > 0);
+      Assert.assertEquals(3.5, rs.getFloat("interest"), 0.01);
+      Assert.assertTrue(rs.getString("name").matches("^.\\**.$"));
+      Assert.assertTrue(rs.getString("email").matches("^.x*@.*\\..*"));
+      Assert.assertTrue(rs.getString("card").matches("^[0-9]{3}x-x{4}-x{3}[0-9]-[0-9]{4}$"));
+
+    }
+    // Assert that no changes take place in the static table.
+    Assert.assertEquals(ORIGINAL_TABLE_1_ROW_COUNT , rowCount);
+    rs.close();
+    statement.close();
+  }
+
+  @Test
+  public void testMultipleMaskSingleTableUpdateDataStaticMasking() throws IOException,
+      SQLException {
+    config.setRules(createMaskingRuleVersionOne());
+    runRedMaskApp(config, STATIC_MASKING);
+    Statement statement = devConnection.createStatement();
+    ResultSet rs = statement.executeQuery("SELECT * FROM mask_" + TABLE_NAME);
+    int rowCount = 0;
+    while (rs.next()) {
+      rowCount += 1;
+      Assert.assertTrue(rs.getInt("age") <= 10);
+      Assert.assertTrue(rs.getInt("age") > 0);
+      Assert.assertEquals(3.5, rs.getFloat("interest"), 0.01);
+      Assert.assertTrue(rs.getString("name").matches("^.\\**.$"));
+      Assert.assertTrue(rs.getString("email").matches("^.x*@.*\\..*"));
+      Assert.assertTrue(rs.getString("card").matches("^[0-9]{3}x-x{4}-x{3}[0-9]-[0-9]{4}$"));
+
+    }
+    Assert.assertEquals(6, rowCount);
+    //Updates age of User Alpha to 14
+    String dataChangedUsername = "User Alpha";
+    updateDataInTable();
+    rs = statement.executeQuery("SELECT * FROM mask_" + TABLE_NAME);
+    rowCount = 0;
+    while (rs.next()) {
+      rowCount += 1;
+      if (rs.getString("name").equals(dataChangedUsername)) {
+        Assert.assertEquals(14, rs.getInt("age"));
+      } else {
+        Assert.assertTrue(rs.getInt("age") <= 10);
+        Assert.assertTrue(rs.getInt("age") > 0);
+      }
+      Assert.assertEquals(3.5, rs.getFloat("interest"), 0.01);
+      Assert.assertTrue(rs.getString("name").matches("^.\\**.$"));
+      Assert.assertTrue(rs.getString("email").matches("^.x*@.*\\..*"));
+      Assert.assertTrue(rs.getString("card").matches("^[0-9]{3}x-x{4}-x{3}[0-9]-[0-9]{4}$"));
+
+    }
+    Assert.assertEquals(ORIGINAL_TABLE_1_ROW_COUNT, rowCount);
+    rs.close();
+    statement.close();
+  }
+
+  @Test
+  public void testMultipleMaskSingleTableInsertDataStaticMasking() throws IOException,
+      SQLException {
+    config.setRules(createMaskingRuleVersionOne());
+    runRedMaskApp(config, STATIC_MASKING);
+    Statement statement = devConnection.createStatement();
+    ResultSet rs = statement.executeQuery("SELECT * FROM mask_" + TABLE_NAME);
+    int rowCount = 0;
+    while (rs.next()) {
+      rowCount++;
+      Assert.assertTrue(rs.getInt("age") <= 10);
+      Assert.assertTrue(rs.getInt("age") > 0);
+      Assert.assertEquals(3.5, rs.getFloat("interest"), 0.01);
+      Assert.assertTrue(rs.getString("name").matches("^.\\**.$"));
+      Assert.assertTrue(rs.getString("email").matches("^.x*@.*\\..*"));
+      Assert.assertTrue(rs.getString("card").matches("^[0-9]{3}x-x{4}-x{3}[0-9]-[0-9]{4}$"));
+
+    }
+    Assert.assertEquals(6, rowCount);
+    //Insert addition 6 records into the table
+    addMoreDataToTable();
+    int insertedRows = 6;
+    rs = statement.executeQuery("SELECT * FROM mask_" + TABLE_NAME);
+    rowCount = 0;
+    while (rs.next()) {
+      rowCount += 1;
+      Assert.assertTrue(rs.getInt("age") <= 10);
+      Assert.assertTrue(rs.getInt("age") > 0);
+      Assert.assertEquals(3.5, rs.getFloat("interest"), 0.01);
+      Assert.assertTrue(rs.getString("name").matches("^.\\**.$"));
+      Assert.assertTrue(rs.getString("email").matches("^.x*@.*\\..*"));
+      Assert.assertTrue(rs.getString("card").matches("^[0-9]{3}x-x{4}-x{3}[0-9]-[0-9]{4}$"));
+
+    }
+    Assert.assertEquals(ORIGINAL_TABLE_1_ROW_COUNT, rowCount);
+    rs.close();
+    statement.close();
+  }
+
+  @Test
+  public void testMultipleTablesStaticMasking() throws IOException, SQLException {
+    config.setRules(createMaskingRuleVersionSix());
+    runRedMaskApp(config, STATIC_MASKING);
+    Statement statement = devConnection.createStatement();
+    ResultSet rs = statement.executeQuery("SELECT * FROM mask_" + TABLE_NAME);
+    int rowCount = 0;
+    while (rs.next()) {
+      rowCount += 1;
+      Assert.assertTrue(rs.getInt("age") <= 10);
+      Assert.assertTrue(rs.getInt("age") > 0);
+    }
+    Assert.assertEquals(ORIGINAL_TABLE_1_ROW_COUNT, rowCount);
+    rs.close();
+    statement.close();
+
+    Statement statement2 = connection.createStatement();
+    ResultSet rs2 = statement2.executeQuery("SELECT * FROM mask_" + TABLE_NAME_2);
+    int rowCount2 = 0;
+    while (rs2.next()) {
+      rowCount2 += 1;
+      Assert.assertTrue(rs2.getString("name").matches("^.\\**.$"));
+    }
+    Assert.assertEquals(ORIGINAL_TABLE_2_ROW_COUNT, rowCount2);
+    rs2.close();
+    statement2.close();
+  }
+
+  private void runRedMaskApp(MaskConfiguration config, String maskingMode) {
+    DataMasking dataMasking = DataMaskFactory.buildDataMask(config, false, maskingMode);
     dataMasking.generateSqlQueryForMasking();
     dataMasking.executeSqlQueryForMasking();
   }
