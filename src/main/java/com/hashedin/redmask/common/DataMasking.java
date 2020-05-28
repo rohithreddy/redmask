@@ -48,6 +48,7 @@ public abstract class DataMasking {
   public static final String MASKING_FUNCTION_SCHEMA = "redmask";
   public static final String SELECT_QUERY = "SELECT * FROM ";
   public static final String DEFAULT_INPUT_TABLE_SCHEMA = "public";
+  private static final String STATIC_MASKING_MODE = "static";
 
   /**
    * Steps:
@@ -72,9 +73,10 @@ public abstract class DataMasking {
    * @param config  MaskConfiguration object
    * @param url     database url.
    * @param connectionProps  DB connection properties.
+   * @param maskingMode
    */
   public void buildQueryAndAppend(MaskingRule rule, FileWriter writer,
-      MaskConfiguration config, String url, Properties connectionProps) {
+      MaskConfiguration config, String url, Properties connectionProps, String maskingMode) {
 
     Set<String> functionDefinitionSet = new LinkedHashSet<>();
     List<String> querySubstring = new ArrayList<>();
@@ -116,9 +118,26 @@ public abstract class DataMasking {
             "Exception while appending masking function definition to file writer", e);
       }
     }
+    if (maskingMode.equals(STATIC_MASKING_MODE)) {
+      createTableQuery(rule, writer, config, querySubstring, config.getUser());
+    } else {
+      createVieWQuery(rule, writer, config, querySubstring);
+    }
 
-    // Create view query.
-    log.info("Creating the query in order to create the intended masked view.");
+  }
+
+  /**
+   * This function create the view for housing the masked data when the mode is dynamic
+   *
+   * @param rule           The masking rule given for a table.
+   * @param writer         FileWriter object. All the queries are appended to this writer.
+   * @param config         MaskConfiguration object
+   * @param querySubstring List of  masked column queries
+   */
+  void createVieWQuery(MaskingRule rule, FileWriter writer, MaskConfiguration config,
+                       List<String> querySubstring) {
+    // Create view query for Dynamic masking.
+    log.info("Creating the query in order to create the view for the intended masked view.");
     String queryString = String.join(",", querySubstring);
     StringBuilder sb = new StringBuilder();
     sb.append(config.getUsername()).append(".").append(rule.getTable());
@@ -142,8 +161,47 @@ public abstract class DataMasking {
       throw new RedmaskRuntimeException(
           "Exception while appending to file writer", e);
     }
-
   }
+
+  /**
+   * This function create the table for housing the masked data when the mode is static
+   *
+   * @param rule           The masking rule given for a table.
+   * @param writer         FileWriter object. All the queries are appended to this writer.
+   * @param config         MaskConfiguration object
+   * @param querySubstring List of  masked column queries
+   */
+  void createTableQuery(MaskingRule rule, FileWriter writer, MaskConfiguration config,
+                        List<String> querySubstring, String user) {
+    // Create view query for Dynamic masking.
+    log.info("Creating the query in order to create the table for the intended masked view.");
+    String queryString = String.join(",", querySubstring);
+    StringBuilder sb = new StringBuilder();
+    if (config.getDbType().toString().equalsIgnoreCase(DataBaseType.SNOWFLAKE.toString())) {
+      sb.append("public.");
+    }
+    sb.append("mask_").append(rule.getTable());
+
+    String createTableQuery = "CREATE TABLE " + sb.toString() + " AS SELECT "
+        + queryString + " FROM ";
+    if (config.getDbType().toString().equalsIgnoreCase(DataBaseType.SNOWFLAKE.toString())) {
+      createTableQuery = createTableQuery + "public." + rule.getTable() + ";";
+    } else {
+      createTableQuery = createTableQuery + rule.getTable() + ";";
+    }
+    try {
+      //Dropping existing masked version of the table if it exists.
+      writer.append("\nDROP TABLE IF EXISTS " + sb.toString() + ";");
+      writer.append("\n\n-- Create masked table.\n");
+      writer.append(createTableQuery);
+      writer.append("\nGRANT ALL PRIVILEGES ON TABLE " + sb.toString()
+          + " TO " + user + ";");
+    } catch (IOException e) {
+      throw new RedmaskRuntimeException(
+          "Exception while appending to file writer", e);
+    }
+  }
+
 
   /**
    * Creates a map of the column name and the associated masking rule.
