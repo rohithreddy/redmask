@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hashedin.redmask.common.DataMasking;
 import com.hashedin.redmask.config.MaskConfiguration;
 import com.hashedin.redmask.factory.DataMaskFactory;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
@@ -37,6 +36,11 @@ public class RedMaskApp implements Callable<Integer> {
           + "It will not make any changes to DB.")
   private boolean dryRun = true;
 
+  @Option(names = {"-m", "--mode"},
+      description = "When static, this will just generates a new table to house the masked data. "
+          + "When dynamic a new view will be created with the masked data.")
+  private String mode;
+
   public static void main(String[] args) throws IOException {
     log.info("Starting redmask application.");
     System.exit(new CommandLine(new RedMaskApp()).execute(args));
@@ -55,7 +59,7 @@ public class RedMaskApp implements Callable<Integer> {
       log.error("Terminating the Redmask Application.");
       return 0;
     }
-    DataMasking dataMasking = DataMaskFactory.buildDataMask(config, dryRun);
+    DataMasking dataMasking = DataMaskFactory.buildDataMask(config, dryRun, mode);
     dataMasking.generateSqlQueryForMasking();
     dataMasking.executeSqlQueryForMasking();
     log.info("Closing redmask application.");

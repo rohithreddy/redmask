@@ -12,18 +12,22 @@ public class DataMaskFactory {
     //  No use
   }
 
-  public static DataMasking buildDataMask(MaskConfiguration config, boolean dryRunMode) {
+  public static DataMasking buildDataMask(
+      MaskConfiguration config,
+      boolean dryRunMode,
+      String maskingMode) {
+
     DataMasking dataMasking = null;
     switch (config.getDbType()) {
       case POSTGRES:
-        dataMasking = new PostgresMaskingService(config, dryRunMode);
+        dataMasking = new PostgresMaskingService(config, dryRunMode, maskingMode);
         break;
       case REDSHIFT:
-        dataMasking = new RedshiftMaskingService(config, dryRunMode);
+        dataMasking = new RedshiftMaskingService(config, dryRunMode, maskingMode);
         break;
       case SNOWFLAKE:
         // Create DataMasking instance for Snowflake.
-        dataMasking = new SnowflakeMaskingService(config, dryRunMode);
+        dataMasking = new SnowflakeMaskingService(config, dryRunMode, maskingMode);
         break;
       default:
         // throw unsupported data base type.

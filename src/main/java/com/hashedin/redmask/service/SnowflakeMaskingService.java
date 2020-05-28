@@ -28,9 +28,11 @@ public class SnowflakeMaskingService extends DataMasking {
 
   private static final Logger log = LoggerFactory.getLogger(SnowflakeMaskingService.class);
   private static final String SNOWFLAKE_JDBC_DRIVER = "net.snowflake.client.jdbc.SnowflakeDriver";
+  private static final String DYNAMIC_MASKING_MODE = "dynamic";
 
   private final MaskConfiguration config;
   private final boolean dryRunEnabled;
+  private final String maskingMode;
   private String url = "jdbc:snowflake://";
 
   /**
@@ -39,10 +41,15 @@ public class SnowflakeMaskingService extends DataMasking {
    */
   private final File tempFilePath;
 
-  public SnowflakeMaskingService(MaskConfiguration config, boolean dryRunEnabled) {
+  public SnowflakeMaskingService(
+      MaskConfiguration config,
+      boolean dryRunEnabled,
+      String maskingMode) {
+
     this.config = config;
     this.url = url + config.getHost();
     this.dryRunEnabled = dryRunEnabled;
+    this.maskingMode = maskingMode;
     this.tempFilePath = createMaskingSqlFile();
     log.trace("Initialized Snowflake masking service.");
   }
@@ -85,12 +92,17 @@ public class SnowflakeMaskingService extends DataMasking {
        */
       for (int i = 0; i < config.getRules().size(); i++) {
         MaskingRule rule = config.getRules().get(i);
-        buildQueryAndAppend(rule, writer, config, url, connectionProps);
+        buildQueryAndAppend(rule, writer, config, url, connectionProps, maskingMode);
       }
 
-      // TODO add required permission to grant access to different users
-      // Grant access to the masked view data to user.
-      grantAccessToMaskedData(writer, config.getUser());
+      /* Grant access to the masked view data to user is ony executed for the dynamc mode since
+      of the user has to be removed form the original schema and added to the new schema so that
+      he has access only to the masked view.
+      */
+      if (maskingMode.equals(DYNAMIC_MASKING_MODE)) {
+
+        grantAccessToMaskedData(writer, config.getUser());
+      }
       writer.flush();
     } catch (IOException ex) {
       throw new RedmaskRuntimeException(
