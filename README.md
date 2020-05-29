@@ -83,11 +83,12 @@ DB_USER_PASSWORD = <dev_user_password>
 ```
 3. Administrator will launch RedMask via CLI using below command
 ```
-./redmask -f=/<path_to_josn_file>/masking_config.jso -r=false
+./redmask -f=/<path_to_josn_file>/masking_config.jso -r=false -m=dynamic
 ```
 where:
 - `-f`or `--configFilePath` is complete file path of json containing masking configurations.
 - `-r` or `--dryRun` when true, this will just generates sql file with required queries. It will not make any changes to DB. It indicates dry run mode.
+- `-m` or `--mode` is the masking method to be used i.e. **static** or **dynamic**
 
 After running the command, the RedMask will create appropriate schemas/views/permissions in the underlying data warehouse.
 

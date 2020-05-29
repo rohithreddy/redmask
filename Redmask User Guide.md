@@ -109,7 +109,7 @@ DB_USER_PASSWORD = <dev_user_password>
 3. Administrator will launch RedMask via CLI using below command \
 
 ```
-./redmask -f=/<path_to_josn_file>/masking_config.jso -r=false
+./redmask -f=/<path_to_josn_file>/masking_config.jso -r=false -m=dynamic
 ```
 
 

@@ -1,5 +1,8 @@
 package com.hashedin.redmask.config;
 
+import java.util.Arrays;
+import java.util.List;
+
 public class MaskingConstants {
   
   private MaskingConstants() {
@@ -73,4 +76,6 @@ public class MaskingConstants {
   public static final String MASK_CARD_COMMENT =
       "\n\n-- Function to anonymize card details.\n";
 
+  public static final List<MaskType> REDSHIFT_SNOWFLAKE_NOT_SUPPORTED_MASK_TYPES =
+      Arrays.asList(MaskType.NUMERIC_RANGE, MaskType.BIGINT_RANGE, MaskType.INTEGER_RANGE);
 }
