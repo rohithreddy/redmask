@@ -37,6 +37,31 @@ Applications connecting to the data warehouse have to make 2 small changes:
 - With static masking, a copy of the table is created with the desired columns masked. This increases the storage requirements.
 - With dynamic masking, a view wraps the underlying table. This approach has a negligible impact on performance, unless the masked column is part of a join condition. In general, we recommend joining on ids that do not require to be masked. If you cannot join on an id field, there are some ways to reduce the performance impact of masking.
 
+#### Setup:
+
+Clone the repository to your local machine, install [gradle](https://gradle.org/install/) for your respective operating system, and add the following dependencies.
+
+**Linux/Ubuntu**
+```
+sudo apt-get install openjdk-8-jdk gcc zlib1g-dev
+gradle clean nativeImage
+```
+
+**Windows**
+Install the [Microsoft Windows SDK for Windows 7 and .NET Framework 4](https://www.microsoft.com/en-us/download/details.aspx?id=8442) as well as the [C compilers from KB2519277](https://stackoverflow.com/a/45784634/873282).
+
+Using the command Prompt run the following to build redamsk
+```
+gradle clean NativeImage
+```
+
+**Mac**
+
+```
+gradle clean nativeImage
+```
+
+
 #### Administrator Workflow:
 1. Construct a json masking configuration file. Within a masking configuration, the administrator can choose specific columns that need to be masked. For each column that needs to be masked, it will allow the administrator to configure the masking rules like `STRING_MASKING`, `Random_Integer_Within_Range` etc.
 ```
