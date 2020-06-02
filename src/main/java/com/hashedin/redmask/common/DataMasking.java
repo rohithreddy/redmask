@@ -36,6 +36,8 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
+import static com.hashedin.redmask.config.MaskingConstants.REDSHIFT_SNOWFLAKE_NOT_SUPPORTED_MASK_TYPES;
+
 /**
  * This DataMasking class contains common methods to implement data masking.
  * 
@@ -279,6 +281,10 @@ public abstract class DataMasking {
         String colName = rs.getColumnName(i);
         // Check if masking has to be done for this column.
         if (colMaskRuleMap.containsKey(colName)) {
+          if (notSupportedType(colMaskRuleMap.get(colName), dbType)) {
+            throw new RedmaskConfigException(String.format("%s mask is not supported on %s",
+                    colMaskRuleMap.get(colName).getMaskType(), dbType));
+          }
           querySubstring.add(colMaskRuleMap.get(colName)
               .getSubQuery(templateConfig, rule.getTable()));
           String databaseType = dbType.toString().toLowerCase();
@@ -290,6 +296,17 @@ public abstract class DataMasking {
       }
     } catch (SQLException ex) {
       throw new RedmaskRuntimeException(ex);
+    }
+  }
+
+  private boolean notSupportedType(MaskingRuleDef maskingRuleDef, DataBaseType dbType) {
+    switch (dbType) {
+      //all current masks are supported on Postgres
+      case POSTGRES: return false;
+      case REDSHIFT: //intentional fall through
+      case SNOWFLAKE: return REDSHIFT_SNOWFLAKE_NOT_SUPPORTED_MASK_TYPES
+            .contains(maskingRuleDef.getMaskType());
+      default: return false;
     }
   }
 
